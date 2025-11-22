@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import TrendingTicker from './components/TrendingTicker';
 import GitHubLeaderboard from './components/GitHubLeaderboard';
+import LLMLeaderboard from './components/LLMLeaderboard';
 import ArticleCard from './components/ArticleCard';
 import { mockArticles } from './mockData';
 import type { Category } from './types';
+import { icons } from './types';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'ALL'>('ALL');
@@ -67,7 +69,7 @@ function App() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#0f1117]">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -77,12 +79,15 @@ function App() {
         {/* GitHub Trending Leaderboard */}
         <GitHubLeaderboard repos={mockArticles} />
 
+        {/* LLM Leaderboard */}
+        <LLMLeaderboard />
+
         {/* Articles with Category Tabs */}
         <section>
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-md border-l-4 border-primary-base">
-            <h2 className="text-2xl font-extrabold text-navy flex items-center gap-3 mb-4">
-              <span className="text-3xl">📚</span>
-              전체 트렌드
+          <div className="bg-[#1a1d29] rounded-2xl p-6 mb-6 border border-gray-700">
+            <h2 className="text-2xl font-extrabold text-white flex items-center gap-3 mb-4">
+              <span className="text-3xl">{icons.trendingBlog}</span>
+              트렌딩 블로그
             </h2>
 
             {/* Category Tabs */}
@@ -93,8 +98,8 @@ function App() {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     selectedCategory === category.id
-                      ? 'bg-primary-base text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   <span className="mr-1">{category.icon}</span>
@@ -116,8 +121,8 @@ function App() {
           {/* Loading Indicator */}
           {isLoading && (
             <div className="flex justify-center items-center py-8">
-              <div className="flex items-center gap-3 text-primary-base">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-base"></div>
+              <div className="flex items-center gap-3 text-blue-400">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
                 <span className="text-lg font-medium">더 많은 트렌드 로딩 중...</span>
               </div>
             </div>
@@ -125,14 +130,14 @@ function App() {
 
           {/* End Message */}
           {!hasMore && filteredArticles.length > 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-400">
               <p className="text-sm">모든 트렌드를 확인했습니다 ({allFilteredArticles.length}개)</p>
             </div>
           )}
 
           {/* Empty State */}
           {filteredArticles.length === 0 && !isLoading && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-400">
               <p className="text-lg">해당 카테고리의 트렌드가 없습니다.</p>
             </div>
           )}
@@ -144,7 +149,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
-              <p className="text-lg font-semibold">DevPort.kr</p>
+              <p className="text-lg font-semibold">devport.kr</p>
               <p className="text-sm text-gray-300 mt-1">개발자를 위한 글로벌 트렌드 포털</p>
             </div>
 
@@ -165,7 +170,7 @@ function App() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-700 text-center text-sm text-gray-400">
-            © 2024 DevPort.kr - All rights reserved
+            © 2025 devport.kr - All rights reserved
           </div>
         </div>
       </footer>

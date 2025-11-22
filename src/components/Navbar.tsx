@@ -4,17 +4,17 @@ export default function Navbar() {
   const [activeTab, setActiveTab] = useState('home');
 
   const navLinks = [
-    { id: 'home', label: 'Home' },
+    { id: 'home', label: '홈' },
     { id: 'mypage', label: '마이페이지' },
   ];
 
   return (
-    <nav className="bg-primary-base shadow-lg sticky top-0 z-50">
+    <nav className="bg-[#0d0f14] border-b border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <a href="/" className="flex items-center gap-3 text-white hover:opacity-90 transition-opacity">
-            <span className="text-xl font-bold">DevPort</span>
+            <span className="text-xl font-bold">devport.kr</span>
           </a>
 
           {/* Navigation Links */}
@@ -40,7 +40,7 @@ export default function Navbar() {
             <button className="hidden md:block text-white/90 hover:text-white transition-colors font-medium border-b border-transparent hover:border-white pb-0.5">
               구독하기
             </button>
-            <button className="hidden md:flex items-center gap-2 bg-white text-primary-base px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+            <button className="hidden md:flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors">
               <span>로그인</span>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 12 12">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.333 2.667L7.667 6 4.333 9.333" />

@@ -44,7 +44,7 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
   const duplicatedArticles = [...articles, ...articles];
 
   return (
-    <div className="bg-primary-base shadow-lg mb-8 overflow-hidden rounded-lg">
+    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 mb-8 overflow-hidden rounded-lg border border-blue-500/30">
       <div
         ref={scrollRef}
         className="flex overflow-x-hidden py-5"
@@ -61,7 +61,7 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
             >
               <div className="flex items-center gap-4 min-w-[400px] hover:opacity-80 transition-opacity">
                 <div className="flex-1">
-                  <p className="text-base font-semibold text-white group-hover:text-primary-lighter transition-colors line-clamp-1">
+                  <p className="text-base font-semibold text-white group-hover:text-blue-100 transition-colors line-clamp-1">
                     {article.summaryKoTitle}
                   </p>
                 </div>
