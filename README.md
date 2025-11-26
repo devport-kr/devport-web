@@ -11,7 +11,7 @@
 
 ## 🌊 프로젝트 소개
 
-DevPort (devport.kr)는 GitHub, Hacker News, Reddit, 주요 기술 블로그의 영문 트렌드 콘텐츠를 수집하여 한국어 한 줄 요약과 함께 제공하는 서비스입니다. 언어 장벽 없이 글로벌 개발 트렌드를 빠르게 파악할 수 있도록 돕습니다.
+devPort (devport.kr)는 GitHub, Hacker News, Reddit, 주요 기술 블로그의 영문 트렌드 콘텐츠를 수집하여 한국어 한 줄 요약과 함께 제공하는 서비스입니다. 언어 장벽 없이 글로벌 개발 트렌드를 빠르게 파악할 수 있도록 돕습니다.
 
 ### 주요 기능
 
@@ -25,32 +25,6 @@ DevPort (devport.kr)는 GitHub, Hacker News, Reddit, 주요 기술 블로그의 
 - **프레임워크**: React 18 + TypeScript
 - **빌드 도구**: Vite
 - **스타일링**: Tailwind CSS v3
-- **디자인**: Docker 스타일 블루 팔레트 (#2496ed)
-
-### 백엔드 (개발 예정)
-- **프레임워크**: Spring Boot
-- **데이터베이스**: PostgreSQL
-- **API**: RESTful 엔드포인트 (페이지네이션 지원)
-- **배포**: AWS (EC2/ECS + S3 + CloudFront)
-
-## 📊 프로젝트 구조
-
-```
-devport-app/
-├── src/
-│   ├── components/
-│   │   ├── Navbar.tsx           # 상단 네비게이션
-│   │   ├── TrendingTicker.tsx   # 자동 스크롤 티커
-│   │   ├── GitHubLeaderboard.tsx # GitHub 리더보드
-│   │   └── ArticleCard.tsx      # 아티클 카드 컴포넌트
-│   ├── types.ts                  # TypeScript 타입 정의
-│   ├── mockData.ts               # 샘플 데이터 (50개)
-│   ├── App.tsx                   # 메인 앱 컴포넌트
-│   └── main.tsx                  # 앱 진입점
-├── public/                       # 정적 파일
-├── tailwind.config.js            # Tailwind CSS 설정
-└── vite.config.ts                # Vite 설정
-```
 
 ## 🚀 시작하기
 
