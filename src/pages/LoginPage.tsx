@@ -9,15 +9,13 @@ export default function LoginPage() {
   const { isAuthenticated, refreshUser } = useAuth();
 
   useEffect(() => {
-    // Check if we have a token in the URL (OAuth callback)
-    const token = searchParams.get('token');
-    if (token) {
-      localStorage.setItem('authToken', token);
-      refreshUser().then(() => {
-        navigate('/', { replace: true });
-      });
+    // Check for error from OAuth redirect
+    const error = searchParams.get('error');
+    if (error === 'auth_failed') {
+      console.error('OAuth authentication failed');
+      // You can show an error message to the user here
     }
-  }, [searchParams, navigate, refreshUser]);
+  }, [searchParams]);
 
   useEffect(() => {
     // Redirect to home if already authenticated
