@@ -1,5 +1,10 @@
 import type { Article } from '../types';
-import { categoryConfig, sourceConfig, icons } from '../types';
+import { categoryConfig, sourceConfig } from '../types';
+import StarIcon from './icons/StarIcon';
+import MessageIcon from './icons/MessageIcon';
+import ThumbsUpIcon from './icons/ThumbsUpIcon';
+import BookIcon from './icons/BookIcon';
+import FlameIcon from './icons/FlameIcon';
 
 interface ArticleCardProps {
   article: Article;
@@ -29,16 +34,22 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
         rel="noopener noreferrer"
         className="block bg-[#1a1d29] rounded-lg p-6 border border-gray-700 hover:border-blue-500/50 transition-all cursor-pointer"
       >
-        <div className="flex items-center gap-3 mb-3" onClickCapture={(e) => e.stopPropagation()}>
+        <div className="flex items-center flex-wrap gap-2 mb-3" onClickCapture={(e) => e.stopPropagation()}>
           <span
             className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${categoryInfo.color}`}
           >
             {categoryInfo.label}
           </span>
-          <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs flex items-center gap-1">
+          <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs flex items-center gap-1.5">
             <span>{sourceInfo.icon}</span>
             <span>{sourceInfo.label}</span>
           </span>
+          {article.metadata?.readTime && (
+            <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs flex items-center gap-1.5">
+              <BookIcon className="w-3 h-3" />
+              <span>{article.metadata.readTime}</span>
+            </span>
+          )}
         </div>
 
         <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
@@ -47,14 +58,7 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700">
           <div className="flex items-center gap-4 text-sm text-gray-400">
-            <span className="flex items-center gap-1.5">
-              <span className="text-lg">{icons.time}</span> {formatTimeAgo(article.createdAtSource)}
-            </span>
-            {article.metadata?.readTime && (
-              <span className="flex items-center gap-1.5">
-                <span className="text-lg">{icons.readTime}</span> {article.metadata.readTime}
-              </span>
-            )}
+            <span>{formatTimeAgo(article.createdAtSource)}</span>
           </div>
         </div>
       </a>
@@ -66,10 +70,10 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block bg-[#1a1d29] rounded-xl overflow-hidden transition-all border border-gray-700 hover:border-blue-500/50 cursor-pointer group"
+      className="block bg-[#1a1d29] rounded-xl overflow-hidden transition-all border border-gray-700 hover:border-blue-500/50 cursor-pointer group h-full"
     >
-      <div className="p-7">
-        <div className="flex items-center gap-3 mb-4" onClickCapture={(e) => e.stopPropagation()}>
+      <div className="p-7 h-full flex flex-col">
+        <div className="flex items-center flex-wrap gap-2 mb-4" onClickCapture={(e) => e.stopPropagation()}>
           <span className={`px-4 py-1.5 rounded-full text-white text-sm font-semibold ${categoryInfo.color}`}>
             {categoryInfo.label}
           </span>
@@ -77,6 +81,12 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
             <span>{sourceInfo.icon}</span>
             <span>{sourceInfo.label}</span>
           </span>
+          {article.metadata?.readTime && (
+            <span className="px-4 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center gap-2">
+              <BookIcon className="w-4 h-4" />
+              <span>{article.metadata.readTime}</span>
+            </span>
+          )}
         </div>
 
         <h2 className="text-2xl font-bold text-white mb-3 leading-tight group-hover:text-blue-400 transition-colors">
@@ -104,31 +114,31 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
           ))}
         </div>
 
-        <div className="pt-4 border-t border-gray-700">
-          <div className="flex items-center gap-6 text-sm text-gray-400">
+        <div className="mt-auto pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-gray-400">
             <span className="flex items-center gap-1.5">
-              <span className="text-lg">{icons.time}</span> {formatTimeAgo(article.createdAtSource)}
+              <FlameIcon className="w-4 h-4" />
+              점수 {article.score.toLocaleString()}
             </span>
             {article.metadata?.stars && (
               <span className="flex items-center gap-1.5">
-                <span className="text-lg">{icons.star}</span> {article.metadata.stars.toLocaleString()} stars
+                <StarIcon className="w-4 h-4" />
+                {article.metadata.stars.toLocaleString()}
               </span>
             )}
             {article.metadata?.comments && (
               <span className="flex items-center gap-1.5">
-                <span className="text-lg">{icons.comment}</span> {article.metadata.comments} comments
+                <MessageIcon className="w-4 h-4" />
+                {article.metadata.comments}
               </span>
             )}
             {article.metadata?.upvotes && (
               <span className="flex items-center gap-1.5">
-                <span className="text-lg">{icons.upvote}</span> {article.metadata.upvotes} upvotes
+                <ThumbsUpIcon className="w-4 h-4" />
+                {article.metadata.upvotes}
               </span>
             )}
-            {article.metadata?.readTime && (
-              <span className="flex items-center gap-1.5">
-                <span className="text-lg">{icons.readTime}</span> {article.metadata.readTime}
-              </span>
-            )}
+            <span>{formatTimeAgo(article.createdAtSource)}</span>
           </div>
         </div>
       </div>
