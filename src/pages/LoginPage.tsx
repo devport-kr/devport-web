@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { initiateOAuthLogin } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,6 +8,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, refreshUser } = useAuth();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for error from OAuth redirect
@@ -25,10 +27,22 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate]);
 
   const handleGitHubLogin = () => {
+    if (!turnstileToken) {
+      alert('봇 검증을 완료해주세요.');
+      return;
+    }
+    // Store token in sessionStorage for backend to retrieve after OAuth redirect
+    sessionStorage.setItem('turnstile_token', turnstileToken);
     initiateOAuthLogin('github');
   };
 
   const handleGoogleLogin = () => {
+    if (!turnstileToken) {
+      alert('봇 검증을 완료해주세요.');
+      return;
+    }
+    // Store token in sessionStorage for backend to retrieve after OAuth redirect
+    sessionStorage.setItem('turnstile_token', turnstileToken);
     initiateOAuthLogin('google');
   };
 
@@ -70,6 +84,20 @@ export default function LoginPage() {
               </svg>
               Google로 계속하기
             </button>
+          </div>
+
+          {/* Cloudflare Turnstile */}
+          <div className="mt-6 flex justify-center">
+            <Turnstile
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onSuccess={(token) => setTurnstileToken(token)}
+              onError={() => setTurnstileToken(null)}
+              onExpire={() => setTurnstileToken(null)}
+              options={{
+                theme: 'dark',
+                size: 'normal',
+              }}
+            />
           </div>
 
           <div className="mt-6 text-center">
