@@ -263,9 +263,10 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
   return response.data;
 };
 
-export const initiateOAuthLogin = (provider: 'github' | 'google'): void => {
+export const initiateOAuthLogin = (provider: 'github' | 'google', turnstileToken: string): void => {
   // Spring Security OAuth2 default endpoint is /oauth2/authorization/{registrationId}
-  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`;
+  // Append Turnstile token as query parameter for backend validation
+  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}?turnstile_token=${encodeURIComponent(turnstileToken)}`;
 };
 
 export const logout = async (): Promise<void> => {

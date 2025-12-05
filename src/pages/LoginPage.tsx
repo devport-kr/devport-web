@@ -9,13 +9,15 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, refreshUser } = useAuth();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for error from OAuth redirect
     const error = searchParams.get('error');
     if (error === 'auth_failed') {
-      console.error('OAuth authentication failed');
-      // You can show an error message to the user here
+      setErrorMessage('로그인에 실패했습니다. 봇 검증이 만료되었거나 실패했습니다. 다시 시도해주세요.');
+    } else if (error === 'turnstile_failed') {
+      setErrorMessage('봇 검증에 실패했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
     }
   }, [searchParams]);
 
@@ -31,9 +33,8 @@ export default function LoginPage() {
       alert('봇 검증을 완료해주세요.');
       return;
     }
-    // Store token in sessionStorage for backend to retrieve after OAuth redirect
-    sessionStorage.setItem('turnstile_token', turnstileToken);
-    initiateOAuthLogin('github');
+    // Pass Turnstile token as query parameter to OAuth endpoint
+    initiateOAuthLogin('github', turnstileToken);
   };
 
   const handleGoogleLogin = () => {
@@ -41,9 +42,8 @@ export default function LoginPage() {
       alert('봇 검증을 완료해주세요.');
       return;
     }
-    // Store token in sessionStorage for backend to retrieve after OAuth redirect
-    sessionStorage.setItem('turnstile_token', turnstileToken);
-    initiateOAuthLogin('google');
+    // Pass Turnstile token as query parameter to OAuth endpoint
+    initiateOAuthLogin('google', turnstileToken);
   };
 
   return (
@@ -58,6 +58,13 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="bg-[#1a1d29] rounded-2xl p-8 border border-gray-700">
           <h2 className="text-2xl font-bold text-white mb-6 text-center">로그인</h2>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-sm text-red-400 text-center">{errorMessage}</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             {/* GitHub Login Button */}
