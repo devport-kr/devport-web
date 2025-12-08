@@ -9,6 +9,7 @@ import {
   type LLMBenchmarkResponse,
 } from '../services/api';
 import AIIcon from './icons/AIIcon';
+import { getProviderInfo } from '../config/providerLogos';
 
 export default function LLMLeaderboard() {
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkType>('AA_INTELLIGENCE_INDEX');
@@ -44,7 +45,7 @@ export default function LLMLeaderboard() {
         console.log('🔍 Fetching leaderboard for:', selectedBenchmark);
         const entries = await getLLMLeaderboard(selectedBenchmark);
         console.log('✅ Fetched entries:', entries.length);
-        setLeaderboardEntries(entries.slice(0, 8)); // Show top 8
+        setLeaderboardEntries(entries.slice(0, 50)); // Show top 50
 
         // Find current benchmark info
         const benchmarkInfo = allBenchmarks.find(b => b.benchmarkType === selectedBenchmark);
@@ -206,9 +207,29 @@ export default function LLMLeaderboard() {
                   <h3 className="text-base font-semibold text-white group-hover:text-indigo-400 transition-colors">
                     {entry.modelName}
                   </h3>
-                  <p className="text-sm text-gray-400 mt-0.5">
-                    {entry.modelCreatorName || entry.provider}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {(() => {
+                      const providerInfo = getProviderInfo(entry.provider);
+                      return (
+                        <>
+                          {providerInfo.logo && (
+                            <img
+                              src={providerInfo.logo}
+                              alt={providerInfo.name}
+                              className="w-4 h-4 rounded object-contain"
+                              onError={(e) => {
+                                // Hide image if it fails to load
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <p className="text-sm text-gray-400">
+                            {entry.modelCreatorName || entry.provider}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 {/* Score */}
