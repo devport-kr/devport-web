@@ -68,59 +68,159 @@ export const sourceConfig: Record<Source, { label: string; icon: string }> = {
   hashnode: { label: 'Hashnode', icon: '📝' },
 };
 
-// LLM Leaderboard Types
-export type BenchmarkType = 'AGENTIC_CODING' | 'REASONING' | 'MATH' | 'VISUAL' | 'MULTILINGUAL';
+// LLM Leaderboard Types - 15 Available Benchmarks from Artificial Analysis
+// Note: CRIT_PT, MMMU_PRO, AA_OMNISCIENCE_INDEX are not available in API v2
+export type BenchmarkType =
+  // Agentic (2)
+  | 'TERMINAL_BENCH_HARD'
+  | 'TAU_BENCH_TELECOM'
+  // Reasoning (4)
+  | 'AA_LCR'
+  | 'HUMANITYS_LAST_EXAM'
+  | 'MMLU_PRO'
+  | 'GPQA_DIAMOND'
+  // Coding (3)
+  | 'LIVECODE_BENCH'
+  | 'SCICODE'
+  | 'IFBENCH'
+  // Math (3)
+  | 'MATH_500'
+  | 'AIME'
+  | 'AIME_2025'
+  // Composite Indices (3)
+  | 'AA_INTELLIGENCE_INDEX'
+  | 'AA_CODING_INDEX'
+  | 'AA_MATH_INDEX';
 
-export interface LLMModel {
-  id: string;
-  name: string;
-  provider: string;
-  score: number;
-  contextWindow?: string;
-  pricing?: string;
+export type BenchmarkCategoryGroup = 'Intelligence' | 'Agentic' | 'Reasoning' | 'Coding' | 'Math' | 'Specialized';
+
+// Benchmark metadata (fetched from backend)
+export interface LLMBenchmark {
+  benchmarkType: BenchmarkType;
+  displayName: string;
+  categoryGroup: BenchmarkCategoryGroup;
+  description: string;
+  explanation?: string;
+  sortOrder?: number;
 }
 
-export const benchmarkConfig: Record<BenchmarkType, {
+// LLM Model summary (for leaderboard lists)
+export interface LLMModelSummary {
+  id: number;
+  modelId: string;
+  slug: string;
+  modelName: string;
+  provider: string;
+  modelCreatorName?: string;
+  license?: string;
+  priceBlended?: number;
+  contextWindow?: number;
+  scoreAaIntelligenceIndex?: number;
+}
+
+// LLM Model detail (includes all benchmark scores)
+export interface LLMModelDetail {
+  id: number;
+  externalId?: string;
+  slug: string;
+  modelId: string;
+  modelName: string;
+  releaseDate?: string;
+  provider: string;
+  modelCreatorId?: number;
+  modelCreatorName?: string;
+  description?: string;
+
+  // Pricing
+  priceInput?: number;
+  priceOutput?: number;
+  priceBlended?: number;
+
+  // Performance
+  contextWindow?: number;
+  outputSpeedMedian?: number;
+  latencyTtft?: number;
+  medianTimeToFirstAnswerToken?: number;
+  license?: string;
+
+  // 15 Available Benchmark scores (0-100 scale)
+  // Agentic (2)
+  scoreTerminalBenchHard?: number;
+  scoreTauBenchTelecom?: number;
+  // Reasoning (4)
+  scoreAaLcr?: number;
+  scoreHumanitysLastExam?: number;
+  scoreMmluPro?: number;
+  scoreGpqaDiamond?: number;
+  // Coding (3)
+  scoreLivecodeBench?: number;
+  scoreScicode?: number;
+  scoreIfbench?: number;
+  // Math (3)
+  scoreMath500?: number;
+  scoreAime?: number;
+  scoreAime2025?: number;
+  // Composite (3)
+  scoreAaIntelligenceIndex?: number;
+  scoreAaCodingIndex?: number;
+  scoreAaMathIndex?: number;
+}
+
+// Leaderboard entry (model with rank and score for specific benchmark)
+export interface LLMLeaderboardEntry {
+  rank: number;
+  modelId: string;
+  modelName: string;
+  provider: string;
+  modelCreatorName?: string;
+  score: number;
+  license?: string;
+  priceBlended?: number;
+  contextWindow?: number;
+}
+
+// Category group configuration
+export const benchmarkCategoryConfig: Record<BenchmarkCategoryGroup, {
   label: string;
   labelKo: string;
-  description: string;
-  descriptionKo: string;
+  color: string;
   icon: string;
 }> = {
-  AGENTIC_CODING: {
-    label: 'Agentic Coding',
-    labelKo: '에이전틱 코딩',
-    description: 'Data from the SWE Benchmark that evaluates if LLMs can resolve GitHub Issues. It measures agentic reasoning.',
-    descriptionKo: 'LLM이 GitHub 이슈를 해결할 수 있는지 평가하는 SWE 벤치마크 데이터입니다. 에이전틱 추론 능력을 측정합니다.',
-    icon: '💻'
+  Intelligence: {
+    label: 'Intelligence',
+    labelKo: '종합 지능',
+    color: 'bg-violet-600',
+    icon: '📊'
   },
-  REASONING: {
+  Agentic: {
+    label: 'Agentic',
+    labelKo: '에이전틱',
+    color: 'bg-purple-600',
+    icon: '🤖'
+  },
+  Reasoning: {
     label: 'Reasoning',
-    labelKo: '추론 능력',
-    description: 'Data from the GPQA Diamond, a very complex benchmark that evaluates quality and reliability across biology, physics, and chemistry.',
-    descriptionKo: '생물학, 물리학, 화학 분야의 품질과 신뢰성을 평가하는 매우 복잡한 벤치마크인 GPQA 다이아몬드의 데이터입니다.',
+    labelKo: '추론',
+    color: 'bg-indigo-600',
     icon: '🧠'
   },
-  MATH: {
-    label: 'High School Math',
-    labelKo: '고급 수학',
-    description: 'Data from the AIME 2024, a competitive high school math benchmark.',
-    descriptionKo: '경쟁적인 고등학교 수학 벤치마크인 AIME 2024의 데이터입니다.',
+  Coding: {
+    label: 'Coding',
+    labelKo: '코딩',
+    color: 'bg-blue-600',
+    icon: '💻'
+  },
+  Math: {
+    label: 'Math',
+    labelKo: '수학',
+    color: 'bg-cyan-600',
     icon: '📐'
   },
-  VISUAL: {
-    label: 'Visual Reasoning',
-    labelKo: '시각 추론',
-    description: 'ARC-AGI-2 which challenges systems to demonstrate both high adaptability and high efficiency.',
-    descriptionKo: '시스템이 높은 적응성과 효율성을 모두 입증하도록 요구하는 ARC-AGI-2 벤치마크입니다.',
-    icon: '👁️'
-  },
-  MULTILINGUAL: {
-    label: 'Multilingual',
-    labelKo: '다국어 처리',
-    description: 'MMMLU which covers a broad range of topics from 57 different categories, covering elementary-level knowledge up to advanced professional subjects like law, physics, history, and computer science in 14 languages.',
-    descriptionKo: '법학, 물리학, 역사, 컴퓨터 과학과 같은 전문 과목부터 초등 수준의 지식까지 57개 카테고리의 광범위한 주제를 14개 언어로 다루는 MMMLU 벤치마크입니다.',
-    icon: '🌐'
+  Specialized: {
+    label: 'Specialized',
+    labelKo: '특수 분야',
+    color: 'bg-teal-600',
+    icon: '🎯'
   }
 };
 

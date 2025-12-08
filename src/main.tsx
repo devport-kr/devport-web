@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage'
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
+import BenchmarksExplanationPage from './pages/BenchmarksExplanationPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
+          <Route path="/benchmarks" element={<BenchmarksExplanationPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>

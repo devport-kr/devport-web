@@ -132,28 +132,76 @@ export interface TrendingTickerResponse {
   createdAtSource: string;
 }
 
-export interface LLMModelResponse {
+// LLM API Response Types (matching backend DTOs)
+export interface LLMModelSummaryResponse {
   id: number;
-  name: string;
+  modelId: string;
+  slug: string;
+  modelName: string;
   provider: string;
-  score: number;
+  modelCreatorName?: string;
+  license?: string;
+  priceBlended?: number;
+  contextWindow?: number;
+  scoreAaIntelligenceIndex?: number;
+}
+
+export interface LLMModelDetailResponse {
+  id: number;
+  externalId?: string;
+  slug: string;
+  modelId: string;
+  modelName: string;
+  releaseDate?: string;
+  provider: string;
+  modelCreatorId?: number;
+  modelCreatorName?: string;
+  description?: string;
+  priceInput?: number;
+  priceOutput?: number;
+  priceBlended?: number;
+  contextWindow?: number;
+  outputSpeedMedian?: number;
+  latencyTtft?: number;
+  medianTimeToFirstAnswerToken?: number;
+  license?: string;
+  // 15 Available Benchmarks (excluding CRIT_PT, MMMU_PRO, AA_OMNISCIENCE_INDEX)
+  scoreTerminalBenchHard?: number;
+  scoreTauBenchTelecom?: number;
+  scoreAaLcr?: number;
+  scoreHumanitysLastExam?: number;
+  scoreMmluPro?: number;
+  scoreGpqaDiamond?: number;
+  scoreLivecodeBench?: number;
+  scoreScicode?: number;
+  scoreIfbench?: number;
+  scoreMath500?: number;
+  scoreAime?: number;
+  scoreAime2025?: number;
+  scoreAaIntelligenceIndex?: number;
+  scoreAaCodingIndex?: number;
+  scoreAaMathIndex?: number;
+}
+
+export interface LLMLeaderboardEntryResponse {
   rank: number;
-  contextWindow?: string;
-  pricing?: string;
+  modelId: string;
+  modelName: string;
+  provider: string;
+  modelCreatorName?: string;
+  score: number;
+  license?: string;
+  priceBlended?: number;
+  contextWindow?: number;
 }
 
-export interface BenchmarkResponse {
-  type: BenchmarkType;
-  labelEn: string;
-  labelKo: string;
-  descriptionEn: string;
-  descriptionKo: string;
-  icon: string;
-}
-
-export interface LLMRankingResponse {
-  benchmark: BenchmarkResponse;
-  models: LLMModelResponse[];
+export interface LLMBenchmarkResponse {
+  benchmarkType: string;
+  displayName: string;
+  categoryGroup: string;
+  description: string;
+  explanation?: string;
+  sortOrder?: number;
 }
 
 export interface UserResponse {
@@ -242,18 +290,35 @@ export const getTrendingTicker = async (limit: number = 20): Promise<TrendingTic
 };
 
 // LLM Ranking APIs
-export const getLLMRankings = async (
-  benchmark: BenchmarkType = 'AGENTIC_CODING',
-  limit: number = 8
-): Promise<LLMRankingResponse> => {
-  const response = await apiClient.get<LLMRankingResponse>('/api/llm-rankings', {
-    params: { benchmark, limit },
-  });
+export const getLLMLeaderboard = async (
+  benchmarkType: BenchmarkType,
+  filters?: {
+    provider?: string;
+    creatorSlug?: string;
+    license?: string;
+    maxPrice?: number;
+    minContextWindow?: number;
+  }
+): Promise<LLMLeaderboardEntryResponse[]> => {
+  const response = await apiClient.get<LLMLeaderboardEntryResponse[]>(
+    `/api/llm/leaderboard/${benchmarkType}`,
+    { params: filters }
+  );
   return response.data;
 };
 
-export const getAllBenchmarks = async (): Promise<BenchmarkResponse[]> => {
-  const response = await apiClient.get<BenchmarkResponse[]>('/api/benchmarks');
+export const getAllLLMBenchmarks = async (): Promise<LLMBenchmarkResponse[]> => {
+  const response = await apiClient.get<LLMBenchmarkResponse[]>('/api/llm/benchmarks');
+  return response.data;
+};
+
+export const getLLMBenchmarksByGroup = async (categoryGroup: string): Promise<LLMBenchmarkResponse[]> => {
+  const response = await apiClient.get<LLMBenchmarkResponse[]>(`/api/llm/benchmarks/${categoryGroup}`);
+  return response.data;
+};
+
+export const getLLMModelById = async (modelId: string): Promise<LLMModelDetailResponse> => {
+  const response = await apiClient.get<LLMModelDetailResponse>(`/api/llm/models/${modelId}`);
   return response.data;
 };
 
