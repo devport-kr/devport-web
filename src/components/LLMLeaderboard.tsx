@@ -71,14 +71,12 @@ export default function LLMLeaderboard() {
     return acc;
   }, {} as Record<BenchmarkCategoryGroup, LLMBenchmarkResponse[]>);
 
-  // Single-benchmark categories: Composite, Math, Specialized
-  // Don't show sub-tabs for these, just show the score directly
-  const shouldShowBenchmarkTabs = !['Composite', 'Math', 'Specialized'].includes(selectedGroup);
-
+  // Show benchmark tabs if the category has more than 1 benchmark
   const displayBenchmarks = allBenchmarks.filter(benchmark => {
     const group = benchmark.categoryGroup as BenchmarkCategoryGroup;
     return group === selectedGroup;
   });
+  const shouldShowBenchmarkTabs = displayBenchmarks.length > 1;
 
   // Get hovered benchmark info for tooltip
   const hoveredBenchmarkInfo = hoveredBenchmark
