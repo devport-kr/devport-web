@@ -2,8 +2,6 @@ export type Category = 'AI_LLM' | 'DEVOPS_SRE' | 'INFRA_CLOUD' | 'DATABASE' | 'B
 
 export type ItemType = 'REPO' | 'BLOG' | 'DISCUSSION';
 
-export type Source = 'github' | 'hackernews' | 'reddit' | 'medium' | 'devto' | 'hashnode';
-
 // GitRepo Entity (separate from Article)
 export interface GitRepo {
   id: number;
@@ -26,7 +24,7 @@ export interface GitRepo {
 export interface Article {
   id: string;
   itemType: ItemType;
-  source: Source;
+  source: string;
   category: Category;
   summaryKoTitle: string;
   summaryKoBody?: string;
@@ -57,15 +55,6 @@ export const categoryConfig: Record<Category, { label: string; color: string }> 
   FRONTEND: { label: 'Frontend', color: 'bg-teal-600' },
   BACKEND: { label: 'Backend', color: 'bg-green-600' },
   OTHER: { label: '기타', color: 'bg-gray-600' },
-};
-
-export const sourceConfig: Record<Source, { label: string; icon: string }> = {
-  github: { label: 'GitHub', icon: '📦' },
-  hackernews: { label: 'Hacker News', icon: '📰' },
-  reddit: { label: 'Reddit', icon: '💬' },
-  medium: { label: 'Medium', icon: '📝' },
-  devto: { label: 'Dev.to', icon: '📝' },
-  hashnode: { label: 'Hashnode', icon: '📝' },
 };
 
 // LLM Leaderboard Types - 15 Benchmarks Total

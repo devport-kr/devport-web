@@ -1,5 +1,5 @@
 import type { Article } from '../types';
-import { categoryConfig, sourceConfig } from '../types';
+import { categoryConfig } from '../types';
 import StarIcon from './icons/StarIcon';
 import MessageIcon from './icons/MessageIcon';
 import ThumbsUpIcon from './icons/ThumbsUpIcon';
@@ -13,7 +13,7 @@ interface ArticleCardProps {
 
 export default function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
   const categoryInfo = categoryConfig[article.category];
-  const sourceInfo = sourceConfig[article.source];
+  const sourceLabel = (article.source || '').trim() || 'Unknown';
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -40,9 +40,8 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
           >
             {categoryInfo.label}
           </span>
-          <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs flex items-center gap-1.5">
-            <span>{sourceInfo.icon}</span>
-            <span>{sourceInfo.label}</span>
+          <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs">
+            {sourceLabel}
           </span>
           {article.metadata?.readTime && (
             <span className="px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 text-xs flex items-center gap-1.5">
@@ -77,9 +76,8 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
           <span className={`px-4 py-1.5 rounded-full text-white text-sm font-semibold ${categoryInfo.color}`}>
             {categoryInfo.label}
           </span>
-          <span className="px-4 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center gap-2">
-            <span>{sourceInfo.icon}</span>
-            <span>{sourceInfo.label}</span>
+          <span className="px-4 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-sm">
+            {sourceLabel}
           </span>
           {article.metadata?.readTime && (
             <span className="px-4 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-sm flex items-center gap-2">
@@ -114,11 +112,11 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
           ))}
         </div>
 
-        <div className="mt-auto pt-4 border-t border-gray-700">
+        <div className="mt-auto pt-4 border-t border-gray-700 relative group/metadata">
           <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-gray-400">
             <span className="flex items-center gap-1.5">
               <FlameIcon className="w-4 h-4" />
-              점수 {article.score.toLocaleString()}
+              {article.score.toLocaleString()} 점
             </span>
             {article.metadata?.stars && (
               <span className="flex items-center gap-1.5">
@@ -140,6 +138,10 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
             )}
             <span>{formatTimeAgo(article.createdAtSource)}</span>
           </div>
+          <p className="mt-2 text-xs text-gray-500 opacity-0 transition-opacity group-hover/metadata:opacity-100 space-y-0.5">
+            <span className="block">불꽃 점수는 조회수·반응·댓글·날짜 정보를 반영한 점수 입니다.</span>
+            <span className="block">댓글과 좋아요 수는 해당 출처 혹은 Reddit에서 집계된 값입니다.</span>
+          </p>
         </div>
       </div>
     </a>

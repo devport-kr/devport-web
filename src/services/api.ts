@@ -351,7 +351,7 @@ export const logout = async (): Promise<void> => {
 // Admin API Types
 export interface CreateArticleRequest {
   itemType: 'BLOG' | 'DISCUSSION' | 'REPO';
-  source: 'hackernews' | 'reddit' | 'medium' | 'devto' | 'hashnode' | 'github';
+  source: string;
   category: string;
   summaryKoTitle: string;
   summaryKoBody?: string;

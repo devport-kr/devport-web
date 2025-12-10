@@ -27,7 +27,7 @@ const AdminPage = () => {
   // Article form state
   const [articleForm, setArticleForm] = useState<CreateArticleRequest>({
     itemType: 'BLOG',
-    source: 'hackernews',
+    source: '',
     category: 'AI_LLM',
     summaryKoTitle: '',
     summaryKoBody: '',
@@ -112,7 +112,7 @@ const AdminPage = () => {
       setTagsInput('');
       setArticleForm({
         itemType: 'BLOG',
-        source: 'hackernews',
+        source: '',
         category: 'AI_LLM',
         summaryKoTitle: '',
         summaryKoBody: '',
@@ -294,21 +294,16 @@ const AdminPage = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Source *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={articleForm.source}
                     onChange={(e) =>
-                      setArticleForm({ ...articleForm, source: e.target.value as any })
+                      setArticleForm({ ...articleForm, source: e.target.value })
                     }
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                     required
-                  >
-                    <option value="hackernews">Hacker News</option>
-                    <option value="reddit">Reddit</option>
-                    <option value="medium">Medium</option>
-                    <option value="devto">Dev.to</option>
-                    <option value="hashnode">Hashnode</option>
-                    <option value="github">GitHub</option>
-                  </select>
+                    placeholder="e.g. hackernews, producthunt, reddit"
+                  />
                 </div>
               </div>
 
