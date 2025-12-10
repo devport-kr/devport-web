@@ -68,8 +68,8 @@ export const sourceConfig: Record<Source, { label: string; icon: string }> = {
   hashnode: { label: 'Hashnode', icon: '📝' },
 };
 
-// LLM Leaderboard Types - 15 Available Benchmarks from Artificial Analysis
-// Note: CRIT_PT, MMMU_PRO, AA_OMNISCIENCE_INDEX are not available in API v2
+// LLM Leaderboard Types - 15 Benchmarks Total
+// Includes all available benchmarks from Artificial Analysis API
 export type BenchmarkType =
   // Agentic (2)
   | 'TERMINAL_BENCH_HARD'
