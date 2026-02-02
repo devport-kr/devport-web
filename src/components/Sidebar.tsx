@@ -13,36 +13,26 @@ const navItems = [
     ),
   },
   {
-    id: 'explore',
-    label: '탐색',
-    path: '/explore',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'library',
-    label: '라이브러리',
-    path: '/library',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-      </svg>
-    ),
-    requiresAuth: true,
-  },
-  {
-    id: 'profile',
-    label: '프로필',
-    path: '/profile',
+    id: 'mypage',
+    label: '마이페이지',
+    path: '/mypage',
+    authPath: '/login',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
-    requiresAuth: true,
+  },
+  {
+    id: 'write',
+    label: '글쓰기',
+    path: '/write',
+    authPath: '/login',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    ),
   },
 ];
 
@@ -54,14 +44,13 @@ export default function Sidebar() {
     <aside className="w-52 h-full py-6 px-4 border-r border-surface-border/30 bg-surface">
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => {
-          if (item.requiresAuth && !isAuthenticated) return null;
-
           const isActive = location.pathname === item.path;
+          const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
 
           return (
             <Link
               key={item.id}
-              to={item.path}
+              to={linkPath}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-accent/10 text-accent'

@@ -3,15 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
-  const [activeTab, setActiveTab] = useState('home');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-
-  const navLinks = [
-    { id: 'home', label: '홈', path: '/' },
-    { id: 'mypage', label: '마이페이지', path: '/mypage', requiresAuth: true },
-  ];
 
   const handleLogout = () => {
     logout();
@@ -20,41 +14,39 @@ export default function Navbar() {
 
   return (
     <nav className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-1 group"
-          >
-            <span className="text-xl font-semibold text-text-primary tracking-tight">
-              devport
-            </span>
-            <span className="text-accent text-xl font-semibold">.</span>
-          </Link>
+          {/* Logo and Search */}
+          <div className="flex items-center gap-6">
+            <Link
+              to="/"
+              className="flex items-center gap-1 group"
+            >
+              <span className="text-xl font-semibold text-text-primary tracking-tight">
+                devport
+              </span>
+              <span className="text-accent text-xl font-semibold">.</span>
+            </Link>
 
-          {/* Navigation Links */}
-          <ul className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
-              if (link.requiresAuth && !isAuthenticated) return null;
-
-              return (
-                <li key={link.id}>
-                  <Link
-                    to={link.path}
-                    onClick={() => setActiveTab(link.id)}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                      activeTab === link.id
-                        ? 'text-text-primary'
-                        : 'text-text-muted hover:text-text-secondary'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+            {/* Search Bar */}
+            <div className="hidden md:flex items-center">
+              <div className="relative">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="검색..."
+                  className="w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Right side actions */}
           <div className="flex items-center gap-3">

@@ -2,7 +2,6 @@ export type Category = 'AI_LLM' | 'DEVOPS_SRE' | 'INFRA_CLOUD' | 'DATABASE' | 'B
 
 export type ItemType = 'REPO' | 'BLOG' | 'DISCUSSION';
 
-// GitRepo Entity (separate from Article)
 export interface GitRepo {
   id: number;
   fullName: string;
@@ -20,7 +19,6 @@ export interface GitRepo {
   updatedAt: string;
 }
 
-// Article Entity (for blogs, discussions)
 export interface Article {
   id: string;
   itemType: ItemType;
@@ -57,34 +55,25 @@ export const categoryConfig: Record<Category, { label: string; color: string }> 
   OTHER: { label: '기타', color: 'bg-gray-600' },
 };
 
-// LLM Leaderboard Types - 15 Benchmarks Total
-// Includes all available benchmarks from Artificial Analysis API
 export type BenchmarkType =
-  // Agentic (2)
   | 'TERMINAL_BENCH_HARD'
   | 'TAU_BENCH_TELECOM'
-  // Reasoning (4)
   | 'AA_LCR'
   | 'HUMANITYS_LAST_EXAM'
   | 'MMLU_PRO'
   | 'GPQA_DIAMOND'
-  // Coding (3)
   | 'LIVECODE_BENCH'
   | 'SCICODE'
   | 'IFBENCH'
-  // Math (3)
   | 'MATH_500'
   | 'AIME'
   | 'AIME_2025'
-  // Composite Indices (3)
   | 'AA_INTELLIGENCE_INDEX'
   | 'AA_CODING_INDEX'
   | 'AA_MATH_INDEX';
 
 export type BenchmarkCategoryGroup = 'Composite' | 'Agentic' | 'Reasoning' | 'Coding' | 'Math' | 'Specialized';
 
-
-// Category group configuration
 export const benchmarkCategoryConfig: Record<BenchmarkCategoryGroup, {
   label: string;
   labelKo: string;
@@ -93,38 +82,38 @@ export const benchmarkCategoryConfig: Record<BenchmarkCategoryGroup, {
 }> = {
   Composite: {
     label: 'Composite',
-    labelKo: '종합 지능',
+    labelKo: '종합',
     color: 'bg-violet-600',
-    icon: '📊'
+    icon: ''
   },
   Agentic: {
     label: 'Agentic',
     labelKo: '에이전틱',
     color: 'bg-purple-600',
-    icon: '🤖'
+    icon: ''
   },
   Reasoning: {
     label: 'Reasoning',
     labelKo: '추론',
     color: 'bg-indigo-600',
-    icon: '🧠'
+    icon: ''
   },
   Coding: {
     label: 'Coding',
     labelKo: '코딩',
     color: 'bg-blue-600',
-    icon: '💻'
+    icon: ''
   },
   Math: {
     label: 'Math',
     labelKo: '수학',
     color: 'bg-cyan-600',
-    icon: '📐'
+    icon: ''
   },
   Specialized: {
     label: 'Specialized',
-    labelKo: '특수 분야',
+    labelKo: '특수',
     color: 'bg-teal-600',
-    icon: '🎯'
+    icon: ''
   }
 };

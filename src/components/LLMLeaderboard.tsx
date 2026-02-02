@@ -88,69 +88,77 @@ export default function LLMLeaderboard() {
         </Link>
       </div>
 
-      <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-[340px] flex flex-col">
-        {/* Category Tabs */}
-        <div className="px-4 py-3 border-b border-surface-border bg-surface-elevated/30">
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {(Object.keys(benchmarkCategoryConfig) as BenchmarkCategoryGroup[]).map((group) => {
-              const config = benchmarkCategoryConfig[group];
+      {/* Category Tabs */}
+      <div className="mb-3">
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {(Object.keys(benchmarkCategoryConfig) as BenchmarkCategoryGroup[]).map((group) => {
+            const config = benchmarkCategoryConfig[group];
+            return (
+              <button
+                key={group}
+                onClick={() => {
+                  setSelectedGroup(group);
+                  const firstBenchmark = groupedBenchmarks[group]?.[0];
+                  if (firstBenchmark) {
+                    setSelectedBenchmark(firstBenchmark.benchmarkType as BenchmarkType);
+                  }
+                }}
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                  selectedGroup === group
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover'
+                }`}
+              >
+                {config.labelKo}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Benchmark Sub-tabs */}
+        {shouldShowBenchmarkTabs && (
+          <div className="flex flex-wrap gap-1 relative">
+            {displayBenchmarks.map((benchmark) => {
+              const isSelected = selectedBenchmark === benchmark.benchmarkType;
               return (
-                <button
-                  key={group}
-                  onClick={() => {
-                    setSelectedGroup(group);
-                    const firstBenchmark = groupedBenchmarks[group]?.[0];
-                    if (firstBenchmark) {
-                      setSelectedBenchmark(firstBenchmark.benchmarkType as BenchmarkType);
-                    }
-                  }}
-                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                    selectedGroup === group
-                      ? 'bg-accent text-white'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover'
-                  }`}
-                >
-                  {config.labelKo}
-                </button>
+                <div key={benchmark.benchmarkType} className="relative">
+                  <button
+                    onClick={() => setSelectedBenchmark(benchmark.benchmarkType as BenchmarkType)}
+                    onMouseEnter={() => setHoveredBenchmark(benchmark.benchmarkType as BenchmarkType)}
+                    onMouseLeave={() => setHoveredBenchmark(null)}
+                    className={`px-2 py-0.5 rounded text-xs transition-all ${
+                      isSelected
+                        ? 'bg-surface-hover text-text-primary'
+                        : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                  >
+                    {benchmark.displayName}
+                  </button>
+
+                  {/* Tooltip */}
+                  {hoveredBenchmark === benchmark.benchmarkType && hoveredBenchmarkInfo && (
+                    <div className="absolute z-50 bottom-full left-0 mb-2 w-56 p-2 bg-surface-elevated border border-surface-border rounded-lg shadow-soft animate-fade-in">
+                      <p className="text-xs text-text-secondary leading-relaxed">
+                        {hoveredBenchmarkInfo.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
+        )}
 
-          {/* Benchmark Sub-tabs */}
-          {shouldShowBenchmarkTabs && (
-            <div className="flex flex-wrap gap-1 relative">
-              {displayBenchmarks.map((benchmark) => {
-                const isSelected = selectedBenchmark === benchmark.benchmarkType;
-                return (
-                  <div key={benchmark.benchmarkType} className="relative">
-                    <button
-                      onClick={() => setSelectedBenchmark(benchmark.benchmarkType as BenchmarkType)}
-                      onMouseEnter={() => setHoveredBenchmark(benchmark.benchmarkType as BenchmarkType)}
-                      onMouseLeave={() => setHoveredBenchmark(null)}
-                      className={`px-2 py-0.5 rounded text-xs transition-all ${
-                        isSelected
-                          ? 'bg-surface-hover text-text-primary'
-                          : 'text-text-muted hover:text-text-secondary'
-                      }`}
-                    >
-                      {benchmark.displayName}
-                    </button>
+        {/* Current Benchmark Description */}
+        {currentBenchmarkInfo && (
+          <p className="mt-2 text-xs text-text-muted line-clamp-2">
+            {currentBenchmarkInfo.description}
+          </p>
+        )}
+      </div>
 
-                    {/* Tooltip */}
-                    {hoveredBenchmark === benchmark.benchmarkType && hoveredBenchmarkInfo && (
-                      <div className="absolute z-50 bottom-full left-0 mb-2 w-56 p-2 bg-surface-elevated border border-surface-border rounded-lg shadow-soft animate-fade-in">
-                        <p className="text-xs text-text-secondary leading-relaxed">
-                          {hoveredBenchmarkInfo.description}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
+      {/* Leaderboard Box */}
+      <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-[340px] flex flex-col">
         {/* Leaderboard List */}
         <div className="divide-y divide-surface-border flex-1 overflow-y-auto scrollbar-minimal">
           {isLoading ? (
