@@ -222,10 +222,7 @@ export default function HomePage() {
           <div className="max-w-xl mx-auto">
             {/* Articles Section */}
             <section>
-              {/* Section Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-text-primary">트렌딩 아티클</h2>
-              </div>
+
 
               {/* Category Tabs */}
               <div className="flex flex-wrap gap-2 mb-8">

@@ -228,12 +228,43 @@ export interface LLMBenchmarkResponse {
 export interface UserResponse {
   id: number;
   email: string;
+  username?: string;
   name: string;
   profileImageUrl?: string;
-  authProvider: 'github' | 'google' | 'naver';
+  authProvider: 'github' | 'google' | 'naver' | 'local';
   role: 'USER' | 'ADMIN';
+  emailVerified?: boolean;
   createdAt: string;
   lastLoginAt: string;
+}
+
+// Signup & Login Request/Response Types
+export interface SignupRequest {
+  username: string;
+  password: string;
+  email: string;
+  name?: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface ProfileUpdateRequest {
+  email?: string;
+  name?: string;
+  profileImageUrl?: string;
+}
+
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 // Article APIs
@@ -372,6 +403,49 @@ export const logout = async (): Promise<void> => {
     localStorage.removeItem('refreshToken');
     window.location.href = '/';
   }
+};
+
+// Local Authentication APIs
+export const signup = async (data: SignupRequest): Promise<TokenResponse> => {
+  const response = await apiClient.post<TokenResponse>('/api/auth/signup', data);
+  return response.data;
+};
+
+export const login = async (data: LoginRequest): Promise<TokenResponse> => {
+  const response = await apiClient.post<TokenResponse>('/api/auth/login', data);
+  return response.data;
+};
+
+export const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+  try {
+    await apiClient.get('/api/auth/check-username', { params: { username } });
+    return true; // Available
+  } catch (error) {
+    return false; // Not available
+  }
+};
+
+export const checkEmailAvailability = async (email: string): Promise<boolean> => {
+  try {
+    await apiClient.get('/api/auth/check-email', { params: { email } });
+    return true; // Available
+  } catch (error) {
+    return false; // Not available
+  }
+};
+
+// Profile Management APIs
+export const updateProfile = async (data: ProfileUpdateRequest): Promise<UserResponse> => {
+  const response = await apiClient.put<UserResponse>('/api/profile', data);
+  return response.data;
+};
+
+export const changePassword = async (data: PasswordChangeRequest): Promise<void> => {
+  await apiClient.post('/api/profile/change-password', data);
+};
+
+export const removeEmail = async (): Promise<void> => {
+  await apiClient.delete('/api/profile/email');
 };
 
 // Admin API Types

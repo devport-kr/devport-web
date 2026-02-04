@@ -5,6 +5,7 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/articles/:externalId" element={<ArticleDetailPage />} />
