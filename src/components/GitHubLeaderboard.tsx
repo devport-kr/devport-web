@@ -71,7 +71,7 @@ export default function GitHubLeaderboard({ repos, onLoadMore, hasMore, isLoadin
           <span className="text-xs text-text-muted">GitHub</span>
         </div>
         <p className="text-xs text-text-muted">
-          이번 주 GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트입니다
+          GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트입니다
         </p>
       </div>
 
