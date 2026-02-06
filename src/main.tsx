@@ -9,7 +9,7 @@ import SignupPage from './pages/SignupPage'
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
-import BenchmarksExplanationPage from './pages/BenchmarksExplanationPage'
+import LLMRankingsPage from './pages/LLMRankingsPage'
 import ArticleDetailPage from './pages/ArticleDetailPage'
 import MyPage from './pages/MyPage'
 import AdminPage from './pages/AdminPage'
@@ -29,7 +29,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/articles/:externalId" element={<ArticleDetailPage />} />
           <Route path="/article/:externalId" element={<ArticleDetailPage />} />
           <Route path="/mypage" element={<MyPage />} />
-          <Route path="/benchmarks" element={<BenchmarksExplanationPage />} />
+          <Route path="/llm-rankings" element={<LLMRankingsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route

@@ -80,7 +80,7 @@ export const providerLogos: Record<string, ProviderInfo> = {
   },
   "Kimi": {
     name: "Kimi",
-    logo: "",
+    logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kimi-ai.svg",
     color: "#8B5CF6"
   },
   "Allen Institute for AI": {
@@ -125,8 +125,18 @@ export const providerLogos: Record<string, ProviderInfo> = {
   },
   "Z AI": {
     name: "Z AI",
-    logo: "",
+    logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/z-ai.svg",
     color: "#3B82F6"
+  },
+  "Xiaomi": {
+    name: "Xiaomi",
+    logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/xiaomi-global.svg",
+    color: "#FF6900"
+  },
+  "Xiaomi Global": {
+    name: "Xiaomi Global",
+    logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/xiaomi-global.svg",
+    color: "#FF6900"
   },
   "Cohere": {
     name: "Cohere",

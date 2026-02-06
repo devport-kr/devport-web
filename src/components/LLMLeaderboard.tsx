@@ -11,6 +11,13 @@ import {
 import AIIcon from './icons/AIIcon';
 import { getProviderInfo } from '../config/providerLogos';
 
+const formatScore = (score?: number | string | null, digits: number = 1) => {
+  if (score === null || score === undefined) return '-';
+  const numericScore = typeof score === 'number' ? score : Number(score);
+  if (!Number.isFinite(numericScore)) return '-';
+  return numericScore.toFixed(digits);
+};
+
 export default function LLMLeaderboard() {
   const [selectedBenchmark, setSelectedBenchmark] = useState<BenchmarkType>('AA_INTELLIGENCE_INDEX');
   const [selectedGroup, setSelectedGroup] = useState<BenchmarkCategoryGroup>('Composite');
@@ -81,10 +88,10 @@ export default function LLMLeaderboard() {
           <h2 className="text-base font-semibold text-text-primary">LLM 리더보드</h2>
         </div>
         <Link
-          to="/benchmarks"
+          to="/llm-rankings"
           className="text-xs text-text-muted hover:text-accent transition-colors"
         >
-          더보기
+          전체보기
         </Link>
       </div>
 
@@ -214,7 +221,7 @@ export default function LLMLeaderboard() {
                 {/* Score */}
                 <div className="text-right flex-shrink-0">
                   <span className="text-sm font-medium text-text-primary">
-                    {entry.score.toFixed(1)}%
+                    {formatScore(entry.score, 1)}%
                   </span>
                 </div>
               </div>
@@ -222,20 +229,6 @@ export default function LLMLeaderboard() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-4 py-2 bg-surface-elevated/30 border-t border-surface-border">
-          <p className="text-xs text-text-muted text-center">
-            Data by{' '}
-            <a
-              href="https://artificialanalysis.ai/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline"
-            >
-              Artificial Analysis
-            </a>
-          </p>
-        </div>
       </div>
     </section>
   );

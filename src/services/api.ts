@@ -125,6 +125,24 @@ export interface GitRepoPageResponse {
   hasMore: boolean;
 }
 
+export interface SpringPageResponse<T> {
+  content: T[];
+  pageable: unknown;
+  sort: {
+    sorted: boolean;
+    unsorted: boolean;
+    empty: boolean;
+  };
+  first: boolean;
+  last: boolean;
+  number: number;
+  size: number;
+  numberOfElements: number;
+  totalElements: number;
+  totalPages: number;
+  empty: boolean;
+}
+
 export interface TrendingTickerResponse {
   id: string;
   summaryKoTitle: string;
@@ -224,6 +242,43 @@ export interface LLMBenchmarkResponse {
   explanation?: string;
   sortOrder?: number;
 }
+
+export interface MediaModelCreatorResponse {
+  id: number;
+  externalId?: string;
+  slug?: string;
+  name: string;
+}
+
+export interface MediaModelCategoryResponse {
+  styleCategory?: string;
+  subjectMatterCategory?: string;
+  formatCategory?: string;
+  elo: number;
+  ci95?: number;
+  appearances?: number;
+}
+
+export interface LLMMediaModelResponse {
+  id: number;
+  externalId: string;
+  slug: string;
+  name: string;
+  modelCreator: MediaModelCreatorResponse;
+  elo: number;
+  rank: number;
+  ci95?: number;
+  appearances?: number;
+  releaseDate?: string;
+  categories?: MediaModelCategoryResponse[];
+}
+
+export type LLMMediaType =
+  | 'text-to-image'
+  | 'image-editing'
+  | 'text-to-speech'
+  | 'text-to-video'
+  | 'image-to-video';
 
 export interface UserResponse {
   id: number;
@@ -376,6 +431,19 @@ export const getLLMBenchmarksByGroup = async (categoryGroup: string): Promise<LL
 
 export const getLLMModelById = async (modelId: string): Promise<LLMModelDetailResponse> => {
   const response = await apiClient.get<LLMModelDetailResponse>(`/api/llm/models/${modelId}`);
+  return response.data;
+};
+
+export const getLLMMediaLeaderboard = async (
+  mediaType: LLMMediaType,
+  page: number = 0,
+  size: number = 20,
+  sort: string = 'rank,asc'
+): Promise<SpringPageResponse<LLMMediaModelResponse>> => {
+  const response = await apiClient.get<SpringPageResponse<LLMMediaModelResponse>>(
+    `/api/llm/media/${mediaType}`,
+    { params: { page, size, sort } }
+  );
   return response.data;
 };
 
