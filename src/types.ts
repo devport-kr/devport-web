@@ -124,6 +124,8 @@ export interface CommentAuthor {
   id: number;
   name: string;
   profileImageUrl?: string;
+  flair?: string;
+  flairColor?: string;
 }
 
 export interface Comment {
@@ -158,4 +160,100 @@ export interface ReadHistory {
   category: string;
   url: string;
   readAt: string;
+}
+
+// Ports Types
+export interface Port {
+  id: number;
+  portNumber: number;
+  slug: string;
+  name: string;
+  description: string;
+  accentColor: string;
+  projectCount: number;
+  recentReleases: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Project {
+  id: number;
+  externalId: string;
+  portId: number;
+  name: string;
+  fullName: string;
+  repoUrl: string;
+  homepageUrl?: string;
+  description: string;
+  stars: number;
+  starsWeekDelta: number;
+  forks: number;
+  contributors: number;
+  language: string;
+  languageColor: string;
+  license: string;
+  lastRelease: string;
+  releasesLast30d: number;
+  tags: string[];
+  sparklineData: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EventType = 'FEATURE' | 'FIX' | 'SECURITY' | 'BREAKING' | 'PERF' | 'MISC';
+
+export interface ProjectEvent {
+  id: number;
+  projectId: number;
+  version: string;
+  releasedAt: string;
+  eventTypes: EventType[];
+  summary: string;
+  bullets: string[];
+  impactScore: number;
+  isSecurity: boolean;
+  isBreaking: boolean;
+  sourceUrl: string;
+  rawNotes?: string;
+  createdAt: string;
+}
+
+export interface StarHistoryPoint {
+  date: string;
+  stars: number;
+}
+
+export interface ProjectOverview {
+  id: number;
+  projectId: number;
+  summary: string;
+  highlights: string[];
+  quickstart: string;
+  links: { label: string; url: string }[];
+  sourceUrl: string;
+  fetchedAt: string;
+  summarizedAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectComment extends Comment {
+  votes: number;
+  userVote: 0 | 1 | -1;
+}
+
+export interface ProjectCommentTreeNode extends ProjectComment {
+  replies: ProjectCommentTreeNode[];
+}
+
+export interface PortDetailResponse {
+  port: Port;
+  projects: Project[];
+  hotReleases: ProjectEvent[];
+}
+
+export interface ProjectDetailResponse {
+  project: Project;
+  overview?: ProjectOverview;
+  starHistory: StarHistoryPoint[];
+  recentEvents: ProjectEvent[];
 }

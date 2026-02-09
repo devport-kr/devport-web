@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Comment, CommentTreeNode } from '../types';
+import type { CommentTreeNode } from '../types';
 import {
   getCommentsByArticle,
   createComment,
@@ -43,7 +43,6 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
     const commentMap = new Map<string, CommentTreeNode>();
     const rootComments: CommentTreeNode[] = [];
 
-    // First pass: create nodes
     flatComments.forEach((comment) => {
       commentMap.set(comment.id, {
         ...comment,
@@ -51,7 +50,6 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
     });
 
-    // Second pass: build tree
     flatComments.forEach((comment) => {
       const node = commentMap.get(comment.id)!;
       if (comment.parentId) {
@@ -59,7 +57,6 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
         if (parent) {
           parent.replies.push(node);
         } else {
-          // Parent not found (shouldn't happen), treat as root
           rootComments.push(node);
         }
       } else {
@@ -119,9 +116,9 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-lg p-8">
+      <div className="py-8">
         <div className="flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-surface-border border-t-accent rounded-full animate-spin"></div>
+          <div className="w-6 h-6 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -129,19 +126,23 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-lg p-8">
-        <p className="text-text-muted text-center">{error}</p>
+      <div className="py-8">
+        <p className="text-text-muted text-sm text-center">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-lg p-6 md:p-8 space-y-8">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-surface-border pb-4">
-        <h2 className="text-xl font-bold text-text-primary">
-          댓글 {totalCommentCount > 0 && <span className="text-accent">{totalCommentCount}</span>}
-        </h2>
+      <div className="flex items-center gap-2.5">
+        <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+        </svg>
+        <h2 className="text-sm font-medium text-text-secondary">토론</h2>
+        {totalCommentCount > 0 && (
+          <span className="text-xs text-text-muted">{totalCommentCount}개 댓글</span>
+        )}
       </div>
 
       {/* Comment form */}
@@ -149,11 +150,11 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
 
       {/* Comments list */}
       {comments.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-text-muted">아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!</p>
+        <div className="text-center py-8">
+          <p className="text-sm text-text-muted">아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-1">
           {comments.map((comment) => (
             <CommentItem
               key={comment.id}
