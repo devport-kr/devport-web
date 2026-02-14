@@ -13,9 +13,42 @@ interface ArticleCardProps {
   variant?: 'default' | 'compact';
 }
 
+const stripMarkdown = (markdown: string) => {
+  const plainText = markdown
+    // remove fenced code blocks
+    .replace(/```[\s\S]*?```/g, ' ')
+    // inline code
+    .replace(/`[^`]*`/g, '')
+    // images ![alt](url) -> alt
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    // links [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    // headings #### Title -> Title
+    .replace(/^#{1,6}\s*/gm, '')
+    // blockquotes
+    .replace(/^\s*>+\s?/gm, '')
+    // unordered lists
+    .replace(/^\s*[-*+]\s+/gm, '')
+    // ordered lists
+    .replace(/^\s*\d+\.\s+/gm, '')
+    // emphasis/bold/strikethrough
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    .replace(/~~(.*?)~~/g, '$1')
+    // collapse whitespace
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return plainText || markdown;
+};
+
 export default function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
   const categoryInfo = categoryConfig[article.category];
   const sourceLabel = (article.source || '').trim() || 'Unknown';
+  const summaryText = article.summaryKoBody
+    ? stripMarkdown(article.summaryKoBody)
+    : article.titleEn;
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -95,7 +128,7 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
 
       {/* Summary or English title */}
       <p className="text-sm text-text-secondary mb-4 line-clamp-2">
-        {article.summaryKoBody || article.titleEn}
+        {summaryText}
       </p>
 
       {/* Tags & Stats */}
