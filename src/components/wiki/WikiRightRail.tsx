@@ -13,8 +13,8 @@ interface WikiRightRailProps {
 
 export default function WikiRightRail({ snapshot, projectExternalId }: WikiRightRailProps) {
   // Check if activity and releases sections are visible
-  const hasActivity = !snapshot.hiddenSections.includes('activity');
-  const hasReleases = !snapshot.hiddenSections.includes('releases');
+  const hasActivity = !snapshot.hiddenSections?.includes('activity');
+  const hasReleases = !snapshot.hiddenSections?.includes('releases');
 
   return (
     <div className="space-y-4">
