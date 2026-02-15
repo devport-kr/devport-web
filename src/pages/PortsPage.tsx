@@ -89,14 +89,11 @@ function buildCommentTree(comments: any[]): ProjectCommentTreeNode[] {
 
 // ─── Views ───────────────────────────────────────────────────
 
-type ProjectTab = 'wiki' | 'activity' | 'comments';
-
 export default function PortsPage() {
   const { portNumber, projectExternalId } = useParams<{ portNumber?: string; projectExternalId?: string }>();
   const navigate = useNavigate();
   const [eventFilter, setEventFilter] = useState<EventType | 'all'>('all');
-  const [activeTab, setActiveTab] = useState<ProjectTab>('wiki');
-  const [activeWikiSection, setActiveWikiSection] = useState('what');
+  const [activeSection, setActiveSection] = useState('wiki-what');
 
   // Directory data
   const [ports, setPorts] = useState<Port[]>([]);
@@ -210,21 +207,22 @@ export default function PortsPage() {
     return projectEvents.filter(e => e.eventTypes.includes(eventFilter));
   }, [projectEvents, eventFilter]);
 
-  // Wiki TOC sections
-  const wikiTocSections = useMemo(() => {
-    if (!wikiSnapshot) return [];
+  // All TOC sections (wiki + activity + comments)
+  const tocSections = useMemo(() => {
     const sections: { id: string; label: string }[] = [];
-    if (wikiSnapshot.what) sections.push({ id: 'wiki-what', label: '프로젝트 개요' });
-    if (wikiSnapshot.how) sections.push({ id: 'wiki-how', label: '작동 원리' });
-    if (wikiSnapshot.architecture) sections.push({ id: 'wiki-architecture', label: '아키텍처' });
+    if (wikiSnapshot?.what) sections.push({ id: 'wiki-what', label: '프로젝트 개요' });
+    if (wikiSnapshot?.how) sections.push({ id: 'wiki-how', label: '작동 원리' });
+    if (wikiSnapshot?.architecture) sections.push({ id: 'wiki-architecture', label: '아키텍처' });
+    sections.push({ id: 'activity', label: '활동' });
+    sections.push({ id: 'comments', label: '댓글' });
     return sections;
   }, [wikiSnapshot]);
 
-  // IntersectionObserver for active wiki section
+  // IntersectionObserver for active section
   useEffect(() => {
-    if (activeTab !== 'wiki' || wikiTocSections.length === 0) return;
+    if (tocSections.length === 0) return;
     
-    const elements = wikiTocSections
+    const elements = tocSections
       .map((section) => document.getElementById(section.id))
       .filter((element): element is HTMLElement => Boolean(element));
 
@@ -235,14 +233,14 @@ export default function PortsPage() {
         const visible = entries.filter((entry) => entry.isIntersecting);
         if (visible.length === 0) return;
         const topEntry = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        setActiveWikiSection(topEntry.target.id);
+        setActiveSection(topEntry.target.id);
       },
       { rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.25, 0.6] }
     );
 
     elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, [activeTab, wikiTocSections]);
+  }, [tocSections]);
 
   const goPort = (portNum: number) => {
     navigate(`/ports/${portNum}`);
@@ -288,8 +286,7 @@ export default function PortsPage() {
               <div className="flex items-center justify-center py-24 text-text-muted">Loading project...</div>
             ) : (
             <>
-            {/* Fixed right sidebar - Only for activity and comments tabs */}
-            {(activeTab === 'activity' || activeTab === 'comments') && (
+            {/* Fixed right sidebar - ALWAYS visible */}
             <aside className="fixed right-0 top-16 w-[28%] min-w-[340px] max-w-[420px] h-[calc(100vh-4rem)] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-20 scrollbar-hide">
             <div className="space-y-4">
               {/* Star history chart */}
@@ -383,12 +380,14 @@ export default function PortsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Chat Panel at bottom */}
+              {projectExternalId && <WikiChatPanel projectExternalId={projectExternalId} />}
             </div>
           </aside>
-            )}
 
-          {/* Wiki TOC Sidebar - Left side for wiki tab */}
-          {activeTab === 'wiki' && wikiTocSections.length > 0 && (
+          {/* TOC Sidebar - Left side */}
+          {tocSections.length > 0 && (
             <div
               className="fixed top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden xl:flex items-center"
               style={{ left: 'max(13.5rem, calc((100vw - 98rem) / 4 + 13rem))' }}
@@ -397,12 +396,12 @@ export default function PortsPage() {
                 <div className="rounded-2xl border border-surface-border bg-surface-card/80 p-4 shadow-soft">
                   <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">목차</h3>
                   <nav className="space-y-2">
-                    {wikiTocSections.map((section) => (
+                    {tocSections.map((section) => (
                       <a
                         key={section.id}
                         href={`#${section.id}`}
                         className={`block text-sm transition-colors ${
-                          activeWikiSection === section.id
+                          activeSection === section.id
                             ? 'text-accent font-semibold'
                             : 'text-text-muted hover:text-text-secondary'
                         }`}
@@ -417,7 +416,7 @@ export default function PortsPage() {
           )}
 
           {/* Main content */}
-          <div className={`${(activeTab === 'activity' || activeTab === 'comments') ? 'xl:mr-[28%]' : ''} ${activeTab === 'wiki' ? 'xl:ml-52' : ''} max-w-3xl mx-auto px-6 py-8`}>
+          <div className="xl:ml-52 xl:mr-[28%] max-w-3xl mx-auto px-6 py-8">
             {projectLoading ? (
               <div className="text-center py-12 text-text-muted">Loading project...</div>
             ) : (
@@ -456,54 +455,59 @@ export default function PortsPage() {
                   </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex gap-1 mb-6 border-b border-surface-border">
-                  <button
-                    onClick={() => setActiveTab('wiki')}
-                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-                      activeTab === 'wiki'
-                        ? 'text-accent border-accent'
-                        : 'text-text-muted border-transparent hover:text-text-secondary'
-                    }`}
-                  >
-                    Wiki
-                    {wikiSnapshot && (
-                      <span className="ml-1.5 px-1.5 py-0.5 text-2xs bg-accent/10 text-accent rounded">
-                        AI
-                      </span>
+                <div className="space-y-12">
+                {/* Wiki Sections */}
+                {wikiLoading ? (
+                  <div className="text-center py-12 text-text-muted">Loading wiki...</div>
+                ) : wikiSnapshot ? (
+                  <>
+                    {/* What Section */}
+                    {wikiSnapshot.what && (
+                      <section id="wiki-what" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                        <h2 className="text-base font-semibold text-text-primary mb-3">📌 프로젝트 개요</h2>
+                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.what.summary}</p>
+                        {wikiSnapshot.what.deepDiveMarkdown && (
+                          <div className="prose prose-sm prose-invert max-w-none">
+                            <ReactMarkdown>{wikiSnapshot.what.deepDiveMarkdown}</ReactMarkdown>
+                          </div>
+                        )}
+                      </section>
                     )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('activity')}
-                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-                      activeTab === 'activity'
-                        ? 'text-accent border-accent'
-                        : 'text-text-muted border-transparent hover:text-text-secondary'
-                    }`}
-                  >
-                    활동
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('comments')}
-                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-                      activeTab === 'comments'
-                        ? 'text-accent border-accent'
-                        : 'text-text-muted border-transparent hover:text-text-secondary'
-                    }`}
-                  >
-                    댓글
-                    {comments.length > 0 && (
-                      <span className="ml-1.5 px-1.5 py-0.5 text-2xs bg-surface-elevated text-text-muted rounded">
-                        {comments.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
 
-                {/* Tab Content - Activity (Release timeline) */}
-                {activeTab === 'activity' && (
-                <>
-                <div className="bg-surface-card rounded-xl border border-surface-border p-5 mb-6">
+                    {/* How Section */}
+                    {wikiSnapshot.how && (
+                      <section id="wiki-how" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                        <h2 className="text-base font-semibold text-text-primary mb-3">⚙️ 작동 원리</h2>
+                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.how.summary}</p>
+                        {wikiSnapshot.how.deepDiveMarkdown && (
+                          <div className="prose prose-sm prose-invert max-w-none">
+                            <ReactMarkdown>{wikiSnapshot.how.deepDiveMarkdown}</ReactMarkdown>
+                          </div>
+                        )}
+                      </section>
+                    )}
+
+                    {/* Architecture Section */}
+                    {wikiSnapshot.architecture && (
+                      <section id="wiki-architecture" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                        <h2 className="text-base font-semibold text-text-primary mb-3">🏗️ 아키텍처</h2>
+                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.architecture.summary}</p>
+                        {wikiSnapshot.architecture.deepDiveMarkdown && (
+                          <div className="prose prose-sm prose-invert max-w-none">
+                            <ReactMarkdown>{wikiSnapshot.architecture.deepDiveMarkdown}</ReactMarkdown>
+                          </div>
+                        )}
+                      </section>
+                    )}
+
+                    <div className="text-center py-2">
+                      <span className="text-2xs text-text-muted">AI-generated technical documentation · Verify with official sources</span>
+                    </div>
+                  </>
+                ) : null}
+
+                {/* Activity Section - GitHub Events */}
+                <section id="activity" className="bg-surface-card rounded-xl border border-surface-border p-5 scroll-mt-24">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-medium text-text-secondary">릴리스</h2>
                     <div className="flex gap-0.5 bg-surface-elevated rounded-lg p-0.5">
@@ -578,82 +582,15 @@ export default function PortsPage() {
                       })}
                     </div>
                   )}
-                </div>
 
-                <div className="text-center mb-8">
-                  <span className="text-2xs text-text-muted">릴리스 요약은 LLM으로 생성 · 원문 확인 필수</span>
-                </div>
-                </>
-                )}
-
-                {/* Tab Content - Wiki */}
-                {activeTab === 'wiki' && (
-                  <div className="space-y-6">
-                    {wikiLoading ? (
-                      <div className="text-center py-12 text-text-muted">Loading wiki...</div>
-                    ) : !wikiSnapshot ? (
-                      <div className="bg-surface-card rounded-xl border border-surface-border p-8 text-center">
-                        <p className="text-sm text-text-muted mb-2">Wiki not available for this project</p>
-                        <p className="text-xs text-text-muted">Check back later as we generate technical documentation</p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* What Section */}
-                        {wikiSnapshot.what && (
-                          <section id="wiki-what" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">📌 프로젝트 개요</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.what.summary}</p>
-                            {wikiSnapshot.what.deepDiveMarkdown && (
-                              <div className="prose prose-sm prose-invert max-w-none">
-                                <ReactMarkdown>{wikiSnapshot.what.deepDiveMarkdown}</ReactMarkdown>
-                              </div>
-                            )}
-                          </section>
-                        )}
-
-                        {/* How Section */}
-                        {wikiSnapshot.how && (
-                          <section id="wiki-how" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">⚙️ 작동 원리</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.how.summary}</p>
-                            {wikiSnapshot.how.deepDiveMarkdown && (
-                              <div className="prose prose-sm prose-invert max-w-none">
-                                <ReactMarkdown>{wikiSnapshot.how.deepDiveMarkdown}</ReactMarkdown>
-                              </div>
-                            )}
-                          </section>
-                        )}
-
-                        {/* Architecture Section */}
-                        {wikiSnapshot.architecture && (
-                          <section id="wiki-architecture" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">🏗️ 아키텍처</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.architecture.summary}</p>
-                            {wikiSnapshot.architecture.deepDiveMarkdown && (
-                              <div className="prose prose-sm prose-invert max-w-none">
-                                <ReactMarkdown>{wikiSnapshot.architecture.deepDiveMarkdown}</ReactMarkdown>
-                              </div>
-                            )}
-                          </section>
-                        )}
-
-                        {/* Chat Panel */}
-                        <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
-                          <WikiChatPanel projectExternalId={projectExternalId!} />
-                        </div>
-
-                        <div className="text-center py-4">
-                          <span className="text-2xs text-text-muted">AI-generated technical documentation · Verify with official sources</span>
-                        </div>
-                      </>
-                    )}
+                  <div className="text-center mt-6 pt-4 border-t border-surface-border/50">
+                    <span className="text-2xs text-text-muted">릴리스 요약은 LLM으로 생성 · 원문 확인 필수</span>
                   </div>
-                )}
+                </section>
 
-                {/* Tab Content - Comments (Discussion Section) */}
-                {activeTab === 'comments' && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2.5">
+                {/* Comments Section */}
+                <section id="comments" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                  <div className="flex items-center gap-2.5 mb-4">
                     <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                     <h2 className="text-sm font-medium text-text-secondary">토론</h2>
                     {comments.length > 0 && (
@@ -665,7 +602,7 @@ export default function PortsPage() {
                     <div className="text-center py-8 text-text-muted text-sm">Loading comments...</div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3 px-1">
+                      <div className="flex items-center gap-3 px-1 mb-4">
                         <div className="w-6 h-6 rounded-full bg-surface-elevated flex items-center justify-center text-2xs text-text-muted shrink-0">
                           ?
                         </div>
@@ -688,8 +625,9 @@ export default function PortsPage() {
                       </div>
                     </>
                   )}
+                </section>
+
                 </div>
-                )}
               </>
             )}
           </div>
