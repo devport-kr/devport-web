@@ -29,9 +29,8 @@ import { getWikiSnapshot } from '../services/wiki/wikiService';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import CommentItem from '../components/CommentItem';
-import WikiContentColumn from '../components/wiki/WikiContentColumn';
-import WikiAnchorRail from '../components/wiki/WikiAnchorRail';
-import WikiRightRail from '../components/wiki/WikiRightRail';
+import WikiChatPanel from '../components/wiki/WikiChatPanel';
+import ReactMarkdown from 'react-markdown';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -97,6 +96,7 @@ export default function PortsPage() {
   const navigate = useNavigate();
   const [eventFilter, setEventFilter] = useState<EventType | 'all'>('all');
   const [activeTab, setActiveTab] = useState<ProjectTab>('wiki');
+  const [activeWikiSection, setActiveWikiSection] = useState('what');
 
   // Directory data
   const [ports, setPorts] = useState<Port[]>([]);
@@ -209,6 +209,40 @@ export default function PortsPage() {
     if (eventFilter === 'all') return projectEvents;
     return projectEvents.filter(e => e.eventTypes.includes(eventFilter));
   }, [projectEvents, eventFilter]);
+
+  // Wiki TOC sections
+  const wikiTocSections = useMemo(() => {
+    if (!wikiSnapshot) return [];
+    const sections: { id: string; label: string }[] = [];
+    if (wikiSnapshot.what) sections.push({ id: 'wiki-what', label: '프로젝트 개요' });
+    if (wikiSnapshot.how) sections.push({ id: 'wiki-how', label: '작동 원리' });
+    if (wikiSnapshot.architecture) sections.push({ id: 'wiki-architecture', label: '아키텍처' });
+    return sections;
+  }, [wikiSnapshot]);
+
+  // IntersectionObserver for active wiki section
+  useEffect(() => {
+    if (activeTab !== 'wiki' || wikiTocSections.length === 0) return;
+    
+    const elements = wikiTocSections
+      .map((section) => document.getElementById(section.id))
+      .filter((element): element is HTMLElement => Boolean(element));
+
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting);
+        if (visible.length === 0) return;
+        const topEntry = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        setActiveWikiSection(topEntry.target.id);
+      },
+      { rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.25, 0.6] }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [activeTab, wikiTocSections]);
 
   const goPort = (portNum: number) => {
     navigate(`/ports/${portNum}`);
@@ -353,8 +387,37 @@ export default function PortsPage() {
           </aside>
             )}
 
+          {/* Wiki TOC Sidebar - Left side for wiki tab */}
+          {activeTab === 'wiki' && wikiTocSections.length > 0 && (
+            <div
+              className="fixed top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden xl:flex items-center"
+              style={{ left: 'max(13.5rem, calc((100vw - 98rem) / 4 + 13rem))' }}
+            >
+              <div className="w-full px-4">
+                <div className="rounded-2xl border border-surface-border bg-surface-card/80 p-4 shadow-soft">
+                  <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">목차</h3>
+                  <nav className="space-y-2">
+                    {wikiTocSections.map((section) => (
+                      <a
+                        key={section.id}
+                        href={`#${section.id}`}
+                        className={`block text-sm transition-colors ${
+                          activeWikiSection === section.id
+                            ? 'text-accent font-semibold'
+                            : 'text-text-muted hover:text-text-secondary'
+                        }`}
+                      >
+                        {section.label}
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main content */}
-          <div className={`${(activeTab === 'activity' || activeTab === 'comments') ? 'xl:mr-[28%]' : ''} max-w-3xl mx-auto px-6 py-8`}>
+          <div className={`${(activeTab === 'activity' || activeTab === 'comments') ? 'xl:mr-[28%]' : ''} ${activeTab === 'wiki' ? 'xl:ml-52' : ''} max-w-3xl mx-auto px-6 py-8`}>
             {projectLoading ? (
               <div className="text-center py-12 text-text-muted">Loading project...</div>
             ) : (
@@ -525,7 +588,7 @@ export default function PortsPage() {
 
                 {/* Tab Content - Wiki */}
                 {activeTab === 'wiki' && (
-                  <>
+                  <div className="space-y-6">
                     {wikiLoading ? (
                       <div className="text-center py-12 text-text-muted">Loading wiki...</div>
                     ) : !wikiSnapshot ? (
@@ -534,36 +597,57 @@ export default function PortsPage() {
                         <p className="text-xs text-text-muted">Check back later as we generate technical documentation</p>
                       </div>
                     ) : (
-                      <div className="flex gap-6">
-                        {/* Left Rail - Section Navigation */}
-                        <aside className="w-48 shrink-0 sticky top-24 self-start hidden lg:block">
-                          <WikiAnchorRail 
-                            sections={['what', 'how', 'architecture'].filter(s => 
-                              !wikiSnapshot.hiddenSections?.includes(s) && wikiSnapshot[s as keyof WikiSnapshot]
+                      <>
+                        {/* What Section */}
+                        {wikiSnapshot.what && (
+                          <section id="wiki-what" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                            <h2 className="text-base font-semibold text-text-primary mb-3">📌 프로젝트 개요</h2>
+                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.what.summary}</p>
+                            {wikiSnapshot.what.deepDiveMarkdown && (
+                              <div className="prose prose-sm prose-invert max-w-none">
+                                <ReactMarkdown>{wikiSnapshot.what.deepDiveMarkdown}</ReactMarkdown>
+                              </div>
                             )}
-                          />
-                        </aside>
+                          </section>
+                        )}
 
-                        {/* Center - Wiki Content */}
-                        <div className="flex-1 min-w-0">
-                          <WikiContentColumn 
-                            snapshot={wikiSnapshot}
-                            visibleSections={['what', 'how', 'architecture'].filter(s => 
-                              !wikiSnapshot.hiddenSections?.includes(s) && wikiSnapshot[s as keyof WikiSnapshot]
+                        {/* How Section */}
+                        {wikiSnapshot.how && (
+                          <section id="wiki-how" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                            <h2 className="text-base font-semibold text-text-primary mb-3">⚙️ 작동 원리</h2>
+                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.how.summary}</p>
+                            {wikiSnapshot.how.deepDiveMarkdown && (
+                              <div className="prose prose-sm prose-invert max-w-none">
+                                <ReactMarkdown>{wikiSnapshot.how.deepDiveMarkdown}</ReactMarkdown>
+                              </div>
                             )}
-                          />
+                          </section>
+                        )}
+
+                        {/* Architecture Section */}
+                        {wikiSnapshot.architecture && (
+                          <section id="wiki-architecture" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                            <h2 className="text-base font-semibold text-text-primary mb-3">🏗️ 아키텍처</h2>
+                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.architecture.summary}</p>
+                            {wikiSnapshot.architecture.deepDiveMarkdown && (
+                              <div className="prose prose-sm prose-invert max-w-none">
+                                <ReactMarkdown>{wikiSnapshot.architecture.deepDiveMarkdown}</ReactMarkdown>
+                              </div>
+                            )}
+                          </section>
+                        )}
+
+                        {/* Chat Panel */}
+                        <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
+                          <WikiChatPanel projectExternalId={projectExternalId!} />
                         </div>
 
-                        {/* Right Rail - Chat + Activity/Releases */}
-                        <aside className="w-80 shrink-0 sticky top-24 self-start hidden xl:block">
-                          <WikiRightRail 
-                            snapshot={wikiSnapshot}
-                            projectExternalId={projectExternalId!}
-                          />
-                        </aside>
-                      </div>
+                        <div className="text-center py-4">
+                          <span className="text-2xs text-text-muted">AI-generated technical documentation · Verify with official sources</span>
+                        </div>
+                      </>
                     )}
-                  </>
+                  </div>
                 )}
 
                 {/* Tab Content - Comments (Discussion Section) */}
