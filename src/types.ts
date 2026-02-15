@@ -164,47 +164,61 @@ export interface ReadHistory {
 
 // Ports Types
 export interface Port {
-  id: number;
+  id: string;
   portNumber: number;
   slug: string;
   name: string;
   description: string;
   accentColor: string;
   projectCount: number;
-  recentReleases: number;
-  createdAt: string;
-  updatedAt: string;
+  recentReleaseCount: number;
 }
 
-export interface Project {
-  id: number;
-  externalId: string;
-  portId: number;
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  fullName: string;
+  stars: number;
+  starsWeekDelta: number;
+  language: string;
+  languageColor: string;
+  releases30d: number;
+  sparklineData: number[];
+}
+
+export interface ProjectDetail {
+  id: string;
   name: string;
   fullName: string;
   repoUrl: string;
   homepageUrl?: string;
   description: string;
   stars: number;
-  starsWeekDelta: number;
   forks: number;
   contributors: number;
   language: string;
   languageColor: string;
   license: string;
   lastRelease: string;
-  releasesLast30d: number;
   tags: string[];
-  sparklineData: number[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export type EventType = 'FEATURE' | 'FIX' | 'SECURITY' | 'BREAKING' | 'PERF' | 'MISC';
 
+export interface HotRelease {
+  id: string;
+  projectName: string;
+  version: string;
+  releasedAt: string;
+  eventTypes: EventType[];
+  summary: string;
+  impactScore: number;
+  isSecurity: boolean;
+  isBreaking: boolean;
+}
+
 export interface ProjectEvent {
-  id: number;
-  projectId: number;
+  id: string;
   version: string;
   releasedAt: string;
   eventTypes: EventType[];
@@ -214,8 +228,6 @@ export interface ProjectEvent {
   isSecurity: boolean;
   isBreaking: boolean;
   sourceUrl: string;
-  rawNotes?: string;
-  createdAt: string;
 }
 
 export interface StarHistoryPoint {
@@ -224,16 +236,13 @@ export interface StarHistoryPoint {
 }
 
 export interface ProjectOverview {
-  id: number;
-  projectId: number;
   summary: string;
   highlights: string[];
   quickstart: string;
-  links: { label: string; url: string }[];
+  links: string;
   sourceUrl: string;
   fetchedAt: string;
   summarizedAt: string;
-  updatedAt: string;
 }
 
 export interface ProjectComment extends Comment {
@@ -247,13 +256,6 @@ export interface ProjectCommentTreeNode extends ProjectComment {
 
 export interface PortDetailResponse {
   port: Port;
-  projects: Project[];
-  hotReleases: ProjectEvent[];
-}
-
-export interface ProjectDetailResponse {
-  project: Project;
-  overview?: ProjectOverview;
-  starHistory: StarHistoryPoint[];
-  recentEvents: ProjectEvent[];
+  projects: ProjectSummary[];
+  hotReleases: HotRelease[];
 }

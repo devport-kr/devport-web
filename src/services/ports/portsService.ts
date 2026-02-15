@@ -1,5 +1,5 @@
 import apiClient from '../../lib/http/apiClient';
-import type { Port, PortDetailResponse, ProjectDetailResponse, ProjectEvent, EventType, StarHistoryPoint, ProjectComment, ProjectOverview } from '../../types';
+import type { Port, PortDetailResponse, ProjectDetail, ProjectEvent, EventType, StarHistoryPoint, ProjectComment, ProjectOverview } from '../../types';
 import type { SpringPageResponse } from '../llm/llmService';
 
 // ─── Ports & Projects APIs ───────────────────────────────────────
@@ -14,13 +14,13 @@ export const getPortBySlug = async (slug: string): Promise<PortDetailResponse> =
   return response.data;
 };
 
-export const getProjectById = async (id: number): Promise<ProjectDetailResponse> => {
-  const response = await apiClient.get<ProjectDetailResponse>(`/api/projects/${id}`);
+export const getProjectById = async (id: string): Promise<ProjectDetail> => {
+  const response = await apiClient.get<ProjectDetail>(`/api/projects/${id}`);
   return response.data;
 };
 
 export const getProjectEvents = async (
-  projectId: number,
+  projectId: string,
   type?: EventType,
   page: number = 0,
   size: number = 20
@@ -35,7 +35,7 @@ export const getProjectEvents = async (
 };
 
 export const getProjectStarHistory = async (
-  projectId: number,
+  projectId: string,
   from?: string,
   to?: string
 ): Promise<StarHistoryPoint[]> => {
@@ -48,20 +48,20 @@ export const getProjectStarHistory = async (
   return response.data;
 };
 
-export const getProjectOverview = async (projectId: number): Promise<ProjectOverview> => {
+export const getProjectOverview = async (projectId: string): Promise<ProjectOverview> => {
   const response = await apiClient.get<ProjectOverview>(`/api/projects/${projectId}/overview`);
   return response.data;
 };
 
 // ─── Project Comments APIs ───────────────────────────────────────
 
-export const getProjectComments = async (projectId: number): Promise<ProjectComment[]> => {
+export const getProjectComments = async (projectId: string): Promise<ProjectComment[]> => {
   const response = await apiClient.get<ProjectComment[]>(`/api/projects/${projectId}/comments`);
   return response.data;
 };
 
 export const createProjectComment = async (
-  projectId: number,
+  projectId: string,
   content: string,
   parentCommentId?: string
 ): Promise<ProjectComment> => {
@@ -73,7 +73,7 @@ export const createProjectComment = async (
 };
 
 export const updateProjectComment = async (
-  projectId: number,
+  projectId: string,
   commentId: string,
   content: string
 ): Promise<ProjectComment> => {
@@ -85,14 +85,14 @@ export const updateProjectComment = async (
 };
 
 export const deleteProjectComment = async (
-  projectId: number,
+  projectId: string,
   commentId: string
 ): Promise<void> => {
   await apiClient.delete(`/api/projects/${projectId}/comments/${commentId}`);
 };
 
 export const voteOnProjectComment = async (
-  projectId: number,
+  projectId: string,
   commentId: string,
   vote: 1 | -1 | 0
 ): Promise<{ votes: number; userVote: 0 | 1 | -1 }> => {

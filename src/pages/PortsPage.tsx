@@ -29,6 +29,9 @@ import { getWikiSnapshot } from '../services/wiki/wikiService';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import CommentItem from '../components/CommentItem';
+import WikiContentColumn from '../components/wiki/WikiContentColumn';
+import WikiAnchorRail from '../components/wiki/WikiAnchorRail';
+import WikiRightRail from '../components/wiki/WikiRightRail';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -87,13 +90,13 @@ function buildCommentTree(comments: any[]): ProjectCommentTreeNode[] {
 
 // ─── Views ───────────────────────────────────────────────────
 
-type ProjectTab = 'overview' | 'activity' | 'wiki' | 'comments';
+type ProjectTab = 'wiki' | 'activity' | 'comments';
 
 export default function PortsPage() {
   const { portNumber, projectExternalId } = useParams<{ portNumber?: string; projectExternalId?: string }>();
   const navigate = useNavigate();
   const [eventFilter, setEventFilter] = useState<EventType | 'all'>('all');
-  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
+  const [activeTab, setActiveTab] = useState<ProjectTab>('wiki');
 
   // Directory data
   const [ports, setPorts] = useState<Port[]>([]);
@@ -251,7 +254,8 @@ export default function PortsPage() {
               <div className="flex items-center justify-center py-24 text-text-muted">Loading project...</div>
             ) : (
             <>
-            {/* Fixed right sidebar */}
+            {/* Fixed right sidebar - Only for activity and comments tabs */}
+            {(activeTab === 'activity' || activeTab === 'comments') && (
             <aside className="fixed right-0 top-16 w-[28%] min-w-[340px] max-w-[420px] h-[calc(100vh-4rem)] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-20 scrollbar-hide">
             <div className="space-y-4">
               {/* Star history chart */}
@@ -347,9 +351,10 @@ export default function PortsPage() {
               )}
             </div>
           </aside>
+            )}
 
           {/* Main content */}
-          <div className="xl:mr-[28%] max-w-3xl mx-auto px-6 py-8">
+          <div className={`${(activeTab === 'activity' || activeTab === 'comments') ? 'xl:mr-[28%]' : ''} max-w-3xl mx-auto px-6 py-8`}>
             {projectLoading ? (
               <div className="text-center py-12 text-text-muted">Loading project...</div>
             ) : (
@@ -391,26 +396,6 @@ export default function PortsPage() {
                 {/* Tab Navigation */}
                 <div className="flex gap-1 mb-6 border-b border-surface-border">
                   <button
-                    onClick={() => setActiveTab('overview')}
-                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-                      activeTab === 'overview'
-                        ? 'text-accent border-accent'
-                        : 'text-text-muted border-transparent hover:text-text-secondary'
-                    }`}
-                  >
-                    개요
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('activity')}
-                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-                      activeTab === 'activity'
-                        ? 'text-accent border-accent'
-                        : 'text-text-muted border-transparent hover:text-text-secondary'
-                    }`}
-                  >
-                    활동
-                  </button>
-                  <button
                     onClick={() => setActiveTab('wiki')}
                     className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
                       activeTab === 'wiki'
@@ -424,6 +409,16 @@ export default function PortsPage() {
                         AI
                       </span>
                     )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('activity')}
+                    className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+                      activeTab === 'activity'
+                        ? 'text-accent border-accent'
+                        : 'text-text-muted border-transparent hover:text-text-secondary'
+                    }`}
+                  >
+                    활동
                   </button>
                   <button
                     onClick={() => setActiveTab('comments')}
@@ -441,72 +436,6 @@ export default function PortsPage() {
                     )}
                   </button>
                 </div>
-
-                {/* Tab Content - Overview */}
-                {activeTab === 'overview' && overview && (
-                  <div className="bg-surface-card rounded-xl border border-surface-border mb-6 overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-surface-border">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                        <h2 className="text-sm font-medium text-text-secondary">개요</h2>
-                      </div>
-                      <div className="flex items-center gap-3 text-2xs text-text-muted">
-                        {overview.summarizedAt && <span>업데이트: {overview.summarizedAt.split('T')[0]}</span>}
-                        {overview.sourceUrl && (
-                          <a
-                            href={overview.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-accent hover:text-accent-light transition-colors flex items-center gap-1"
-                          >
-                            원문
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="px-5 py-5 space-y-4">
-                      <p className="text-sm text-text-secondary leading-relaxed">{overview.summary}</p>
-
-                      <div className="space-y-1.5">
-                        {(overview.highlights || []).map((h, i) => (
-                          <div key={i} className="flex items-start gap-2 text-sm text-text-secondary">
-                            <span className="text-text-muted mt-0.5 shrink-0">·</span>
-                            <span>{h}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {overview.quickstart && (
-                        <pre className="text-xs text-emerald-300/80 bg-surface-elevated/80 border border-surface-border/50 rounded-lg px-4 py-3 overflow-x-auto font-mono leading-relaxed">
-                          {overview.quickstart}
-                        </pre>
-                      )}
-
-                      {overviewLinks.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {overviewLinks.map((link) => (
-                            <a
-                              key={link.label}
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-accent hover:text-accent-light px-2.5 py-1 rounded-lg border border-surface-border hover:bg-surface-hover transition-colors flex items-center gap-1"
-                            >
-                              {link.label}
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="px-5 py-2.5 border-t border-surface-border bg-surface-elevated/30">
-                      <span className="text-2xs text-text-muted">LLM으로 생성된 한국어 요약입니다. 정확한 내용은 원문 문서를 확인하세요.</span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Tab Content - Activity (Release timeline) */}
                 {activeTab === 'activity' && (
@@ -596,7 +525,7 @@ export default function PortsPage() {
 
                 {/* Tab Content - Wiki */}
                 {activeTab === 'wiki' && (
-                  <div className="space-y-6">
+                  <>
                     {wikiLoading ? (
                       <div className="text-center py-12 text-text-muted">Loading wiki...</div>
                     ) : !wikiSnapshot ? (
@@ -605,55 +534,36 @@ export default function PortsPage() {
                         <p className="text-xs text-text-muted">Check back later as we generate technical documentation</p>
                       </div>
                     ) : (
-                      <>
-                        {/* What Section */}
-                        {wikiSnapshot.what && (
-                          <div className="bg-surface-card rounded-xl border border-surface-border p-6">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">What is this project?</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.what.summary}</p>
-                            {wikiSnapshot.what.deepDiveMarkdown && (
-                              <div 
-                                className="text-sm text-text-secondary prose prose-sm prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: wikiSnapshot.what.deepDiveMarkdown.replace(/\n/g, '<br/>') }}
-                              />
+                      <div className="flex gap-6">
+                        {/* Left Rail - Section Navigation */}
+                        <aside className="w-48 shrink-0 sticky top-24 self-start hidden lg:block">
+                          <WikiAnchorRail 
+                            sections={['what', 'how', 'architecture'].filter(s => 
+                              !wikiSnapshot.hiddenSections?.includes(s) && wikiSnapshot[s as keyof WikiSnapshot]
                             )}
-                          </div>
-                        )}
+                          />
+                        </aside>
 
-                        {/* How Section */}
-                        {wikiSnapshot.how && (
-                          <div className="bg-surface-card rounded-xl border border-surface-border p-6">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">How it works</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.how.summary}</p>
-                            {wikiSnapshot.how.deepDiveMarkdown && (
-                              <div 
-                                className="text-sm text-text-secondary prose prose-sm prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: wikiSnapshot.how.deepDiveMarkdown.replace(/\n/g, '<br/>') }}
-                              />
+                        {/* Center - Wiki Content */}
+                        <div className="flex-1 min-w-0">
+                          <WikiContentColumn 
+                            snapshot={wikiSnapshot}
+                            visibleSections={['what', 'how', 'architecture'].filter(s => 
+                              !wikiSnapshot.hiddenSections?.includes(s) && wikiSnapshot[s as keyof WikiSnapshot]
                             )}
-                          </div>
-                        )}
-
-                        {/* Architecture Section */}
-                        {wikiSnapshot.architecture && (
-                          <div className="bg-surface-card rounded-xl border border-surface-border p-6">
-                            <h2 className="text-base font-semibold text-text-primary mb-3">Architecture</h2>
-                            <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.architecture.summary}</p>
-                            {wikiSnapshot.architecture.deepDiveMarkdown && (
-                              <div 
-                                className="text-sm text-text-secondary prose prose-sm prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: wikiSnapshot.architecture.deepDiveMarkdown.replace(/\n/g, '<br/>') }}
-                              />
-                            )}
-                          </div>
-                        )}
-
-                        <div className="text-center py-4">
-                          <span className="text-2xs text-text-muted">AI-generated technical documentation · Verify with official sources</span>
+                          />
                         </div>
-                      </>
+
+                        {/* Right Rail - Chat + Activity/Releases */}
+                        <aside className="w-80 shrink-0 sticky top-24 self-start hidden xl:block">
+                          <WikiRightRail 
+                            snapshot={wikiSnapshot}
+                            projectExternalId={projectExternalId!}
+                          />
+                        </aside>
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
 
                 {/* Tab Content - Comments (Discussion Section) */}
