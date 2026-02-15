@@ -34,41 +34,30 @@ export async function getWikiSnapshot(projectExternalId: string): Promise<WikiSn
 }
 
 /**
- * Get list of wiki domains for discovery.
- * Returns domain names with project counts.
- *
- * @returns Domain list with project counts
+ * Known wiki domains from design.
+ * Frontend iterates these to build complete domain browse view.
  */
-export async function getWikiDomains(): Promise<unknown[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/wiki/domains`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch domains: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Wiki domains fetch error:', error);
-    throw error;
-  }
-}
+const KNOWN_DOMAINS = ['web', 'mobile', 'data', 'devtools', 'ml'];
 
 /**
  * Get domain browse cards for wiki discovery.
  * Returns list of domains with top projects per domain.
+ * Fetches each domain individually and aggregates results.
  *
  * @returns Domain browse cards with project summaries
  */
 export async function getDomainBrowseCards(): Promise<unknown[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/wiki/domains`);
+    const responses = await Promise.all(
+      KNOWN_DOMAINS.map(domain => 
+        fetch(`${API_BASE_URL}/api/wiki/domains/${encodeURIComponent(domain)}`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch domain cards: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
+    // Filter out failed requests and return valid domain responses
+    return responses.filter(response => response !== null);
   } catch (error) {
     console.error('Domain browse cards fetch error:', error);
     throw error;
