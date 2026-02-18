@@ -1,55 +1,64 @@
 /**
- * Wiki snapshot types aligned to API WikiSnapshotResponse.
- * Provides type-safe access to Core-6 sections with progressive disclosure.
+ * Wiki types aligned to backend WikiProjectPageResponse contract.
  */
 
-/**
- * Individual wiki section with summary + deep dive content.
- */
-export interface WikiSection {
-  /** Short summary paragraph (1-3 sentences) */
-  summary: string;
-  /** Full technical explanation in markdown format */
-  deepDiveMarkdown: string;
-  /** Whether this section should be expanded by default */
-  defaultExpanded: boolean;
-  /** Optional Mermaid DSL for generated architecture/flow diagrams */
-  generatedDiagramDsl?: string | null;
+export interface WikiDiagramMetadata {
+  diagramType?: string;
+  altText?: string;
+  renderHints?: string;
 }
 
-/**
- * Complete wiki snapshot with Core-6 sections and readiness metadata.
- */
-export interface WikiSnapshot {
-  /** Project external ID (e.g., "github:12345") */
+export interface WikiSection {
+  sectionId: string;
+  heading: string;
+  anchor: string;
+  summary: string;
+  deepDiveMarkdown: string;
+  defaultExpanded: boolean;
+  generatedDiagramDsl?: string | null;
+  diagramMetadata?: WikiDiagramMetadata | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface WikiAnchor {
+  sectionId: string;
+  heading: string;
+  anchor: string;
+}
+
+export interface WikiCurrentCounters {
+  stars?: number | null;
+  forks?: number | null;
+  watchers?: number | null;
+  openIssues?: number | null;
+  updatedAt?: string | null;
+}
+
+export interface WikiRightRailOrdering {
+  activityPriority: number;
+  releasesPriority: number;
+  chatPriority: number;
+  visibleSectionIds: string[];
+}
+
+export interface WikiPublishedSnapshot {
   projectExternalId: string;
-  /** Snapshot generation timestamp */
+  fullName?: string;
   generatedAt: string;
-
-  // Core-6 sections (optional - may be missing if data not ready)
-  /** What this project is - purpose, domain, users */
-  what?: WikiSection;
-  /** How it works - key concepts, workflows, usage */
-  how?: WikiSection;
-  /** Architecture and codebase - structure, components, design */
-  architecture?: WikiSection;
-  /** Repository activity - 12-month event history */
-  activity?: WikiSection;
-  /** Releases and tags - timeline with narrative */
-  releases?: WikiSection;
-  /** Chat module payload - repo context for Q&A */
-  chat?: WikiSection;
-
-  // Readiness and hiding controls
-  /** Whether this project meets minimum data quality thresholds */
-  isDataReady: boolean;
-  /** Section names to hide due to incomplete data */
-  hiddenSections?: string[];
-  /** Detailed readiness scoring and gate results */
+  sections: WikiSection[];
+  anchors: WikiAnchor[];
+  hiddenSections: string[];
+  currentCounters?: WikiCurrentCounters | null;
+  rightRail?: WikiRightRailOrdering | null;
   readinessMetadata?: Record<string, unknown>;
 }
 
-/**
- * Section types for type-safe section access.
- */
-export type SectionType = 'what' | 'how' | 'architecture' | 'activity' | 'releases' | 'chat';
+export interface WikiSnapshot extends WikiPublishedSnapshot {
+  // Legacy fields kept optional for existing pages outside /wiki route.
+  what?: Partial<WikiSection>;
+  how?: Partial<WikiSection>;
+  architecture?: Partial<WikiSection>;
+  activity?: Partial<WikiSection>;
+  releases?: Partial<WikiSection>;
+  chat?: Partial<WikiSection>;
+}

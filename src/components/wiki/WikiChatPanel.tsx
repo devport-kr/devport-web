@@ -1,20 +1,14 @@
 /**
- * WikiChatPanel - Chat interface with repo-specific Q&A and optional citations.
+ * WikiChatPanel - Chat interface with repo-specific Q&A.
  * Uses short-lived session memory and handles clarification requests.
  */
 
-import { useState } from 'react';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import apiClient from '../../lib/http/apiClient';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  citations?: Array<{
-    title: string;
-    url: string;
-    excerpt: string;
-  }>;
   needsClarification?: boolean;
 }
 
@@ -22,59 +16,78 @@ interface WikiChatPanelProps {
   projectExternalId: string;
 }
 
+const SUGGESTION_PROMPTS = [
+  '이 프로젝트는 어떤 문제를 해결하나요?',
+  '핵심 아키텍처를 설명해 주세요',
+  '비슷한 프로젝트와 비교하면?',
+  '시작하려면 어떻게 해야 하나요?',
+  '최근 주요 변경 사항이 있나요?',
+  '프로덕션에서 사용해도 될까요?',
+];
+
 export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [showCitations, setShowCitations] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, []);
 
-    const userMessage: ChatMessage = { role: 'user', content: input.trim() };
+  useEffect(() => {
+    autoResize();
+  }, [input, autoResize]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  const sendMessage = async (text?: string) => {
+    const messageText = text ?? input;
+    if (!messageText.trim()) return;
+
+    const currentSessionId = sessionId ?? crypto.randomUUID();
+    if (!sessionId) {
+      setSessionId(currentSessionId);
+    }
+
+    const userMessage: ChatMessage = { role: 'user', content: messageText.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/wiki/projects/${encodeURIComponent(projectExternalId)}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectExternalId,
-          question: userMessage.content,
-          sessionId: sessionId || undefined,
-          includeCitations: showCitations,
-        }),
-      });
+      const response = await apiClient.post(`/api/wiki/projects/${encodeURIComponent(projectExternalId)}/chat`, {
+        question: userMessage.content,
+        sessionId: currentSessionId,
+        includeCitations: false,
+      }, {
+        skipAuthRedirect: true,
+      } as any);
 
-      if (!response.ok) {
-        throw new Error(`Chat request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Update session ID if this is the first message
-      if (!sessionId && data.sessionId) {
-        setSessionId(data.sessionId);
-      }
+      const data = response.data;
 
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: data.answer,
-        citations: data.citations || [],
-        needsClarification: data.needsClarification || false,
+        needsClarification: data.isClarification || false,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
+      const message = (error as any)?.response?.data?.message;
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, there was an error processing your request.',
+          content: message || '요청 처리 중 오류가 발생했습니다.',
         },
       ]);
     } finally {
@@ -90,92 +103,98 @@ export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps)
   };
 
   return (
-    <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
-      {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-surface-border bg-surface-elevated/30 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-text-secondary flex items-center gap-2">
-          <span>💬</span>
-          <span>Ask about this repository</span>
-        </h3>
-        <button
-          onClick={() => setShowCitations(!showCitations)}
-          className="text-2xs text-text-muted hover:text-text-primary transition-colors"
-          title="Toggle citations"
-        >
-          {showCitations ? 'Hide citations' : 'Show citations'}
-        </button>
-      </div>
+    <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-full flex flex-col">
+      {/* Chat Messages / Empty State */}
+      <div className="px-4 py-3 flex-1 min-h-0 overflow-y-auto space-y-3">
+        {messages.length === 0 ? (
+          <div className="flex flex-col h-full">
+            {/* Logo + instruction — upper portion */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center relative">
+              <div
+                className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                style={{
+                  background: 'radial-gradient(ellipse at 50% 40%, #2f81f7 0%, transparent 70%)',
+                }}
+              />
+              <div className="mb-5 opacity-25">
+                <span className="text-5xl font-semibold text-text-muted tracking-tight">
+                  devport<span className="text-accent">.</span>
+                </span>
+              </div>
+              <p className="text-base text-text-muted leading-relaxed">
+                이 프로젝트에 대해 궁금한 점이 있으면
+              </p>
+              <p className="text-base text-text-muted leading-relaxed">
+                무엇이든 질문해 보세요.
+              </p>
+            </div>
 
-      {/* Chat Messages */}
-      <div className="px-4 py-3 max-h-[400px] overflow-y-auto space-y-3">
-        {messages.length === 0 && (
-          <p className="text-xs text-text-muted">Ask a question about this project's architecture, usage, or recent changes.</p>
-        )}
+            {/* Suggestion chips — bottom portion */}
+            <div className="shrink-0 pt-4 pb-1 space-y-2">
+              <p className="text-2xs text-text-muted/50 uppercase tracking-widest font-medium mb-2">추천 질문</p>
+              {SUGGESTION_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => sendMessage(prompt)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg border border-surface-border/60 text-xs text-text-muted hover:text-text-secondary hover:border-accent/30 hover:bg-accent/5 transition-all"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
+                    msg.role === 'user'
+                      ? 'bg-accent/15 text-text-primary'
+                      : 'bg-surface-elevated text-text-secondary'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
 
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
-                msg.role === 'user'
-                  ? 'bg-accent/15 text-text-primary'
-                  : 'bg-surface-elevated text-text-secondary'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-
-              {/* Clarification Notice */}
-              {msg.needsClarification && (
-                <p className="text-2xs text-text-muted mt-2 italic">
-                  Clarification requested - please provide more context.
-                </p>
-              )}
-
-              {/* Citations */}
-              {msg.citations && msg.citations.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  <p className="text-2xs text-text-muted">Sources:</p>
-                  {msg.citations.map((cite, i) => (
-                    <a
-                      key={i}
-                      href={cite.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-2xs text-accent hover:text-accent-light block"
-                    >
-                      {cite.title}
-                    </a>
-                  ))}
+                  {msg.needsClarification && (
+                    <p className="text-2xs text-text-muted mt-2 italic">
+                      더 자세한 내용을 알려주시면 정확하게 답변드릴 수 있어요.
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
+              </div>
+            ))}
 
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-surface-elevated rounded-lg px-3 py-2">
-              <span className="text-xs text-text-muted">Thinking...</span>
-            </div>
-          </div>
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                  <span className="text-xs text-text-muted">생각하는 중...</span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 
       {/* Chat Input */}
-      <div className="px-4 py-3 border-t border-surface-border">
-        <div className="flex gap-2">
-          <input
-            type="text"
+      <div className="px-4 py-3 border-t border-surface-border shrink-0">
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question..."
+            placeholder="질문을 입력하세요..."
             disabled={loading}
-            className="flex-1 bg-surface-elevated/50 border border-surface-border/50 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors"
+            rows={1}
+            className="flex-1 bg-surface-elevated/50 border border-surface-border/50 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors resize-none overflow-hidden"
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
-            className="px-3 py-2 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+            className="px-3 py-2 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium shrink-0"
           >
             Send
           </button>

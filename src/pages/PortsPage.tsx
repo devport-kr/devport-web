@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, ResponsiveContainer,
 } from 'recharts';
 import type {
   Port,
@@ -11,7 +11,6 @@ import type {
   EventType,
   HotRelease,
   PortDetailResponse,
-  StarHistoryPoint,
   ProjectOverview,
   ProjectCommentTreeNode,
 } from '../types';
@@ -21,7 +20,6 @@ import {
   getPortBySlug,
   getProjectById,
   getProjectEvents,
-  getProjectStarHistory,
   getProjectOverview,
   getProjectComments,
 } from '../services/ports/portsService';
@@ -107,7 +105,6 @@ export default function PortsPage() {
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
   const [projectLoading, setProjectLoading] = useState(false);
   const [projectOverview, setProjectOverview] = useState<ProjectOverview | null>(null);
-  const [starHistory, setStarHistory] = useState<StarHistoryPoint[]>([]);
   const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [comments, setComments] = useState<ProjectCommentTreeNode[]>([]);
@@ -162,11 +159,6 @@ export default function PortsPage() {
         .catch(err => console.error('Failed to load project:', err))
         .finally(() => setProjectLoading(false));
 
-      // Load star history
-      getProjectStarHistory(projectId)
-        .then(setStarHistory)
-        .catch(() => setStarHistory([]));
-
       // Load overview
       getProjectOverview(projectId)
         .then(setProjectOverview)
@@ -207,16 +199,23 @@ export default function PortsPage() {
     return projectEvents.filter(e => e.eventTypes.includes(eventFilter));
   }, [projectEvents, eventFilter]);
 
+  // Visible wiki sections from dynamic sections array
+  const visibleWikiSections = useMemo(() => {
+    if (!wikiSnapshot?.sections?.length) return [];
+    const hidden = wikiSnapshot.hiddenSections || [];
+    return wikiSnapshot.sections.filter(s => !hidden.includes(s.sectionId));
+  }, [wikiSnapshot]);
+
   // All TOC sections (wiki + activity + comments)
   const tocSections = useMemo(() => {
     const sections: { id: string; label: string }[] = [];
-    if (wikiSnapshot?.what) sections.push({ id: 'wiki-what', label: '프로젝트 개요' });
-    if (wikiSnapshot?.how) sections.push({ id: 'wiki-how', label: '작동 원리' });
-    if (wikiSnapshot?.architecture) sections.push({ id: 'wiki-architecture', label: '아키텍처' });
+    for (const ws of visibleWikiSections) {
+      sections.push({ id: `wiki-${ws.sectionId}`, label: ws.heading });
+    }
     sections.push({ id: 'activity', label: '활동' });
     sections.push({ id: 'comments', label: '댓글' });
     return sections;
-  }, [wikiSnapshot]);
+  }, [visibleWikiSections]);
 
   // IntersectionObserver for active section
   useEffect(() => {
@@ -287,158 +286,95 @@ export default function PortsPage() {
             ) : (
             <>
             {/* Fixed right sidebar - ALWAYS visible */}
-            <aside className="fixed right-0 top-16 w-[28%] min-w-[340px] max-w-[420px] h-[calc(100vh-4rem)] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-20 scrollbar-hide">
-            <div className="space-y-4">
-              {/* Star history chart */}
-              {starHistory.length > 0 && (
-                <div className="bg-surface-card rounded-xl border border-surface-border p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-text-secondary">Star History</h3>
-                    <span className="text-2xs text-text-muted">
-                      {starHistory[0]?.date} — {starHistory[starHistory.length - 1]?.date}
-                    </span>
-                  </div>
-                  <div className="h-36">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={starHistory.filter(d => d.stars > 0)}>
-                        <defs>
-                          <linearGradient id="starGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.15} />
-                            <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis
-                          dataKey="date"
-                          tick={{ fontSize: 9, fill: '#8b949e' }}
-                          tickFormatter={(v: string) => v.slice(0, 4)}
-                          interval={11}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 9, fill: '#8b949e' }}
-                          tickFormatter={(v: number) => fmt(v)}
-                          axisLine={false}
-                          tickLine={false}
-                          width={32}
-                        />
-                        <Tooltip
-                          contentStyle={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: '8px', fontSize: '11px', color: '#f0f6fc' }}
-                          labelStyle={{ color: '#8b949e' }}
-                          formatter={(value: number) => [value.toLocaleString(), 'Stars']}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="stars"
-                          stroke="#f59e0b"
-                          strokeWidth={1.5}
-                          fill="url(#starGrad)"
-                          dot={false}
-                          activeDot={{ r: 3, fill: '#f59e0b', stroke: '#0f1419', strokeWidth: 2 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-surface-border/50">
-                    <div>
-                      <div className="text-lg font-semibold text-text-primary">{fmt(project.stars)}</div>
-                      <div className="text-2xs text-text-muted">total stars</div>
-                    </div>
-                    {summary?.starsWeekDelta != null && summary.starsWeekDelta > 0 && (
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-emerald-400">+{fmt(summary.starsWeekDelta)}</div>
-                        <div className="text-2xs text-text-muted">this week</div>
-                      </div>
-                    )}
-                  </div>
+            <aside className="fixed right-0 top-16 w-[320px] 2xl:w-[520px] h-[calc(100vh-4rem)] pt-6 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-20">
+              {/* Last release */}
+              {project.lastRelease && (
+                <div className="bg-surface-card rounded-xl border border-surface-border px-4 py-2.5 flex items-center justify-between mb-3 shrink-0">
+                  <span className="text-xs text-text-muted">Last release</span>
+                  <span className="text-xs font-medium text-text-secondary">{ago(project.lastRelease)}</span>
                 </div>
               )}
 
-              {/* Quick stats */}
-              <div className="bg-surface-card rounded-xl border border-surface-border divide-y divide-surface-border">
-                {[
-                  project.contributors != null && { label: 'Contributors', value: String(project.contributors) },
-                  project.forks != null && { label: 'Forks', value: fmt(project.forks) },
-                  summary?.releases30d != null && { label: 'Releases / 30d', value: String(summary.releases30d) },
-                  project.lastRelease && { label: 'Last release', value: ago(project.lastRelease) },
-                ].filter((s): s is { label: string; value: string } => !!s).map(s => (
-                  <div key={s.label} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-text-muted">{s.label}</span>
-                    <span className="text-xs font-medium text-text-secondary">{s.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tags */}
-              {Array.isArray(project.tags) && project.tags.length > 0 && (
-                <div className="bg-surface-card rounded-xl border border-surface-border p-4">
-                  <h3 className="text-xs text-text-muted mb-2">Tags</h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {project.tags.map(t => (
-                      <span key={t} className="text-xs text-text-muted px-2 py-0.5 rounded bg-surface-hover">{t}</span>
-                    ))}
-                  </div>
+              {/* Chat Panel — fills remaining height */}
+              {projectExternalId && (
+                <div className="flex-1 min-h-0">
+                  <WikiChatPanel projectExternalId={projectExternalId} />
                 </div>
               )}
-
-              {/* Chat Panel at bottom */}
-              {projectExternalId && <WikiChatPanel projectExternalId={projectExternalId} />}
-            </div>
           </aside>
 
-          {/* TOC Sidebar - Left side */}
+          {/* TOC Sidebar - Fixed next to global sidebar */}
           {tocSections.length > 0 && (
-            <div
-              className="fixed top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden xl:flex items-center"
-              style={{ left: 'max(13.5rem, calc((100vw - 98rem) / 4 + 13rem))' }}
-            >
-              <div className="w-full px-4">
-                <div className="rounded-2xl border border-surface-border bg-surface-card/80 p-4 shadow-soft">
-                  <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">목차</h3>
-                  <nav className="space-y-2">
-                    {tocSections.map((section) => (
-                      <a
-                        key={section.id}
-                        href={`#${section.id}`}
-                        className={`block text-sm transition-colors ${
-                          activeSection === section.id
-                            ? 'text-accent font-semibold'
-                            : 'text-text-muted hover:text-text-secondary'
-                        }`}
-                      >
+            <div className="fixed left-52 top-16 w-44 h-[calc(100vh-4rem)] z-30 hidden xl:block">
+              <div className="h-full px-3 pt-8">
+                <nav className="max-h-[calc(100vh-8rem)] overflow-y-auto space-y-0.5 border-l border-surface-border/80 pl-3">
+                  {tocSections.map((section) => (
+                    <a
+                      key={section.id}
+                      href={`#${section.id}`}
+                      className={`block py-1.5 pr-1 text-[13px] leading-5 transition-colors ${
+                        activeSection === section.id
+                          ? 'font-medium text-text-primary'
+                          : 'text-text-muted hover:text-text-secondary'
+                      }`}
+                    >
+                      <span className={`inline-block truncate ${activeSection === section.id ? 'border-b border-accent/60 pb-0.5' : ''}`}>
                         {section.label}
-                      </a>
-                    ))}
-                  </nav>
-                </div>
+                      </span>
+                    </a>
+                  ))}
+                </nav>
               </div>
             </div>
           )}
 
-          {/* Main content */}
-          <div className="xl:ml-52 xl:mr-[28%] max-w-3xl mx-auto px-6 py-8">
+          {/* Main content — centered between TOC (left-44 = 176px) and right rail */}
+          <div className="xl:ml-44 xl:mr-[320px] 2xl:mr-[520px] px-6 py-8">
+            <div className="max-w-3xl mx-auto">
             {projectLoading ? (
               <div className="text-center py-12 text-text-muted">Loading project...</div>
             ) : (
               <>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div>
-                    <h1 className="text-xl font-semibold text-text-primary mb-1">{project.fullName}</h1>
-                    <p className="text-sm text-text-muted">{project.description}</p>
-                  </div>
+                <div className="mb-6">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-xl font-semibold text-text-primary mb-1">{project.fullName}</h1>
+                      {Array.isArray(project.tags) && project.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden max-h-10">
+                          {project.tags.slice(0, 12).map((tag) => (
+                            <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
+                          ))}
+                          {project.tags.length > 12 && (
+                            <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
                       <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                       {fmt(project.stars)}
                     </span>
+                    {project.forks != null && (
+                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0 12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
+                        {fmt(project.forks)}
+                      </span>
+                    )}
+                    {project.contributors != null && (
+                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                        {fmt(project.contributors)}
+                      </span>
+                    )}
                     {project.language && (
                       <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
                         <span className="w-2 h-2 rounded-full" style={{ background: project.languageColor }} />
                         {project.language}
                       </span>
                     )}
-                    {project.license && (
+                    {project.license && project.license !== 'NOASSERTION' && (
                       <span className="px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
                         {project.license}
                       </span>
@@ -453,52 +389,33 @@ export default function PortsPage() {
                       GitHub
                     </a>
                   </div>
+                  </div>
+                  <p className="text-sm text-text-muted">{project.description}</p>
                 </div>
 
                 <div className="space-y-12">
                 {/* Wiki Sections */}
                 {wikiLoading ? (
                   <div className="text-center py-12 text-text-muted">Loading wiki...</div>
-                ) : wikiSnapshot ? (
+                ) : visibleWikiSections.length > 0 ? (
                   <>
-                    {/* What Section */}
-                    {wikiSnapshot.what && (
-                      <section id="wiki-what" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                        <h2 className="text-base font-semibold text-text-primary mb-3">📌 프로젝트 개요</h2>
-                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.what.summary}</p>
-                        {wikiSnapshot.what.deepDiveMarkdown && (
+                    {visibleWikiSections.map(ws => (
+                      <section
+                        key={ws.sectionId}
+                        id={`wiki-${ws.sectionId}`}
+                        className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24"
+                      >
+                        <h2 className="text-base font-semibold text-text-primary mb-3">{ws.heading}</h2>
+                        {ws.summary && (
+                          <p className="text-sm text-text-secondary mb-4">{ws.summary}</p>
+                        )}
+                        {ws.deepDiveMarkdown && (
                           <div className="prose prose-sm prose-invert max-w-none">
-                            <ReactMarkdown>{wikiSnapshot.what.deepDiveMarkdown}</ReactMarkdown>
+                            <ReactMarkdown>{ws.deepDiveMarkdown}</ReactMarkdown>
                           </div>
                         )}
                       </section>
-                    )}
-
-                    {/* How Section */}
-                    {wikiSnapshot.how && (
-                      <section id="wiki-how" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                        <h2 className="text-base font-semibold text-text-primary mb-3">⚙️ 작동 원리</h2>
-                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.how.summary}</p>
-                        {wikiSnapshot.how.deepDiveMarkdown && (
-                          <div className="prose prose-sm prose-invert max-w-none">
-                            <ReactMarkdown>{wikiSnapshot.how.deepDiveMarkdown}</ReactMarkdown>
-                          </div>
-                        )}
-                      </section>
-                    )}
-
-                    {/* Architecture Section */}
-                    {wikiSnapshot.architecture && (
-                      <section id="wiki-architecture" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                        <h2 className="text-base font-semibold text-text-primary mb-3">🏗️ 아키텍처</h2>
-                        <p className="text-sm text-text-secondary mb-4">{wikiSnapshot.architecture.summary}</p>
-                        {wikiSnapshot.architecture.deepDiveMarkdown && (
-                          <div className="prose prose-sm prose-invert max-w-none">
-                            <ReactMarkdown>{wikiSnapshot.architecture.deepDiveMarkdown}</ReactMarkdown>
-                          </div>
-                        )}
-                      </section>
-                    )}
+                    ))}
 
                     <div className="text-center py-2">
                       <span className="text-2xs text-text-muted">AI-generated technical documentation · Verify with official sources</span>
@@ -630,6 +547,7 @@ export default function PortsPage() {
                 </div>
               </>
             )}
+            </div>
           </div>
         </>
         )}

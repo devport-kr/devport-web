@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { WikiSnapshot } from '../types/wiki';
+import type { WikiAnchor, WikiPublishedSnapshot, WikiSnapshot } from '../types/wiki';
 import { getDomainBrowseCards, getWikiSnapshot, getVisibleSections } from '../services/wiki/wikiService';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import WikiAnchorRail from '../components/wiki/WikiAnchorRail';
 import WikiContentColumn from '../components/wiki/WikiContentColumn';
 import WikiRightRail from '../components/wiki/WikiRightRail';
+
+function toPublishedWikiSnapshot(snapshot: WikiSnapshot | null): WikiPublishedSnapshot | null {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    projectExternalId: snapshot.projectExternalId,
+    fullName: snapshot.fullName,
+    generatedAt: snapshot.generatedAt,
+    sections: snapshot.sections,
+    anchors: snapshot.anchors,
+    hiddenSections: snapshot.hiddenSections,
+    currentCounters: snapshot.currentCounters,
+    rightRail: snapshot.rightRail,
+    readinessMetadata: snapshot.readinessMetadata,
+  };
+}
 
 // Domain browse card type (minimal structure)
 interface DomainCard {
@@ -29,7 +47,7 @@ export default function WikiPage() {
   const [domainsLoading, setDomainsLoading] = useState(true);
 
   // Wiki snapshot state
-  const [snapshot, setSnapshot] = useState<WikiSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<WikiPublishedSnapshot | null>(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
 
   // Determine current view
@@ -52,7 +70,7 @@ export default function WikiPage() {
     if (projectExternalId) {
       setSnapshotLoading(true);
       getWikiSnapshot(projectExternalId)
-        .then(setSnapshot)
+        .then(response => setSnapshot(toPublishedWikiSnapshot(response)))
         .catch(err => {
           console.error('Failed to load wiki snapshot:', err);
           setSnapshot(null);
@@ -71,8 +89,22 @@ export default function WikiPage() {
   const goProject = (projExternalId: string, domainName: string) => navigate(`/wiki/${domainName}/${projExternalId}`);
   const goDirectory = () => navigate('/wiki');
 
-  // Get visible sections for anchor rail
+  // Get visible dynamic sections and anchors for wiki rails
   const visibleSections = snapshot ? getVisibleSections(snapshot) : [];
+  const visibleAnchors: WikiAnchor[] = snapshot
+    ? (() => {
+        const anchors = snapshot.anchors.filter(anchor =>
+          visibleSections.some(section => section.sectionId === anchor.sectionId)
+        );
+        return anchors.length > 0
+          ? anchors
+          : visibleSections.map(section => ({
+              sectionId: section.sectionId,
+              heading: section.heading,
+              anchor: section.anchor,
+            }));
+      })()
+    : [];
 
   return (
     <div className="min-h-screen bg-glow">
@@ -95,7 +127,7 @@ export default function WikiPage() {
               <>
                 {/* Left Anchor Rail */}
                 <aside className="fixed left-52 top-16 w-48 h-[calc(100vh-4rem)] pt-8 pb-8 px-4 border-r border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-20 scrollbar-hide">
-                  <WikiAnchorRail sections={visibleSections} />
+                  <WikiAnchorRail anchors={visibleAnchors} />
                 </aside>
 
                 {/* Right Activity/Releases/Chat Rail */}
@@ -105,7 +137,7 @@ export default function WikiPage() {
 
                 {/* Center Content Column */}
                 <div className="xl:ml-48 xl:mr-[28%] max-w-4xl mx-auto px-6 py-8">
-                  <WikiContentColumn snapshot={snapshot} visibleSections={visibleSections} />
+                  <WikiContentColumn snapshot={snapshot} sections={visibleSections} />
                 </div>
               </>
             )}

@@ -1,164 +1,226 @@
-/**
- * Integration tests for WikiPage layout and behavior.
- * 
- * Covers:
- * - 3-column layout (left anchor rail, center content, right activity/releases/chat)
- * - Section visibility based on hiddenSections array
- * - Progressive disclosure controls
- * 
- * Note: Requires test framework (Vitest/Jest + @testing-library/react) to run.
- * These tests document expected behavior and serve as regression checks.
- */
-
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import WikiPage from '../WikiPage';
 import type { WikiSnapshot } from '../../types/wiki';
+import * as wikiService from '../../services/wiki/wikiService';
 
-// Mock wiki service
-vi.mock('../../services/wiki/wikiService', () => ({
-  getDomainBrowseCards: vi.fn(() => Promise.resolve([
-    {
-      domain: 'ml-frameworks',
-      projectCount: 5,
-      topProjects: [{ projectExternalId: 'github:test/repo', fullName: 'test/repo', stars: 1000 }]
-    }
-  ])),
-  getWikiSnapshot: vi.fn((projectExternalId: string) => Promise.resolve<WikiSnapshot>({
-    projectExternalId,
-    generatedAt: '2026-02-15T00:00:00Z',
-    isDataReady: true,
-    hiddenSections: [],
-    what: { summary: 'What summary', deepDiveMarkdown: 'What deep' },
-    how: { summary: 'How summary', deepDiveMarkdown: 'How deep' },
-    architecture: { summary: 'Architecture summary', deepDiveMarkdown: 'Arch deep' },
-    activity: { summary: 'Activity summary', deepDiveMarkdown: 'Activity deep' },
-    releases: { summary: 'Releases summary', deepDiveMarkdown: 'Releases deep' }
-  })),
-  getVisibleSections: vi.fn((snapshot: WikiSnapshot) => 
-    ['what', 'how', 'architecture', 'activity', 'releases'].filter(
-      s => !snapshot.hiddenSections.includes(s)
-    )
-  )
+vi.mock('../../components/Navbar', () => ({
+  default: () => <div data-testid="navbar" />,
 }));
 
-describe('WikiPage', () => {
-  it('renders 3-column layout with anchor rail, content, and right rail', async () => {
-    render(
-      <BrowserRouter>
-        <WikiPage />
-      </BrowserRouter>
-    );
+vi.mock('../../components/Sidebar', () => ({
+  default: () => <div data-testid="sidebar" />,
+}));
 
-    // Wait for snapshot to load
-    await screen.findByText(/what summary/i, {}, { timeout: 2000 });
+vi.mock('../../components/wiki/WikiChatPanel', () => ({
+  default: () => <div data-testid="chat-panel" />,
+}));
 
-    // Verify layout structure exists
-    // Left anchor rail (section anchors only)
-    const anchorRail = document.querySelector('.fixed.left-52');
-    expect(anchorRail).toBeTruthy();
+vi.mock('../../services/wiki/wikiService', () => ({
+  getDomainBrowseCards: vi.fn(),
+  getWikiSnapshot: vi.fn(),
+  getVisibleSections: vi.fn((snapshot: WikiSnapshot) =>
+    snapshot.sections.filter(section => !snapshot.hiddenSections.includes(section.sectionId))
+  ),
+}));
 
-    // Right rail (activity/releases/chat modules)
-    const rightRail = document.querySelector('.fixed.right-0');
-    expect(rightRail).toBeTruthy();
+function renderProjectPage() {
+  render(
+    <MemoryRouter initialEntries={['/wiki/web/github%3Atest%2Frepo']}>
+      <Routes>
+        <Route path="/wiki/:domain/:projectExternalId" element={<WikiPage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
 
-    // Center content column
-    const centerContent = document.querySelector('.xl\\:ml-48.xl\\:mr-\\[28\\%\\]');
-    expect(centerContent).toBeTruthy();
-  });
+function renderDirectoryPage() {
+  render(
+    <MemoryRouter initialEntries={['/wiki']}>
+      <Routes>
+        <Route path="/wiki" element={<WikiPage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
 
-  it('hides sections listed in hiddenSections array', async () => {
-    const mockSnapshot: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: ['architecture'],  // Architecture is hidden
-      what: { summary: 'What summary', deepDiveMarkdown: 'What deep' },
-      how: { summary: 'How summary', deepDiveMarkdown: 'How deep' },
-      architecture: null,  // Missing/incomplete
-      activity: { summary: 'Activity summary' },
-      releases: { summary: 'Releases summary' }
-    };
-
-    const { getWikiSnapshot } = await import('../../services/wiki/wikiService');
-    vi.mocked(getWikiSnapshot).mockResolvedValueOnce(mockSnapshot);
-
-    render(
-      <BrowserRouter>
-        <WikiPage />
-      </BrowserRouter>
-    );
-
-    await screen.findByText(/what summary/i);
-
-    // Architecture should not be rendered
-    expect(screen.queryByText(/architecture summary/i)).toBeNull();
-
-    // Other sections should be visible
-    expect(screen.getByText(/what summary/i)).toBeTruthy();
-    expect(screen.getByText(/how summary/i)).toBeTruthy();
-  });
-
-  it('displays activity and release modules in right rail above chat', async () => {
-    render(
-      <BrowserRouter>
-        <WikiPage />
-      </BrowserRouter>
-    );
-
-    await screen.findByText(/repository activity/i, {}, { timeout: 2000 });
-
-    // Verify right rail module ordering
-    const rightRail = screen.getByText(/repository activity/i).closest('aside');
-    expect(rightRail).toBeTruthy();
-
-    // Activity and releases should appear before chat
-    const moduleTitles = Array.from(rightRail?.querySelectorAll('h3') || []).map(h => h.textContent);
-    const activityIndex = moduleTitles.findIndex(t => t?.includes('Activity'));
-    const releasesIndex = moduleTitles.findIndex(t => t?.includes('Releases'));
-
-    expect(activityIndex).toBeGreaterThanOrEqual(0);
-    expect(releasesIndex).toBeGreaterThanOrEqual(0);
-    // Chat is always at bottom (rendered last)
-  });
-
-  it('renders directory view with domain cards when no route params', async () => {
-    render(
-      <BrowserRouter>
-        <WikiPage />
-      </BrowserRouter>
-    );
-
-    await screen.findByText(/code wiki/i);
-    await screen.findByText(/browse open-source projects by domain/i);
-
-    // Domain cards should be visible
-    expect(screen.getByText(/ml-frameworks/i)).toBeTruthy();
-  });
-
-  it('filters domain browse to data-ready projects only', async () => {
-    const { getDomainBrowseCards } = await import('../../services/wiki/wikiService');
-    vi.mocked(getDomainBrowseCards).mockResolvedValueOnce([
+function createPublishedSnapshot(overrides: Partial<WikiSnapshot> = {}): WikiSnapshot {
+  return {
+    projectExternalId: 'github:test/repo',
+    fullName: 'test/repo',
+    generatedAt: '2026-02-16T00:00:00Z',
+    hiddenSections: [],
+    sections: [
       {
-        domain: 'web-frameworks',
-        projectCount: 2,
-        topProjects: [
-          { projectExternalId: 'github:ready/repo', fullName: 'ready/repo', stars: 5000 },
-          // Not-ready projects already filtered by API
-        ]
-      }
-    ]);
+        sectionId: 'what',
+        heading: 'What',
+        anchor: 'what-github-test-repo',
+        summary: 'What summary',
+        deepDiveMarkdown: 'What deep',
+        defaultExpanded: false,
+      },
+      {
+        sectionId: 'activity',
+        heading: 'Repository Activity',
+        anchor: 'activity-github-test-repo',
+        summary: 'Activity summary',
+        deepDiveMarkdown: 'Activity deep',
+        defaultExpanded: false,
+      },
+      {
+        sectionId: 'releases',
+        heading: 'Releases',
+        anchor: 'releases-github-test-repo',
+        summary: 'Release summary',
+        deepDiveMarkdown: 'Release deep',
+        defaultExpanded: false,
+      },
+    ],
+    anchors: [
+      { sectionId: 'what', heading: 'What', anchor: 'what-github-test-repo' },
+      { sectionId: 'activity', heading: 'Repository Activity', anchor: 'activity-github-test-repo' },
+      { sectionId: 'releases', heading: 'Releases', anchor: 'releases-github-test-repo' },
+    ],
+    currentCounters: {
+      stars: 123,
+      forks: 45,
+      watchers: 67,
+      openIssues: 8,
+      updatedAt: '2026-02-16T00:00:00Z',
+    },
+    rightRail: {
+      activityPriority: 1,
+      releasesPriority: 2,
+      chatPriority: 3,
+      visibleSectionIds: ['what', 'activity', 'releases'],
+    },
+    ...overrides,
+  };
+}
 
-    render(
-      <BrowserRouter>
-        <WikiPage />
-      </BrowserRouter>
+describe('WikiPage', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(wikiService.getDomainBrowseCards).mockResolvedValue([
+      {
+        domain: 'web',
+        projectCount: 1,
+        topProjects: [
+          {
+            projectExternalId: 'github:test/repo',
+            fullName: 'test/repo',
+            stars: 1000,
+          },
+        ],
+      },
+    ] as unknown[]);
+  });
+
+  it('renders dynamic sections and generated anchors in project view', async () => {
+    vi.mocked(wikiService.getWikiSnapshot).mockResolvedValue(
+      createPublishedSnapshot({
+        sections: [
+          {
+            sectionId: 'what',
+            heading: '프로젝트 개요',
+            anchor: 'what-github-test-repo',
+            summary: 'What summary',
+            deepDiveMarkdown: 'What deep',
+            defaultExpanded: false,
+          },
+          {
+            sectionId: 'architecture',
+            heading: 'Architecture',
+            anchor: 'architecture-github-test-repo',
+            summary: 'Architecture summary',
+            deepDiveMarkdown: 'Architecture deep',
+            defaultExpanded: false,
+          },
+          {
+            sectionId: 'activity',
+            heading: 'Repository Activity',
+            anchor: 'activity-github-test-repo',
+            summary: 'Activity summary',
+            deepDiveMarkdown: 'Activity deep',
+            defaultExpanded: false,
+          },
+          {
+            sectionId: 'releases',
+            heading: 'Releases',
+            anchor: 'releases-github-test-repo',
+            summary: 'Release summary',
+            deepDiveMarkdown: 'Release deep',
+            defaultExpanded: false,
+          },
+        ],
+        anchors: [
+          { sectionId: 'what', heading: '프로젝트 개요', anchor: 'what-github-test-repo' },
+          { sectionId: 'architecture', heading: 'Architecture', anchor: 'architecture-github-test-repo' },
+        ],
+        rightRail: {
+          activityPriority: 1,
+          releasesPriority: 2,
+          chatPriority: 3,
+          visibleSectionIds: ['what', 'architecture', 'activity', 'releases'],
+        },
+      })
     );
 
-    await screen.findByText(/ready\/repo/i);
+    renderProjectPage();
 
-    // Only data-ready projects should appear
-    expect(screen.getByText(/ready\/repo/i)).toBeTruthy();
+    await screen.findByText('What summary');
+    expect(wikiService.getWikiSnapshot).toHaveBeenCalledWith('github:test/repo');
+    expect(screen.getByRole('button', { name: '프로젝트 개요' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Architecture' })).toBeTruthy();
+    expect(screen.getByText('Architecture summary')).toBeTruthy();
+
+    const railHeadings = Array.from(document.querySelectorAll('.bg-surface-card h3')).map(node =>
+      (node as HTMLElement).textContent ?? ''
+    );
+    const activityIndex = railHeadings.findIndex(text => text.includes('Repository Activity'));
+    const releasesIndex = railHeadings.findIndex(text => text.includes('Recent Releases'));
+    expect(activityIndex).toBeGreaterThanOrEqual(0);
+    expect(releasesIndex).toBeGreaterThan(activityIndex);
+  });
+
+  it('does not render hidden sections in content column', async () => {
+    const visibleOnlyWhat = createPublishedSnapshot().sections.slice(0, 1);
+
+    vi.mocked(wikiService.getVisibleSections).mockReturnValueOnce(visibleOnlyWhat);
+
+    vi.mocked(wikiService.getWikiSnapshot).mockResolvedValue(
+      createPublishedSnapshot({
+        hiddenSections: ['activity', 'releases'],
+        sections: [...visibleOnlyWhat],
+        anchors: [{ sectionId: 'what', heading: 'What', anchor: 'what-anchor' }],
+        rightRail: {
+          activityPriority: 1,
+          releasesPriority: 2,
+          chatPriority: 3,
+          visibleSectionIds: ['what'],
+        },
+      })
+    );
+
+    renderProjectPage();
+
+    await screen.findByText('What summary');
+    expect(screen.queryByText('Architecture summary')).toBeNull();
+    expect(screen.queryByText(/repository activity/i)).toBeNull();
+    expect(screen.queryByText(/recent releases/i)).toBeNull();
+  });
+
+  it('renders directory cards when no project route params', async () => {
+    vi.mocked(wikiService.getWikiSnapshot).mockResolvedValue(null);
+
+    renderDirectoryPage();
+
+    await screen.findByText('Code Wiki');
+    expect(screen.getByText('web')).toBeTruthy();
   });
 });

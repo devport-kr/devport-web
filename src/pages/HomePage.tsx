@@ -32,6 +32,18 @@ export default function HomePage() {
 
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
+  const tickerRef = useRef<HTMLDivElement>(null);
+  const [tickerHidden, setTickerHidden] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!tickerRef.current) return;
+      const rect = tickerRef.current.getBoundingClientRect();
+      setTickerHidden(rect.bottom <= 64); // 64px = navbar height (4rem)
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -200,12 +212,18 @@ export default function HomePage() {
         </div>
 
         {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div className="lg:ml-52 border-b border-surface-border/50">
+        <div ref={tickerRef} className="lg:ml-52 border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        {/* Right Sidebar - Fixed, starts below ticker (aligned with main section) */}
-        <aside className="fixed right-0 top-[8.5rem] w-[28%] min-w-[380px] max-w-[500px] h-[calc(100vh-8.5rem)] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide">
+        {/* Right Sidebar - Fixed, slides up when ticker scrolls away */}
+        <aside
+          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide transition-all duration-300 ease-out"
+          style={{
+            top: tickerHidden ? '4rem' : '8.5rem',
+            height: tickerHidden ? 'calc(100vh - 4rem)' : 'calc(100vh - 8.5rem)',
+          }}
+        >
           <div className="space-y-6">
             <LLMLeaderboard />
             <GitHubLeaderboard
@@ -323,32 +341,19 @@ export default function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-surface-border mt-20">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-0.5 mb-2">
-                <span className="text-lg font-semibold text-text-primary">devport</span>
-                <span className="text-accent text-lg font-semibold">.</span>
-              </div>
-              <p className="text-sm text-text-muted">개발자를 위한 글로벌 트렌드 포털</p>
-            </div>
-
-            {/* Links */}
-            <div className="flex gap-8 text-sm">
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">About</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Privacy</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Terms</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Contact</a>
-            </div>
+      <footer className="pt-16 pb-10 px-8">
+        <div className="max-w-xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-0.5 mb-2">
+            <span className="text-sm font-semibold text-text-muted">devport</span>
+            <span className="text-accent text-sm font-semibold">.</span>
           </div>
-
-          <div className="mt-8 pt-8 border-t border-surface-border">
-            <p className="text-xs text-text-muted text-center">
-              © 2025 devport.kr
-            </p>
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs mb-4">
+            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">About</a>
+            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Privacy</a>
+            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Terms</a>
+            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Contact</a>
           </div>
+          <p className="text-2xs text-text-muted/50">© 2025 devport.kr</p>
         </div>
       </footer>
     </div>

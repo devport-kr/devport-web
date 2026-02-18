@@ -1,38 +1,37 @@
 /**
- * WikiContentColumn - Center column rendering progressive Core-6 sections.
- * Shows summary-first with expandable deep content and architecture diagrams when present.
+ * WikiContentColumn - Center column rendering progressive dynamic wiki sections.
  */
 
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { WikiSnapshot, SectionType } from '../../types/wiki';
+import type { WikiSection, WikiSnapshot } from '../../types/wiki';
 
 interface WikiContentColumnProps {
   snapshot: WikiSnapshot;
-  visibleSections: string[];
+  sections: WikiSection[];
 }
 
-const SECTION_META: Record<string, { title: string; icon: string }> = {
-  what: { title: '프로젝트 개요', icon: '📌' },
-  how: { title: '작동 원리', icon: '⚙️' },
-  architecture: { title: '아키텍처', icon: '🏗️' },
-  activity: { title: '활동 내역', icon: '📊' },
-  releases: { title: '릴리스', icon: '🚀' },
-  chat: { title: '채팅', icon: '💬' },
+const SECTION_ICONS: Record<string, string> = {
+  what: '📌',
+  how: '⚙️',
+  architecture: '🏗️',
+  activity: '📊',
+  releases: '🚀',
+  chat: '💬',
 };
 
-export default function WikiContentColumn({ snapshot, visibleSections }: WikiContentColumnProps) {
+export default function WikiContentColumn({ snapshot, sections }: WikiContentColumnProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(visibleSections.filter(s => snapshot[s as SectionType]?.defaultExpanded))
+    new Set(sections.filter(section => section.defaultExpanded).map(section => section.sectionId))
   );
 
-  const toggleSection = (sectionKey: string) => {
+  const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => {
       const next = new Set(prev);
-      if (next.has(sectionKey)) {
-        next.delete(sectionKey);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
       } else {
-        next.add(sectionKey);
+        next.add(sectionId);
       }
       return next;
     });
@@ -40,25 +39,22 @@ export default function WikiContentColumn({ snapshot, visibleSections }: WikiCon
 
   return (
     <div className="space-y-6">
-      {visibleSections.map(sectionKey => {
-        const section = snapshot[sectionKey as SectionType];
-        if (!section) return null;
-
-        const meta = SECTION_META[sectionKey];
-        const isExpanded = expandedSections.has(sectionKey);
+      {sections.map(section => {
+        const icon = SECTION_ICONS[section.sectionId] || '📄';
+        const isExpanded = expandedSections.has(section.sectionId);
         const hasDiagram = !!section.generatedDiagramDsl;
 
         return (
           <section
-            key={sectionKey}
-            id={`section-${sectionKey}`}
+            key={section.sectionId}
+            id={`section-${section.anchor}`}
             className="bg-surface-card rounded-xl border border-surface-border overflow-hidden"
           >
             {/* Section Header */}
             <div className="px-5 py-3 border-b border-surface-border bg-surface-elevated/30">
               <h2 className="text-sm font-medium text-text-secondary flex items-center gap-2">
-                <span>{meta?.icon}</span>
-                <span>{meta?.title || sectionKey}</span>
+                <span>{icon}</span>
+                <span>{section.heading}</span>
               </h2>
             </div>
 
@@ -83,7 +79,7 @@ export default function WikiContentColumn({ snapshot, visibleSections }: WikiCon
               {section.deepDiveMarkdown && (
                 <div>
                   <button
-                    onClick={() => toggleSection(sectionKey)}
+                    onClick={() => toggleSection(section.sectionId)}
                     className="flex items-center gap-2 text-xs text-accent hover:text-accent-light transition-colors"
                   >
                     <svg

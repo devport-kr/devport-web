@@ -21,6 +21,7 @@ import AdminPage from './pages/AdminPage'
 import SearchResultsPage from './pages/SearchResultsPage'
 import PortsPage from './pages/PortsPage'
 import WikiPage from './pages/WikiPage'
+import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
 createRoot(document.getElementById('root')!).render(
@@ -50,6 +51,14 @@ createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedAdminRoute>
                 <AdminPage />
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route
+            path="/admin/wiki/projects/:projectId/drafts"
+            element={
+              <ProtectedAdminRoute>
+                <WikiDraftsPage />
               </ProtectedAdminRoute>
             }
           />

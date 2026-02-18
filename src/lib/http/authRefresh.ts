@@ -42,7 +42,12 @@ export function registerAuthInterceptors(): void {
   apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
-      const originalRequest = error.config;
+      const originalRequest = error.config as any;
+      const skipAuthRedirect = Boolean(originalRequest?.skipAuthRedirect);
+
+      if (error.response?.status === 401 && skipAuthRedirect) {
+        return Promise.reject(error);
+      }
 
       // If error is 401 and we haven't tried to refresh yet
       if (error.response?.status === 401 && !originalRequest._retry) {
@@ -67,7 +72,9 @@ export function registerAuthInterceptors(): void {
           // No refresh token, redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          if (!skipAuthRedirect) {
+            window.location.href = '/login';
+          }
           return Promise.reject(error);
         }
 
@@ -96,7 +103,9 @@ export function registerAuthInterceptors(): void {
           processQueue(refreshError, null);
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          if (!skipAuthRedirect) {
+            window.location.href = '/login';
+          }
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

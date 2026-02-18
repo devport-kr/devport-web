@@ -1,138 +1,78 @@
-/**
- * Tests for WikiRightRail module ordering.
- * 
- * Covers:
- * - Right rail module order: activity → releases → chat (bottom)
- * - Module visibility based on hiddenSections
- * 
- * Note: Requires test framework (Vitest/Jest + @testing-library/react) to run.
- */
-
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import WikiRightRail from '../WikiRightRail';
 import type { WikiSnapshot } from '../../../types/wiki';
 
+function createSnapshot(hiddenSections: string[] = []): WikiSnapshot {
+  return {
+    projectExternalId: 'github:test/repo',
+    fullName: 'test/repo',
+    generatedAt: '2026-02-16T00:00:00Z',
+    hiddenSections,
+    sections: [
+      {
+        sectionId: 'activity',
+        heading: 'Activity',
+        anchor: 'activity-anchor',
+        summary: 'Activity summary',
+        deepDiveMarkdown: 'Activity detail',
+        defaultExpanded: false,
+      },
+      {
+        sectionId: 'releases',
+        heading: 'Releases',
+        anchor: 'release-anchor',
+        summary: 'Release summary',
+        deepDiveMarkdown: 'Release detail',
+        defaultExpanded: false,
+      },
+    ],
+    anchors: [],
+    currentCounters: {
+      stars: 100,
+      forks: 50,
+      watchers: 25,
+      openIssues: 10,
+      updatedAt: '2026-02-16T00:00:00Z',
+    },
+    rightRail: {
+      activityPriority: 1,
+      releasesPriority: 2,
+      chatPriority: 3,
+      visibleSectionIds: ['activity', 'releases'],
+    },
+  };
+}
+
 describe('WikiRightRail', () => {
-  it('renders activity module, releases module, then chat in correct order', () => {
-    const snapshot: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: [],
-      activity: { summary: 'Activity summary', deepDiveMarkdown: 'Activity detail' },
-      releases: { summary: 'Release summary', deepDiveMarkdown: 'Release detail' },
-      what: { summary: 'What' },
-      how: { summary: 'How' }
-    };
-
-    const { container } = render(
-      <WikiRightRail snapshot={snapshot} projectExternalId="github:test/repo" />
-    );
-
-    // Get all module containers in order
-    const modules = container.querySelectorAll('.bg-surface-card');
-
-    // Verify ordering: activity (index 0), releases (index 1), chat (always last, outside card)
-    expect(modules.length).toBeGreaterThanOrEqual(2);
-
-    const moduleHeadings = Array.from(modules).map(m => m.querySelector('h3')?.textContent);
-
-    // Activity should come first
-    expect(moduleHeadings[0]).toContain('Repository Activity');
-
-    // Releases should come second
-    expect(moduleHeadings[1]).toContain('Recent Releases');
-
-    // Chat panel is rendered after modules (always at bottom)
-    const chatPanel = container.querySelector('div > div:last-child');
-    expect(chatPanel).toBeTruthy();  // Chat is always present
+  afterEach(() => {
+    cleanup();
   });
 
-  it('hides activity module when in hiddenSections', () => {
-    const snapshot: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: ['activity'],  // Activity is hidden
-      activity: { summary: 'Activity summary' },
-      releases: { summary: 'Release summary' },
-      what: { summary: 'What' },
-      how: { summary: 'How' }
-    };
-
-    render(
-      <WikiRightRail snapshot={snapshot} projectExternalId="github:test/repo" />
+  it('renders current counters and keeps activity/releases ordering', () => {
+    const { container } = render(
+      <WikiRightRail snapshot={createSnapshot()} projectExternalId="github:test/repo" />
     );
 
-    // Activity module should not render
+    expect(screen.getByText('Current Repository Signals')).toBeTruthy();
+
+    const moduleHeadings = Array.from(container.querySelectorAll('.bg-surface-card h3')).map(node =>
+      (node as HTMLElement).textContent ?? ''
+    );
+    const activityIndex = moduleHeadings.findIndex(text => text.includes('Repository Activity'));
+    const releasesIndex = moduleHeadings.findIndex(text => text.includes('Recent Releases'));
+
+    expect(activityIndex).toBeGreaterThanOrEqual(0);
+    expect(releasesIndex).toBeGreaterThan(activityIndex);
+  });
+
+  it('hides activity and releases modules by hiddenSections while keeping counters', () => {
+    render(
+      <WikiRightRail snapshot={createSnapshot(['activity', 'releases'])} projectExternalId="github:test/repo" />
+    );
+
+    expect(screen.getByText('Current Repository Signals')).toBeTruthy();
     expect(screen.queryByText(/repository activity/i)).toBeNull();
-
-    // Releases should still render
-    expect(screen.getByText(/recent releases/i)).toBeTruthy();
-  });
-
-  it('hides releases module when in hiddenSections', () => {
-    const snapshot: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: ['releases'],  // Releases is hidden
-      activity: { summary: 'Activity summary' },
-      releases: { summary: 'Release summary' },
-      what: { summary: 'What' },
-      how: { summary: 'How' }
-    };
-
-    render(
-      <WikiRightRail snapshot={snapshot} projectExternalId="github:test/repo" />
-    );
-
-    // Releases module should not render
     expect(screen.queryByText(/recent releases/i)).toBeNull();
-
-    // Activity should still render
-    expect(screen.getByText(/repository activity/i)).toBeTruthy();
-  });
-
-  it('always renders chat panel at bottom regardless of other module visibility', () => {
-    const snapshotAllHidden: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: ['activity', 'releases'],  // Both modules hidden
-      what: { summary: 'What' },
-      how: { summary: 'How' }
-    };
-
-    const { container } = render(
-      <WikiRightRail snapshot={snapshotAllHidden} projectExternalId="github:test/repo" />
-    );
-
-    // Chat should still be rendered even when activity/releases are hidden
-    // (Chat is a separate component, not controlled by hiddenSections)
-    const chatPanel = container.querySelector('[class*="space-y"] > div:last-child');
-    expect(chatPanel).toBeTruthy();
-  });
-
-  it('renders modules with correct summary content', () => {
-    const snapshot: WikiSnapshot = {
-      projectExternalId: 'github:test/repo',
-      generatedAt: '2026-02-15T00:00:00Z',
-      isDataReady: true,
-      hiddenSections: [],
-      activity: { summary: 'Last 30 days: 45 commits, 12 PRs merged' },
-      releases: { summary: 'v2.1.0 released 3 days ago' },
-      what: { summary: 'What' },
-      how: { summary: 'How' }
-    };
-
-    render(
-      <WikiRightRail snapshot={snapshot} projectExternalId="github:test/repo" />
-    );
-
-    // Verify summaries are rendered
-    expect(screen.getByText(/45 commits, 12 PRs merged/i)).toBeTruthy();
-    expect(screen.getByText(/v2\.1\.0 released 3 days ago/i)).toBeTruthy();
   });
 });
