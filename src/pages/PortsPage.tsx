@@ -418,14 +418,6 @@ export default function PortsPage() {
               <>
                 {/* Fixed right sidebar - ALWAYS visible */}
                 <aside className="fixed right-0 top-0 w-[320px] 2xl:w-[520px] h-screen pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-20">
-                  {/* Last release */}
-                  {project?.lastRelease && (
-                    <div className="bg-surface-card rounded-xl border border-surface-border px-4 py-2.5 flex items-center justify-between mb-3 shrink-0">
-                      <span className="text-xs text-text-muted">Last release</span>
-                      <span className="text-xs font-medium text-text-secondary">{ago(project.lastRelease)}</span>
-                    </div>
-                  )}
-
                   {/* Chat Panel — fills remaining height */}
                   {decodedProjectExternalId && (
                     <div className="flex-1 min-h-0">
@@ -576,9 +568,14 @@ export default function PortsPage() {
                             <div className="text-center py-12 text-text-muted">Loading wiki...</div>
                           ) : visibleWikiSections.length > 0 ? (
                             <>
-                              {wikiGeneratedLabel && (
-                                <p className="text-2xs text-text-muted">마지막 위키 생성 시각: {wikiGeneratedLabel}</p>
-                              )}
+                              <div className="flex items-center gap-4 flex-wrap">
+                                {wikiGeneratedLabel && (
+                                  <p className="text-2xs text-text-muted">마지막 위키 업데이트 시각: {wikiGeneratedLabel}</p>
+                                )}
+                                {project?.lastRelease && (
+                                  <p className="text-2xs text-text-muted">최근 릴리즈: {ago(project.lastRelease)}</p>
+                                )}
+                              </div>
 
                               {visibleWikiSections.map((ws) => (
                                 <section
