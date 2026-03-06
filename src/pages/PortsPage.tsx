@@ -1,27 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
+import { PortfolioPage } from '../components/ui/starfall-portfolio-landing';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  AreaChart, Area, ResponsiveContainer,
-} from 'recharts';
 import type {
-  Port,
-  ProjectSummary,
   ProjectDetail,
   ProjectEvent,
   EventType,
-  PortDetailResponse,
   ProjectCommentTreeNode,
 } from '../types';
 import type { WikiSnapshot } from '../types/wiki';
+import type { WikiProjectSummary } from '../services/wiki/wikiService';
 import {
-  getPorts,
-  getPortBySlug,
   getProjectById,
   getProjectEvents,
   getProjectComments,
 } from '../services/ports/portsService';
-import { getWikiSnapshot } from '../services/wiki/wikiService';
-import Navbar from '../components/Navbar';
+import { getWikiSnapshot, getWikiProjects } from '../services/wiki/wikiService';
+
 import Sidebar from '../components/Sidebar';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
@@ -30,12 +24,12 @@ import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiM
 // ─── Helpers ─────────────────────────────────────────────────
 
 const EVENT_TYPE: Record<EventType, { label: string; cls: string; dot: string }> = {
-  FEATURE:  { label: 'Feature',  cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: '#22c55e' },
-  FIX:      { label: 'Fix',      cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20',         dot: '#3b82f6' },
-  SECURITY: { label: 'Security', cls: 'bg-red-500/10 text-red-400 border-red-500/20',            dot: '#ef4444' },
-  BREAKING: { label: 'Breaking', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20',   dot: '#f97316' },
-  PERF:     { label: 'Perf',     cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',         dot: '#06b6d4' },
-  MISC:     { label: 'Misc',     cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20',         dot: '#6b7280' },
+  FEATURE: { label: 'Feature', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: '#22c55e' },
+  FIX: { label: 'Fix', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20', dot: '#3b82f6' },
+  SECURITY: { label: 'Security', cls: 'bg-red-500/10 text-red-400 border-red-500/20', dot: '#ef4444' },
+  BREAKING: { label: 'Breaking', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20', dot: '#f97316' },
+  PERF: { label: 'Perf', cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', dot: '#06b6d4' },
+  MISC: { label: 'Misc', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20', dot: '#6b7280' },
 };
 
 interface TocSubsection {
@@ -107,21 +101,22 @@ function buildCommentTree(comments: any[]): ProjectCommentTreeNode[] {
   return roots;
 }
 
-// ─── Views ───────────────────────────────────────────────────
+const ACCENT_COLOR = '#6366f1'; // default indigo accent for events dot
+
+// ─── Page ───────────────────────────────────────────────────
 
 export default function PortsPage() {
-  const { portNumber, projectExternalId } = useParams<{ portNumber?: string; projectExternalId?: string }>();
+  // Use the wildcard `*` segment to capture fullName paths like "owner/repo"
+  const params = useParams<{ '*': string }>();
+  const fullNameFromUrl = params['*'] || '';
   const navigate = useNavigate();
   const [eventFilter, setEventFilter] = useState<EventType | 'all'>('all');
   const [activeSection, setActiveSection] = useState('wiki-what');
 
   // Directory data
-  const [ports, setPorts] = useState<Port[]>([]);
-  const [portsLoading, setPortsLoading] = useState(true);
-
-  // Port detail data
-  const [portDetail, setPortDetail] = useState<PortDetailResponse | null>(null);
-  const [portLoading, setPortLoading] = useState(false);
+  const [wikiProjects, setWikiProjects] = useState<WikiProjectSummary[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Project detail data
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
@@ -137,80 +132,76 @@ export default function PortsPage() {
   const [expandedTocSections, setExpandedTocSections] = useState<Set<string>>(new Set());
   const [tocSections, setTocSections] = useState<TocSectionItem[]>([]);
 
-  // Determine current view from URL params
-  const viewType = projectExternalId ? 'project' : portNumber ? 'port' : 'directory';
+  const viewType = fullNameFromUrl ? 'project' : 'directory';
 
-  // Load ports directory (always load for mapping port number to slug)
+  // Load flat project list for directory view
   useEffect(() => {
-    setPortsLoading(true);
-    getPorts()
-      .then(setPorts)
-      .catch(err => console.error('Failed to load ports:', err))
-      .finally(() => setPortsLoading(false));
-  }, []);
+    if (viewType !== 'directory') return;
+    setProjectsLoading(true);
+    getWikiProjects()
+      .then(res => setWikiProjects(res.projects))
+      .catch(() => setWikiProjects([]))
+      .finally(() => setProjectsLoading(false));
+  }, [viewType]);
 
-  // Find port by port number and load port detail
-  const currentPort = ports.find(p => p.portNumber === Number(portNumber));
-
-  useEffect(() => {
-    if (currentPort) {
-      setPortLoading(true);
-      getPortBySlug(currentPort.slug)
-        .then(setPortDetail)
-        .catch(err => console.error('Failed to load port:', err))
-        .finally(() => setPortLoading(false));
+  // The wildcard param holds the URL-encoded externalId (e.g. "github%3A12345").
+  // Decode it to get the raw externalId ("github:12345") used by the backend.
+  const decodedProjectExternalId = useMemo(() => {
+    if (!fullNameFromUrl) return undefined;
+    try {
+      return decodeURIComponent(fullNameFromUrl);
+    } catch {
+      return fullNameFromUrl;
     }
-  }, [currentPort]);
+  }, [fullNameFromUrl]);
 
-  // Find matched project summary from port detail
-  const matchedSummary: ProjectSummary | undefined = useMemo(() => {
-    if (viewType !== 'project' || !projectExternalId || !portDetail) return undefined;
-    return portDetail.projects.find(
-      p => p.id === projectExternalId || p.name === projectExternalId
+  // Load project, events, comments, wiki by external ID
+  useEffect(() => {
+    if (viewType !== 'project' || !decodedProjectExternalId) return;
+
+    // We need the numeric project ID for events/comments — try matching from directory
+    // For project details we use the external ID directly via the wiki-snapshot
+    setProjectLoading(true);
+    // Try to load project detail using the externalId as the path param
+    getProjectById(decodedProjectExternalId)
+      .then(setProjectData)
+      .catch(() => setProjectData(null))
+      .finally(() => setProjectLoading(false));
+
+    setEventsLoading(true);
+    getProjectEvents(decodedProjectExternalId, undefined, 0, 50)
+      .then(eventsResp => {
+        const events = Array.isArray(eventsResp) ? eventsResp : eventsResp.content;
+        setProjectEvents(events || []);
+      })
+      .catch(() => setProjectEvents([]))
+      .finally(() => setEventsLoading(false));
+
+    setCommentsLoading(true);
+    getProjectComments(decodedProjectExternalId)
+      .then(commentsData => setComments(buildCommentTree(commentsData)))
+      .catch(() => setComments([]))
+      .finally(() => setCommentsLoading(false));
+
+    setWikiLoading(true);
+    getWikiSnapshot(decodedProjectExternalId)
+      .then(wiki => setWikiSnapshot(wiki))
+      .catch(err => {
+        console.error('Failed to load wiki:', err);
+        setWikiSnapshot(null);
+      })
+      .finally(() => setWikiLoading(false));
+  }, [viewType, decodedProjectExternalId]);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return wikiProjects;
+    const q = searchQuery.toLowerCase();
+    return wikiProjects.filter(p =>
+      p.fullName.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.language?.toLowerCase().includes(q)
     );
-  }, [viewType, projectExternalId, portDetail]);
-
-  // Load project detail by external_id
-  useEffect(() => {
-    if (viewType === 'project' && matchedSummary) {
-      const projectId = matchedSummary.id;
-
-      // Load project detail
-      setProjectLoading(true);
-      getProjectById(projectId)
-        .then(setProjectData)
-        .catch(err => console.error('Failed to load project:', err))
-        .finally(() => setProjectLoading(false));
-
-      // Load events
-      setEventsLoading(true);
-      getProjectEvents(projectId, undefined, 0, 50)
-        .then(eventsResp => {
-          // Handle both paginated { content: [...] } and direct array response
-          const events = Array.isArray(eventsResp) ? eventsResp : eventsResp.content;
-          setProjectEvents(events || []);
-        })
-        .catch(() => setProjectEvents([]))
-        .finally(() => setEventsLoading(false));
-
-      // Load comments
-      setCommentsLoading(true);
-      getProjectComments(projectId)
-        .then(commentsData => setComments(buildCommentTree(commentsData)))
-        .catch(() => setComments([]))
-        .finally(() => setCommentsLoading(false));
-
-      // Load wiki snapshot
-      setWikiLoading(true);
-      getWikiSnapshot(projectExternalId!)
-        .then(wiki => setWikiSnapshot(wiki))
-        .catch(err => {
-          console.error('Failed to load wiki:', err);
-          setWikiSnapshot(null);
-        })
-        .finally(() => setWikiLoading(false));
-    }
-  }, [viewType, matchedSummary, projectExternalId]);
+  }, [wikiProjects, searchQuery]);
 
   const filteredEvents = useMemo(() => {
     if (eventFilter === 'all') return projectEvents;
@@ -231,8 +222,10 @@ export default function PortsPage() {
 
   // All TOC sections (wiki + activity + comments)
   useEffect(() => {
+    let timeoutId: number;
+    let rafId: number;
+
     const buildSections = () => {
-      setExpandedTocSections(new Set());
       const sections: TocSectionItem[] = [];
 
       for (const ws of visibleWikiSections) {
@@ -268,15 +261,22 @@ export default function PortsPage() {
 
       sections.push({ id: 'activity', label: '활동' });
       sections.push({ id: 'comments', label: '댓글' });
-      setTocSections(sections);
+
+      // Update TOC sections only if they actually changed (basic comparison)
+      setTocSections(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(sections)) return prev;
+        return sections;
+      });
     };
 
-    const raf = requestAnimationFrame(buildSections);
-    const fallback = window.setTimeout(buildSections, 250);
+    // Use a small delay to ensure DOM is ready after wiki content render
+    timeoutId = window.setTimeout(() => {
+      rafId = requestAnimationFrame(buildSections);
+    }, 100);
 
     return () => {
-      cancelAnimationFrame(raf);
-      window.clearTimeout(fallback);
+      window.clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [visibleWikiSections]);
 
@@ -310,21 +310,12 @@ export default function PortsPage() {
     if (!target) return;
 
     const destination = Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - 88);
-    const currentScrollY = window.pageYOffset;
 
     window.scrollTo({
       top: destination,
       behavior: 'smooth',
     });
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${anchorId}`);
-    setTimeout(() => {
-      if (Math.abs(window.pageYOffset - destination) <= 2) return;
-      if (Math.abs(window.pageYOffset - currentScrollY) <= 2) return;
-      window.scrollTo({
-        top: destination,
-        behavior: 'smooth',
-      });
-    }, 220);
   };
 
   useEffect(() => {
@@ -332,19 +323,14 @@ export default function PortsPage() {
       (section.children || []).some((child) => child.id === activeSection)
     );
     if (activeParent) {
-      setExpandedTocSections((prev) => {
-        if (prev.has(activeParent.id)) return prev;
-        const next = new Set(prev);
-        next.add(activeParent.id);
-        return next;
-      });
+      expandTocSection(activeParent.id);
     }
   }, [activeSection, tocSections]);
 
   // IntersectionObserver for active section
   useEffect(() => {
-    if (tocSections.length === 0) return;
-    
+    if (tocAnchorIds.length === 0) return;
+
     const elements = tocAnchorIds
       .map((id) => document.getElementById(id))
       .filter((element): element is HTMLElement => Boolean(element));
@@ -353,599 +339,486 @@ export default function PortsPage() {
 
     const observer = new IntersectionObserver(
       (entries) => {
+        // Find the topmost visible element
         const visible = entries.filter((entry) => entry.isIntersecting);
         if (visible.length === 0) return;
-        const topEntry = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        setActiveSection(topEntry.target.id);
+
+        // Pick the one closest to the top of the viewport
+        const topEntry = visible.reduce((prev, curr) => {
+          return (Math.abs(curr.boundingClientRect.top) < Math.abs(prev.boundingClientRect.top)) ? curr : prev;
+        });
+
+        if (topEntry.target.id !== activeSection) {
+          setActiveSection(topEntry.target.id);
+        }
       },
-      { rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.25, 0.6] }
+      { rootMargin: '-10% 0px -70% 0px', threshold: 0 }
     );
 
     elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, [tocAnchorIds]);
+  }, [tocAnchorIds, activeSection]);
 
-  const goPort = (portNum: number) => {
-    navigate(`/ports/${portNum}`);
-    setEventFilter('all');
-  };
 
-  const goProject = (proj: ProjectSummary, portNum: number) => {
-    navigate(`/ports/${portNum}/${proj.id}`);
+  const goProject = (externalId: string) => {
+    // Encode the full externalId (e.g. github:12345 → github%3A12345).
+    // No slash in numeric IDs, so the wildcard route captures it cleanly.
+    navigate(`/ports/${encodeURIComponent(externalId)}`);
     setEventFilter('all');
   };
 
   // ─── Render ────────────────────────────────────────────────
 
-  const port = portDetail?.port || null;
   const project = projectData;
-  const portProjects = portDetail?.projects || [];
-  const hotReleases = portDetail?.hotReleases || [];
   const isWikiStylePage = viewType === 'project';
   const sidebarOffsetClass = isWikiStylePage ? 'w-14' : 'w-52';
   const anchorOffsetClass = isWikiStylePage ? 'left-14' : 'left-52';
 
-  // Find port for current project (fallback to currentPort from URL)
-  const projectPort = currentPort || null;
-
   return (
     <div className="min-h-screen bg-glow">
-      <Navbar />
-
       <div className="min-h-[calc(100vh-4rem)]">
         {/* Left Sidebar - Fixed */}
         <div
-          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 hidden lg:block ${sidebarOffsetClass}`}
+          className={`fixed left-0 top-0 h-screen z-40 hidden lg:block ${sidebarOffsetClass}`}
         >
           <Sidebar compact={isWikiStylePage} />
         </div>
 
         {/* ─── PROJECT DETAIL ── */}
         {viewType === 'project' && (
-          <div className={`${isWikiStylePage ? 'lg:ml-14' : 'lg:ml-52'} min-h-[calc(100vh-4rem)]`}>
-            {(!project || !projectPort || projectLoading || portLoading) ? (
+          <div className={`${isWikiStylePage ? 'lg:ml-14' : 'lg:ml-52'} min-h-screen`}>
+            {(projectLoading) ? (
               <div className="flex items-center justify-center py-24 text-text-muted">Loading project...</div>
             ) : (
-            <>
-            {/* Fixed right sidebar - ALWAYS visible */}
-            <aside className="fixed right-0 top-16 w-[320px] 2xl:w-[520px] h-[calc(100vh-4rem)] pt-6 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-20">
-              {/* Last release */}
-              {project.lastRelease && (
-                <div className="bg-surface-card rounded-xl border border-surface-border px-4 py-2.5 flex items-center justify-between mb-3 shrink-0">
-                  <span className="text-xs text-text-muted">Last release</span>
-                  <span className="text-xs font-medium text-text-secondary">{ago(project.lastRelease)}</span>
-                </div>
-              )}
-
-              {/* Chat Panel — fills remaining height */}
-              {projectExternalId && (
-                <div className="flex-1 min-h-0">
-                  <WikiChatPanel projectExternalId={projectExternalId} />
-                </div>
-              )}
-          </aside>
-
-          {/* TOC Sidebar - Fixed next to global sidebar */}
-          {tocSections.length > 0 && (
-            <div
-              className={`fixed ${anchorOffsetClass} top-16 w-56 h-[calc(100vh-4rem)] z-30 hidden xl:block`}
-            >
-              <div className="h-full pl-4 pr-3 pt-8">
-                <nav className="space-y-0.5 border-l border-surface-border/80 pl-3 pr-1 text-left">
-                  {tocSections.map((section) => (
-                    <div key={section.id}>
-                      {(() => {
-                        const isActiveSection =
-                          activeSection === section.id || (section.children || []).some((child) => child.id === activeSection);
-
-                          return (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setActiveSection(section.id);
-                                if (section.children?.length) {
-                                  expandTocSection(section.id);
-                                }
-                                scrollToTocAnchor(section.id);
-                              }}
-                              className={`group relative block rounded-sm px-2 py-1.5 transition-colors ${
-                                isActiveSection
-                                  ? 'font-medium text-text-primary bg-surface-elevated/45'
-                                  : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated/20'
-                              }`}
-                            >
-                            <span
-                              className={`absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-full transition-colors ${
-                                isActiveSection ? 'bg-accent/80' : 'bg-transparent group-hover:bg-surface-border'
-                              }`}
-                            />
-                            <span className="block w-full text-left break-words text-[13px] leading-5">
-                              {section.label}
-                            </span>
-                          </button>
-                        );
-                      })()}
-
-                      {section.children && section.children.length > 0 && expandedTocSections.has(section.id) && (
-                        <div className="mt-0.5">
-                          {section.children.map((child) => (
-                            <button
-                              key={child.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setActiveSection(child.id);
-                                expandTocSection(section.id);
-                                scrollToTocAnchor(child.id);
-                              }}
-                              className={`group relative block rounded-sm px-2 py-1 transition-colors ${
-                                activeSection === child.id
-                                  ? 'font-medium text-text-primary bg-surface-elevated/45'
-                                  : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated/20'
-                              }`}
-                              style={{
-                                paddingLeft:
-                                  child.level === 2
-                                    ? '1.1rem'
-                                    : child.level === 3
-                                      ? '1.5rem'
-                                      : child.level === 4
-                                        ? '1.9rem'
-                                        : child.level >= 5
-                                          ? '2.3rem'
-                                          : '1.1rem',
-                              }}
-                            >
-                              <span
-                                className={`absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-full transition-colors ${
-                                  activeSection === child.id ? 'bg-accent/80' : 'bg-transparent group-hover:bg-surface-border'
-                                }`}
-                              />
-                              <span className="block w-full text-left break-words text-[12px] leading-5">
-                                {child.label}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </nav>
-              </div>
-            </div>
-          )}
-
-          {/* Main content — centered between TOC and right rail */}
-          <div className="xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-6 py-8">
-            <div className="max-w-3xl mx-auto">
-            {projectLoading ? (
-              <div className="text-center py-12 text-text-muted">Loading project...</div>
-            ) : (
               <>
-                {/* Header */}
-                <div className="mb-6">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="min-w-0 flex-1">
-                      <h1 className="text-xl font-semibold text-text-primary mb-1">{project.fullName}</h1>
-                      {Array.isArray(project.tags) && project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden max-h-10">
-                          {project.tags.slice(0, 12).map((tag) => (
-                            <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
-                          ))}
-                          {project.tags.length > 12 && (
-                            <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
-                          )}
-                        </div>
-                      )}
+                {/* Fixed right sidebar - ALWAYS visible */}
+                <aside className="fixed right-0 top-0 w-[320px] 2xl:w-[520px] h-screen pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-20">
+                  {/* Last release */}
+                  {project?.lastRelease && (
+                    <div className="bg-surface-card rounded-xl border border-surface-border px-4 py-2.5 flex items-center justify-between mb-3 shrink-0">
+                      <span className="text-xs text-text-muted">Last release</span>
+                      <span className="text-xs font-medium text-text-secondary">{ago(project.lastRelease)}</span>
                     </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
-                      <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      {fmt(project.stars)}
-                    </span>
-                    {project.forks != null && (
-                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0 12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
-                        {fmt(project.forks)}
-                      </span>
-                    )}
-                    {project.contributors != null && (
-                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                        {fmt(project.contributors)}
-                      </span>
-                    )}
-                    {project.language && (
-                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
-                        <span className="w-2 h-2 rounded-full" style={{ background: project.languageColor }} />
-                        {project.language}
-                      </span>
-                    )}
-                    {project.license && project.license !== 'NOASSERTION' && (
-                      <span className="px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted">
-                        {project.license}
-                      </span>
-                    )}
-                    <a
-                      href={project.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surface-border text-xs text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                      GitHub
-                    </a>
-                  </div>
-                  </div>
-                  <p className="text-sm text-text-muted">{project.description}</p>
-                </div>
+                  )}
 
-                <div className="space-y-12">
-                {/* Wiki Sections */}
-                {wikiLoading ? (
-                  <div className="text-center py-12 text-text-muted">Loading wiki...</div>
-                ) : visibleWikiSections.length > 0 ? (
-                  <>
-                    {wikiGeneratedLabel && (
-                      <p className="text-2xs text-text-muted">마지막 위키 생성 시각: {wikiGeneratedLabel}</p>
-                    )}
+                  {/* Chat Panel — fills remaining height */}
+                  {decodedProjectExternalId && (
+                    <div className="flex-1 min-h-0">
+                      <WikiChatPanel projectExternalId={decodedProjectExternalId} />
+                    </div>
+                  )}
+                </aside>
 
-                    {visibleWikiSections.map((ws) => (
-                      <section
-                        key={ws.sectionId}
-                        id={`wiki-${ws.sectionId}`}
-                        className="scroll-mt-24 pb-12 border-b border-surface-border/50 last:border-b-0 last:pb-0"
-                      >
-                        <div className="space-y-6">
-                          {ws.summary && (
-                            <WikiMarkdownRenderer
-                              content={ws.summary}
-                              className="wiki-markdown--summary"
-                              headingIdPrefix={`wiki-${ws.sectionId}-summary-`}
-                            />
-                          )}
-                          {ws.generatedDiagramDsl && (
-                            <MermaidCodeBlock source={ws.generatedDiagramDsl || ''} />
-                          )}
-                          {ws.deepDiveMarkdown && (
-                            <WikiMarkdownRenderer
-                              content={ws.deepDiveMarkdown}
-                              headingIdPrefix={`wiki-${ws.sectionId}-deepdive-`}
-                            />
-                          )}
-                        </div>
-                      </section>
-                    ))}
-                  </>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-surface-border bg-surface-card/70 p-8 text-center text-sm text-text-muted">
-                    이 프로젝트의 위키 문서는 아직 준비되지 않았습니다.
+                {/* TOC Sidebar - Fixed next to global sidebar */}
+                {tocSections.length > 0 && (
+                  <div
+                    className={`fixed ${anchorOffsetClass} top-0 w-56 h-screen z-30 hidden xl:block`}
+                  >
+                    <div className="h-full pl-4 pr-3 pt-12">
+                      <nav className="space-y-0.5 border-l border-surface-border/80 pl-3 pr-1 text-left">
+                        {tocSections.map((section) => (
+                          <div key={section.id}>
+                            {(() => {
+                              const isActiveSection =
+                                activeSection === section.id || (section.children || []).some((child) => child.id === activeSection);
+
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setActiveSection(section.id);
+                                    if (section.children?.length) {
+                                      expandTocSection(section.id);
+                                    }
+                                    scrollToTocAnchor(section.id);
+                                  }}
+                                  className={`group relative block rounded-sm px-2 py-1.5 transition-colors ${isActiveSection
+                                    ? 'font-medium text-text-primary bg-surface-elevated/45'
+                                    : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated/20'
+                                    }`}
+                                >
+                                  <span
+                                    className={`absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-full transition-colors ${isActiveSection ? 'bg-accent/80' : 'bg-transparent group-hover:bg-surface-border'
+                                      }`}
+                                  />
+                                  <span className="block w-full text-left break-words text-[13px] leading-5">
+                                    {section.label}
+                                  </span>
+                                </button>
+                              );
+                            })()}
+
+                            {section.children && section.children.length > 0 && expandedTocSections.has(section.id) && (
+                              <div className="mt-0.5">
+                                {section.children.map((child) => (
+                                  <button
+                                    key={child.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setActiveSection(child.id);
+                                      expandTocSection(section.id);
+                                      scrollToTocAnchor(child.id);
+                                    }}
+                                    className={`group relative block rounded-sm px-2 py-1 transition-colors ${activeSection === child.id
+                                      ? 'font-medium text-text-primary bg-surface-elevated/45'
+                                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated/20'
+                                      }`}
+                                    style={{
+                                      paddingLeft:
+                                        child.level === 2
+                                          ? '1.1rem'
+                                          : child.level === 3
+                                            ? '1.5rem'
+                                            : child.level === 4
+                                              ? '1.9rem'
+                                              : child.level >= 5
+                                                ? '2.3rem'
+                                                : '1.1rem',
+                                    }}
+                                  >
+                                    <span
+                                      className={`absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-full transition-colors ${activeSection === child.id ? 'bg-accent/80' : 'bg-transparent group-hover:bg-surface-border'
+                                        }`}
+                                    />
+                                    <span className="block w-full text-left break-words text-[12px] leading-5">
+                                      {child.label}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </nav>
+                    </div>
                   </div>
                 )}
 
-                {/* Activity Section - GitHub Events */}
-                <section id="activity" className="bg-surface-card rounded-xl border border-surface-border p-5 scroll-mt-24">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-medium text-text-secondary">릴리스</h2>
-                    <div className="flex gap-0.5 bg-surface-elevated rounded-lg p-0.5">
-                      <button
-                        onClick={() => setEventFilter('all')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${eventFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
-                      >
-                        All
-                      </button>
-                      {(Object.keys(EVENT_TYPE) as EventType[]).map(t => (
-                        <button
-                          key={t}
-                          onClick={() => setEventFilter(t)}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${eventFilter === t ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
-                        >
-                          {EVENT_TYPE[t].label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {eventsLoading ? (
-                    <div className="text-center py-8 text-text-muted text-sm">Loading releases...</div>
-                  ) : filteredEvents.length === 0 ? (
-                    <div className="text-center py-8 text-text-muted text-sm">No releases found</div>
-                  ) : (
-                    <div className="relative pl-5">
-                      <div className="absolute left-[3px] top-1 bottom-1 w-px bg-surface-border" />
-
-                      {filteredEvents.map((ev) => {
-                        const types = ev.eventTypes || [];
-                        const dotColor = types.includes('SECURITY') ? EVENT_TYPE.SECURITY.dot
-                          : types.includes('BREAKING') ? EVENT_TYPE.BREAKING.dot
-                          : projectPort.accentColor;
-
-                        return (
-                          <div key={ev.id} className="relative pb-6 last:pb-0">
-                            <div className="absolute -left-5 top-1 w-[7px] h-[7px] rounded-full border-2" style={{ borderColor: dotColor, background: '#0f1419' }}>
-                              <div className="absolute inset-[1px] rounded-full" style={{ background: dotColor }} />
+                {/* Main content — centered between TOC and right rail */}
+                <div className="xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-6 py-12">
+                  <div className="max-w-3xl mx-auto">
+                    {projectLoading ? (
+                      <div className="text-center py-12 text-text-muted">Loading project...</div>
+                    ) : (
+                      <>
+                        {/* Header */}
+                        {project && (
+                          <div className="mb-10">
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                              <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl font-semibold text-text-primary mb-2">{project.fullName}</h1>
+                                {Array.isArray(project.tags) && project.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden">
+                                    {project.tags.slice(0, 12).map((tag) => (
+                                      <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
+                                    ))}
+                                    {project.tags.length > 12 && (
+                                      <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border text-xs text-text-muted">
+                                  <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                  {fmt(project.stars)}
+                                </span>
+                                <a
+                                  href={project.repoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border text-xs text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+                                  GitHub
+                                </a>
+                              </div>
                             </div>
+                            <p className="text-base text-text-muted leading-relaxed">{project.description}</p>
+                          </div>
+                        )}
 
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <span className="font-mono text-xs font-semibold text-text-primary">{ev.version}</span>
-                              <span className="text-2xs text-text-muted">{ev.releasedAt?.split('T')[0]}</span>
-                              <div className="flex gap-1 ml-auto">
-                                {(ev.eventTypes || []).map(t => EVENT_TYPE[t] && (
-                                  <span key={t} className={`text-2xs px-1.5 py-0.5 rounded border ${EVENT_TYPE[t].cls}`}>
+                        <div className="space-y-16">
+                          {/* Wiki Sections */}
+                          {wikiLoading ? (
+                            <div className="text-center py-12 text-text-muted">Loading wiki...</div>
+                          ) : visibleWikiSections.length > 0 ? (
+                            <>
+                              {wikiGeneratedLabel && (
+                                <p className="text-2xs text-text-muted">마지막 위키 생성 시각: {wikiGeneratedLabel}</p>
+                              )}
+
+                              {visibleWikiSections.map((ws) => (
+                                <section
+                                  key={ws.sectionId}
+                                  id={`wiki-${ws.sectionId}`}
+                                  className="scroll-mt-24 pb-12 border-b border-surface-border/50 last:border-b-0 last:pb-0"
+                                >
+                                  <div className="space-y-6">
+                                    {ws.summary && (
+                                      <WikiMarkdownRenderer
+                                        content={ws.summary}
+                                        className="wiki-markdown--summary"
+                                        headingIdPrefix={`wiki-${ws.sectionId}-summary-`}
+                                      />
+                                    )}
+                                    {ws.generatedDiagramDsl && (
+                                      <MermaidCodeBlock source={ws.generatedDiagramDsl || ''} />
+                                    )}
+                                    {ws.deepDiveMarkdown && (
+                                      <WikiMarkdownRenderer
+                                        content={ws.deepDiveMarkdown}
+                                        headingIdPrefix={`wiki-${ws.sectionId}-deepdive-`}
+                                      />
+                                    )}
+                                  </div>
+                                </section>
+                              ))}
+                            </>
+                          ) : (
+                            <div className="rounded-xl border border-dashed border-surface-border bg-surface-card/70 p-8 text-center text-sm text-text-muted">
+                              이 프로젝트의 위키 문서는 아직 준비되지 않았습니다.
+                            </div>
+                          )}
+
+                          {/* Activity Section - GitHub Events */}
+                          <section id="activity" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
+                            <div className="flex items-center justify-between mb-6">
+                              <h2 className="text-sm font-medium text-text-secondary uppercase tracking-widest">릴리스</h2>
+                              <div className="flex gap-0.5 bg-surface-elevated rounded-lg p-0.5">
+                                <button
+                                  onClick={() => setEventFilter('all')}
+                                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${eventFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
+                                >
+                                  All
+                                </button>
+                                {(Object.keys(EVENT_TYPE) as EventType[]).map(t => (
+                                  <button
+                                    key={t}
+                                    onClick={() => setEventFilter(t)}
+                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${eventFilter === t ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
+                                  >
                                     {EVENT_TYPE[t].label}
-                                  </span>
+                                  </button>
                                 ))}
                               </div>
                             </div>
 
-                            <p className="text-sm text-text-primary mb-2">{ev.summary}</p>
+                            {eventsLoading ? (
+                              <div className="text-center py-8 text-text-muted text-sm">Loading releases...</div>
+                            ) : filteredEvents.length === 0 ? (
+                              <div className="text-center py-8 text-text-muted text-sm">No releases found</div>
+                            ) : (
+                              <div className="relative pl-6">
+                                <div className="absolute left-[3px] top-1 bottom-1 w-px bg-surface-border" />
 
-                            <ul className="space-y-1 mb-2">
-                              {(ev.bullets || []).map((b, i) => (
-                                <li key={i} className="text-xs text-text-muted flex items-start gap-1.5">
-                                  <span className="text-surface-border mt-0.5">·</span>
-                                  <span>{b}</span>
-                                </li>
-                              ))}
-                            </ul>
+                                {filteredEvents.map((ev) => {
+                                  const types = ev.eventTypes || [];
+                                  const dotColor = types.includes('SECURITY') ? EVENT_TYPE.SECURITY.dot
+                                    : types.includes('BREAKING') ? EVENT_TYPE.BREAKING.dot
+                                      : ACCENT_COLOR;
 
-                            <div className="flex items-center gap-3 text-2xs text-text-muted">
-                              {ev.sourceUrl && (
-                                <a href={ev.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-light transition-colors">릴리스 노트</a>
+                                  return (
+                                    <div key={ev.id} className="relative pb-8 last:pb-0">
+                                      <div className="absolute -left-[23px] top-1.5 w-2 h-2 rounded-full border-2 bg-surface" style={{ borderColor: dotColor }}>
+                                        <div className="absolute inset-[1px] rounded-full" style={{ background: dotColor }} />
+                                      </div>
+
+                                      <div className="flex items-center gap-3 mb-2">
+                                        <span className="font-mono text-sm font-semibold text-text-primary">{ev.version}</span>
+                                        <span className="text-xs text-text-muted">{ev.releasedAt?.split('T')[0]}</span>
+                                        <div className="flex gap-1.5 ml-auto">
+                                          {(ev.eventTypes || []).map(t => EVENT_TYPE[t] && (
+                                            <span key={t} className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${EVENT_TYPE[t].cls}`}>
+                                              {EVENT_TYPE[t].label}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      <p className="text-sm text-text-primary mb-3 leading-relaxed">{ev.summary}</p>
+
+                                      <ul className="space-y-1.5 mb-3">
+                                        {(ev.bullets || []).map((b, i) => (
+                                          <li key={i} className="text-xs text-text-muted flex items-start gap-2 leading-relaxed">
+                                            <span className="text-surface-border mt-1 shrink-0">·</span>
+                                            <span>{b}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+
+                                      <div className="flex items-center gap-3 text-xs text-text-muted">
+                                        {ev.sourceUrl && (
+                                          <a href={ev.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-light transition-colors underline underline-offset-4">릴리스 노트</a>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <div className="text-center mt-8 pt-6 border-t border-surface-border/50">
+                              <span className="text-2xs text-text-muted uppercase tracking-widest font-medium">릴리스 요약은 LLM으로 생성 · 원문 확인 필수</span>
+                            </div>
+                          </section>
+
+                          {/* Comments Section */}
+                          <section id="comments" className="bg-surface-card rounded-xl border border-surface-border p-8 scroll-mt-24">
+                            <div className="flex items-center gap-3 mb-8">
+                              <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                              <h2 className="text-sm font-medium text-text-secondary uppercase tracking-widest">토론</h2>
+                              {comments.length > 0 && (
+                                <span className="text-xs text-text-muted font-medium">{comments.length}개 댓글</span>
                               )}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
 
-                  <div className="text-center mt-6 pt-4 border-t border-surface-border/50">
-                    <span className="text-2xs text-text-muted">릴리스 요약은 LLM으로 생성 · 원문 확인 필수</span>
-                  </div>
-                </section>
+                            {commentsLoading ? (
+                              <div className="text-center py-8 text-text-muted text-sm">Loading comments...</div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-4 px-1 mb-8">
+                                  <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-xs text-text-muted shrink-0 border border-surface-border font-medium">
+                                    ?
+                                  </div>
+                                  <div className="flex-1 bg-surface-elevated/30 border border-surface-border/50 rounded-xl px-5 py-3 text-sm text-text-muted cursor-text hover:border-surface-border/80 transition-all font-light">
+                                    이 프로젝트에 대해 의견을 공유하세요...
+                                  </div>
+                                </div>
 
-                {/* Comments Section */}
-                <section id="comments" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
-                    <h2 className="text-sm font-medium text-text-secondary">토론</h2>
-                    {comments.length > 0 && (
-                      <span className="text-xs text-text-muted">{comments.length}개 댓글</span>
+                                <div className="space-y-2">
+                                  {comments.map(thread => (
+                                    <CommentItem
+                                      key={thread.id}
+                                      comment={thread}
+                                      articleId="mock"
+                                      onReply={async () => { }}
+                                      onEdit={async () => { }}
+                                      onDelete={async () => { }}
+                                    />
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </section>
+
+                        </div>
+                      </>
                     )}
                   </div>
-
-                  {commentsLoading ? (
-                    <div className="text-center py-8 text-text-muted text-sm">Loading comments...</div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-3 px-1 mb-4">
-                        <div className="w-6 h-6 rounded-full bg-surface-elevated flex items-center justify-center text-2xs text-text-muted shrink-0">
-                          ?
-                        </div>
-                        <div className="flex-1 bg-surface-elevated/50 border border-surface-border/50 rounded-lg px-4 py-2.5 text-sm text-text-muted cursor-text hover:border-surface-border transition-colors">
-                          이 프로젝트에 대해 의견을 공유하세요...
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        {comments.map(thread => (
-                          <CommentItem
-                            key={thread.id}
-                            comment={thread}
-                            articleId="mock"
-                            onReply={async () => {}}
-                            onEdit={async () => {}}
-                            onDelete={async () => {}}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </section>
-
                 </div>
               </>
             )}
-            </div>
           </div>
-        </>
-        )}
-        </div>
         )}
 
-        {/* Directory and port views */}
-        {viewType !== 'project' && (
-          <main className="lg:ml-52 max-w-[1100px] mx-auto px-6 py-8">
-          {/* ─── DIRECTORY ──────────────────────────────────── */}
-          {viewType === 'directory' && (
-            <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-semibold text-text-primary tracking-tight mb-1">Ports</h1>
-                <p className="text-sm text-text-muted">포트 번호로 분류된 오픈소스 커뮤니티</p>
-              </div>
+        {/* ─── DIRECTORY VIEW (LANDING PAGE) ── */}
+        {viewType === 'directory' && (
+          <main className="lg:ml-52 text-text-primary">
+            {/* Aurora landing — full viewport hero */}
+            <PortfolioPage
+              hero={{
+                titleLine1: '바이브 코더들을 위한 허브',
+                titleLine2Gradient: 'Ports',
+                subtitle: <>매일 쏟아지는 AI 프로젝트들, <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>Ports</span>가 대신 확인하고 정리해드립니다.</>,
+                subtitleBottom: <>가장 중요한 정보만 확인하고 <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
+              }}
+              showAnimatedBackground={true}
+            />
 
-              {portsLoading ? (
-                <div className="text-center py-12 text-text-muted">Loading ports...</div>
-              ) : (
-                <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden divide-y divide-surface-border">
-                  {ports.map((p) => (
+            {/* PORTS PROJECT LIST */}
+            <div id="ports-list" className="relative z-10 max-w-[1200px] mx-auto px-6 py-24">
+              {/* Search bar */}
+              <div className="mb-10">
+                <div className="relative max-w-2xl mx-auto">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="프로젝트 이름, 설명, 언어로 검색..."
+                    className="w-full bg-surface-card border border-surface-border rounded-2xl pl-12 pr-4 py-4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all text-base"
+                  />
+                  {searchQuery && (
                     <button
-                      key={p.id}
-                      onClick={() => goPort(p.portNumber)}
-                      className="w-full flex items-center gap-5 px-5 py-4 hover:bg-surface-hover/50 transition-colors text-left group"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
                     >
-                      <div className="w-24 shrink-0">
-                        <span className="font-mono text-xl font-bold tracking-tighter" style={{ color: p.accentColor }}>
-                          :{p.portNumber}
-                        </span>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-semibold text-text-primary group-hover:text-accent-light transition-colors">
-                            {p.name}
-                          </span>
-                        </div>
-                        <p className="text-xs text-text-muted truncate">{p.description}</p>
-                      </div>
-
-                      <div className="hidden sm:flex items-center gap-6 shrink-0 text-xs text-text-muted">
-                        <div className="text-right">
-                          <div className="text-text-secondary font-medium">{p.projectCount}</div>
-                          <div className="text-2xs">프로젝트</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-text-secondary font-medium">{p.recentReleaseCount}</div>
-                          <div className="text-2xs">릴리스/30d</div>
-                        </div>
-                        <div className="w-16">
-                          <div className="h-1.5 rounded-full bg-surface-border overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${Math.min(100, (p.recentReleaseCount / 35) * 100)}%`, background: p.accentColor }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <svg className="w-4 h-4 text-text-muted/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
                       </svg>
                     </button>
-                  ))}
+                  )}
+                </div>
+              </div>
+
+              {projectsLoading ? (
+                <div className="flex items-center justify-center py-24 text-text-muted text-sm">
+                  <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin mr-2" />
+                  Loading projects...
+                </div>
+              ) : filteredProjects.length === 0 ? (
+                <div className="text-center py-24 text-text-muted bg-surface-card rounded-2xl border border-dashed border-surface-border">
+                  {searchQuery ? `"${searchQuery}"에 대한 결과가 없습니다` : 'No projects found'}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProjects.map((p) => {
+                    // Extract owner from fullName (e.g., "ollama/ollama" -> "ollama")
+                    const owner = p.fullName.split('/')[0];
+                    const avatarUrl = `https://github.com/${owner}.png?size=100`;
+
+                    return (
+                      <button
+                        key={p.projectExternalId}
+                        onClick={() => goProject(p.projectExternalId)}
+                        className="group flex flex-col bg-surface-card/40 backdrop-blur-sm rounded-2xl border border-surface-border p-6 hover:bg-surface-hover/60 hover:border-surface-border/80 transition-all text-left shadow-lg hover:shadow-accent/5"
+                      >
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="w-12 h-12 rounded-xl border border-surface-border bg-surface-elevated overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                            <img src={avatarUrl} alt={owner} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm font-medium text-text-secondary bg-surface-elevated/50 px-2.5 py-1 rounded-full border border-surface-border">
+                            <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                            {p.stars != null ? fmt(p.stars) : '—'}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors truncate">
+                              {p.fullName}
+                            </h3>
+                          </div>
+                          {p.language && (
+                            <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent border border-accent/20 mb-3">{p.language}</span>
+                          )}
+                          {p.description && (
+                            <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed mb-4 min-h-[2.5rem]">{p.description}</p>
+                          )}
+                        </div>
+
+                        <div className="mt-auto pt-6 border-t border-surface-border/50 flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted group-hover:text-accent/70 transition-colors">View Details</span>
+                          <svg className="w-5 h-5 text-text-muted group-hover:text-accent group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          )}
-
-          {/* ─── PORT DETAIL ────────────────────────────────── */}
-          {viewType === 'port' && port && (
-            <div>
-              {portLoading ? (
-                <div className="text-center py-12 text-text-muted">Loading port...</div>
-              ) : (
-                <>
-                  <div className="flex items-baseline gap-4 mb-6">
-                    <span className="font-mono text-3xl font-bold tracking-tighter" style={{ color: port.accentColor }}>
-                      :{port.portNumber}
-                    </span>
-                    <h1 className="text-xl font-semibold text-text-primary">{port.name}</h1>
-                    <span className="text-sm text-text-muted">{port.description}</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    {/* Projects */}
-                    <div className="lg:col-span-3">
-                      <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-medium text-text-secondary">프로젝트 ({portProjects.length})</h2>
-                        <span className="text-xs text-text-muted">릴리스 기준 정렬</span>
-                      </div>
-
-                      <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden divide-y divide-surface-border">
-                        {[...portProjects].sort((a, b) => b.releases30d - a.releases30d).map((p, i) => (
-                          <button
-                            key={p.id}
-                            onClick={() => goProject(p, port.portNumber)}
-                            className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-surface-hover/50 transition-colors text-left group"
-                          >
-                            <span className={`text-xs font-mono w-5 shrink-0 ${i < 3 ? 'text-accent font-medium' : 'text-text-muted'}`}>
-                              {String(i + 1).padStart(2, '0')}
-                            </span>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="text-sm font-medium text-text-primary group-hover:text-accent-light transition-colors truncate">
-                                  {p.fullName}
-                                </span>
-                                {p.language && (
-                                  <span className="flex items-center gap-1 shrink-0">
-                                    <span className="w-2 h-2 rounded-full" style={{ background: p.languageColor }} />
-                                    <span className="text-2xs text-text-muted">{p.language}</span>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="hidden sm:flex items-center gap-3 shrink-0">
-                              <div className="text-right">
-                                <div className="flex items-center gap-1 text-xs text-text-secondary">
-                                  <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                  {fmt(p.stars)}
-                                </div>
-                                {p.starsWeekDelta > 0 && (
-                                  <span className="text-2xs text-emerald-400">+{fmt(p.starsWeekDelta)}/wk</span>
-                                )}
-                              </div>
-                              {p.sparklineData && p.sparklineData.length > 0 && (
-                                <div className="w-14 h-6">
-                                  <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={p.sparklineData.map((v, j) => ({ v, j }))}>
-                                      <defs>
-                                        <linearGradient id={`sp-${p.id}`} x1="0" y1="0" x2="0" y2="1">
-                                          <stop offset="0%" stopColor={port.accentColor} stopOpacity={0.3} />
-                                          <stop offset="100%" stopColor={port.accentColor} stopOpacity={0} />
-                                        </linearGradient>
-                                      </defs>
-                                      <Area type="monotone" dataKey="v" stroke={port.accentColor} strokeWidth={1.5} fill={`url(#sp-${p.id})`} dot={false} />
-                                    </AreaChart>
-                                  </ResponsiveContainer>
-                                </div>
-                              )}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Hot releases */}
-                    <div className="lg:col-span-2">
-                      <div className="flex items-center gap-2 mb-3">
-                        <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
-                        <h2 className="text-sm font-medium text-text-secondary">최근 릴리스</h2>
-                      </div>
-
-                      <div className="space-y-2">
-                        {hotReleases.map((ev) => {
-                          const proj = portProjects.find(p => p.name === ev.projectName);
-                          return (
-                            <div
-                              key={ev.id}
-                              onClick={() => proj && goProject(proj, port.portNumber)}
-                              className="bg-surface-card rounded-xl border border-surface-border p-4 hover:bg-surface-hover/50 transition-colors cursor-pointer"
-                            >
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs font-medium text-text-secondary">{ev.projectName}</span>
-                                <span className="text-xs font-mono text-text-muted">{ev.version}</span>
-                                <span className="text-2xs text-text-muted ml-auto">{ago(ev.releasedAt)}</span>
-                              </div>
-                              <p className="text-sm text-text-primary mb-2 line-clamp-2">{ev.summary}</p>
-                              <div className="flex gap-1.5">
-                                {(ev.eventTypes || []).map(t => EVENT_TYPE[t] && (
-                                  <span key={t} className={`text-2xs px-1.5 py-0.5 rounded border ${EVENT_TYPE[t].cls}`}>
-                                    {EVENT_TYPE[t].label}
-                                  </span>
-                                ))}
-                                {ev.impactScore != null && ev.impactScore >= 80 && (
-                                  <span className="text-2xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 ml-auto font-mono">
-                                    {ev.impactScore}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
           </main>
         )}
+
       </div>
     </div>
   );
 }
+

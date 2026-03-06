@@ -164,27 +164,29 @@ function sanitizeMermaidSvgColors(rawSvg: string): string {
 
       const fill = el.getAttribute('fill');
       const stroke = el.getAttribute('stroke');
+      
+      const elementWithStyle = el as HTMLElement | SVGElement;
 
       if (isText) {
-        el.style.setProperty('fill', textColor, 'important');
+        elementWithStyle.style.setProperty('fill', textColor, 'important');
       } else if (isNodeLike) {
         if ((!fill || fill.toLowerCase() !== 'none') && !isUrlRef(fill)) {
-          el.style.setProperty('fill', nodeFill, 'important');
+          elementWithStyle.style.setProperty('fill', nodeFill, 'important');
         }
       }
 
       if (isText) {
-        el.style.setProperty('stroke', textColor, 'important');
+        elementWithStyle.style.setProperty('stroke', textColor, 'important');
       } else if (stroke && stroke.toLowerCase() !== 'none' && !isUrlRef(stroke)) {
-        el.style.setProperty('stroke', nodeStroke, 'important');
+        elementWithStyle.style.setProperty('stroke', nodeStroke, 'important');
       } else if (!stroke && !isSvgTextContainer) {
-        el.style.setProperty('stroke', nodeStroke, 'important');
+        elementWithStyle.style.setProperty('stroke', nodeStroke, 'important');
       }
 
       if (isText) {
-        el.style.setProperty('color', textColor, 'important');
+        elementWithStyle.style.setProperty('color', textColor, 'important');
       } else if (isSvgTextContainer) {
-        el.style.setProperty('color', textColor, 'important');
+        elementWithStyle.style.setProperty('color', textColor, 'important');
       }
 
       if (tag === 'style' || tag === 'defs' || tag === 'marker' || tag === 'title' || tag === 'desc') {
@@ -192,7 +194,8 @@ function sanitizeMermaidSvgColors(rawSvg: string): string {
       }
     });
 
-    svg.style.setProperty('background-color', bg, 'important');
+    const svgWithStyle = svg as unknown as HTMLElement | SVGElement;
+    svgWithStyle.style.setProperty('background-color', bg, 'important');
     return new XMLSerializer().serializeToString(doc);
   } catch {
     return rawSvg;

@@ -162,17 +162,7 @@ export interface ReadHistory {
   readAt: string;
 }
 
-// Ports Types
-export interface Port {
-  id: string;
-  portNumber: number;
-  slug: string;
-  name: string;
-  description: string;
-  accentColor: string;
-  projectCount: number;
-  recentReleaseCount: number;
-}
+
 
 export interface ProjectSummary {
   id: string;
@@ -254,8 +244,3 @@ export interface ProjectCommentTreeNode extends ProjectComment {
   replies: ProjectCommentTreeNode[];
 }
 
-export interface PortDetailResponse {
-  port: Port;
-  projects: ProjectSummary[];
-  hotReleases: HotRelease[];
-}

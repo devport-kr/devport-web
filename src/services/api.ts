@@ -15,7 +15,7 @@
  *   src/services/search/searchService.ts    — autocomplete, fulltext
  *   src/services/me/meService.ts            — saved articles, history
  *   src/services/llm/llmService.ts          — LLM benchmarks, media
- *   src/services/ports/portsService.ts      — ports, projects
+ *   src/services/ports/portsService.ts      — projects
  *   src/services/admin/adminService.ts      — admin CRUD operations
  *
  * Once all consumers are migrated to direct domain imports, this
@@ -123,10 +123,8 @@ export type {
   SpringPageResponse,
 } from './llm/llmService';
 
-// ─── Ports & Projects ────────────────────────────────────────────
+// ─── Projects ────────────────────────────────────────────────
 export {
-  getPorts,
-  getPortBySlug,
   getProjectById,
   getProjectEvents,
   getProjectStarHistory,

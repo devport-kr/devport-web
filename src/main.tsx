@@ -40,8 +40,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/ports" element={<PortsPage />} />
-          <Route path="/ports/:portNumber" element={<PortsPage />} />
-          <Route path="/ports/:portNumber/:projectExternalId" element={<PortsPage />} />
+          <Route path="/ports/*" element={<PortsPage />} />
           <Route
             path="/admin"
             element={

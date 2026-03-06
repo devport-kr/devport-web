@@ -65,11 +65,11 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
   });
 
   const renderProviderTick = ({ x, y, payload, dataMap }: ProviderTickProps) => {
-    if (x === undefined || y === undefined || !payload?.value) return null;
+    if (x === undefined || y === undefined || !payload?.value) return <g />;
     const rankValue = Number(payload.value);
-    if (!Number.isFinite(rankValue)) return null;
+    if (!Number.isFinite(rankValue)) return <g />;
     const provider = dataMap.get(rankValue);
-    if (!provider) return null;
+    if (!provider) return <g />;
 
     const size = 18;
     const label = provider.label || '';

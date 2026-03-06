@@ -1,21 +1,12 @@
 import apiClient from '../../lib/http/apiClient';
-import type { Port, PortDetailResponse, ProjectDetail, ProjectEvent, EventType, StarHistoryPoint, ProjectComment, ProjectOverview } from '../../types';
+import type { ProjectDetail, ProjectEvent, EventType, StarHistoryPoint, ProjectComment, ProjectOverview } from '../../types';
 import type { SpringPageResponse } from '../llm/llmService';
 
-// ─── Ports & Projects APIs ───────────────────────────────────────
-
-export const getPorts = async (): Promise<Port[]> => {
-  const response = await apiClient.get<Port[]>('/api/ports');
-  return response.data;
-};
-
-export const getPortBySlug = async (slug: string): Promise<PortDetailResponse> => {
-  const response = await apiClient.get<PortDetailResponse>(`/api/ports/${slug}`);
-  return response.data;
-};
+// ─── Project APIs ─────────────────────────────────────────────────
 
 export const getProjectById = async (id: string): Promise<ProjectDetail> => {
-  const response = await apiClient.get<ProjectDetail>(`/api/projects/${id}`);
+  // Use query param to avoid encoded-slash issues with github:owner/repo IDs
+  const response = await apiClient.get<ProjectDetail>(`/api/projects`, { params: { id } });
   return response.data;
 };
 
@@ -25,10 +16,11 @@ export const getProjectEvents = async (
   page: number = 0,
   size: number = 20
 ): Promise<SpringPageResponse<ProjectEvent>> => {
+  // Use query param to avoid encoded-slash issues with github:owner/repo IDs
   const response = await apiClient.get<SpringPageResponse<ProjectEvent>>(
-    `/api/projects/${projectId}/events`,
+    `/api/projects/events`,
     {
-      params: { type, page, size },
+      params: { id: projectId, type, page, size },
     }
   );
   return response.data;
@@ -40,7 +32,7 @@ export const getProjectStarHistory = async (
   to?: string
 ): Promise<StarHistoryPoint[]> => {
   const response = await apiClient.get<StarHistoryPoint[]>(
-    `/api/projects/${projectId}/star-history`,
+    `/api/projects/${encodeURIComponent(projectId)}/star-history`,
     {
       params: { from, to },
     }
@@ -49,14 +41,15 @@ export const getProjectStarHistory = async (
 };
 
 export const getProjectOverview = async (projectId: string): Promise<ProjectOverview> => {
-  const response = await apiClient.get<ProjectOverview>(`/api/projects/${projectId}/overview`);
+  const response = await apiClient.get<ProjectOverview>(`/api/projects/${encodeURIComponent(projectId)}/overview`);
   return response.data;
 };
 
 // ─── Project Comments APIs ───────────────────────────────────────
 
 export const getProjectComments = async (projectId: string): Promise<ProjectComment[]> => {
-  const response = await apiClient.get<ProjectComment[]>(`/api/projects/${projectId}/comments`);
+  // Use query param to avoid encoded-slash issues with github:owner/repo IDs
+  const response = await apiClient.get<ProjectComment[]>(`/api/projects/comments`, { params: { projectId } });
   return response.data;
 };
 
@@ -65,7 +58,7 @@ export const createProjectComment = async (
   content: string,
   parentCommentId?: string
 ): Promise<ProjectComment> => {
-  const response = await apiClient.post<ProjectComment>(`/api/projects/${projectId}/comments`, {
+  const response = await apiClient.post<ProjectComment>(`/api/projects/${encodeURIComponent(projectId)}/comments`, {
     content,
     parentCommentId,
   });
@@ -78,7 +71,7 @@ export const updateProjectComment = async (
   content: string
 ): Promise<ProjectComment> => {
   const response = await apiClient.put<ProjectComment>(
-    `/api/projects/${projectId}/comments/${commentId}`,
+    `/api/projects/${encodeURIComponent(projectId)}/comments/${commentId}`,
     { content }
   );
   return response.data;
@@ -88,7 +81,7 @@ export const deleteProjectComment = async (
   projectId: string,
   commentId: string
 ): Promise<void> => {
-  await apiClient.delete(`/api/projects/${projectId}/comments/${commentId}`);
+  await apiClient.delete(`/api/projects/${encodeURIComponent(projectId)}/comments/${commentId}`);
 };
 
 export const voteOnProjectComment = async (
@@ -97,7 +90,7 @@ export const voteOnProjectComment = async (
   vote: 1 | -1 | 0
 ): Promise<{ votes: number; userVote: 0 | 1 | -1 }> => {
   const response = await apiClient.post<{ votes: number; userVote: 0 | 1 | -1 }>(
-    `/api/projects/${projectId}/comments/${commentId}/vote`,
+    `/api/projects/${encodeURIComponent(projectId)}/comments/${commentId}/vote`,
     { vote }
   );
   return response.data;

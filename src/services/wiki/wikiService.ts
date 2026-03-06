@@ -15,8 +15,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
  */
 export async function getWikiSnapshot(projectExternalId: string): Promise<WikiSnapshot | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/wiki/projects/${encodeURIComponent(projectExternalId)}`);
-    
+    // Use query param to avoid encoded-slash issues with github:owner/repo IDs
+    const url = `${API_BASE_URL}/api/wiki/projects/page?id=${encodeURIComponent(projectExternalId)}`;
+    const response = await fetch(url);
+
     if (response.status === 404) {
       return null;
     }
@@ -53,11 +55,11 @@ function normalizeWikiSnapshot(payload: unknown, fallbackProjectExternalId: stri
     currentCounters: isRecord(source.currentCounters) ? (source.currentCounters as WikiSnapshot['currentCounters']) : null,
     rightRail: isRecord(source.rightRail)
       ? {
-          activityPriority: toNumber(source.rightRail.activityPriority, 1),
-          releasesPriority: toNumber(source.rightRail.releasesPriority, 2),
-          chatPriority: toNumber(source.rightRail.chatPriority, 3),
-          visibleSectionIds: normalizeStringArray(source.rightRail.visibleSectionIds),
-        }
+        activityPriority: toNumber(source.rightRail.activityPriority, 1),
+        releasesPriority: toNumber(source.rightRail.releasesPriority, 2),
+        chatPriority: toNumber(source.rightRail.chatPriority, 3),
+        visibleSectionIds: normalizeStringArray(source.rightRail.visibleSectionIds),
+      }
       : null,
     readinessMetadata: isRecord(source.readinessMetadata) ? source.readinessMetadata : undefined,
   };
@@ -136,10 +138,10 @@ function normalizeAnchors(input: unknown, visibleSections: WikiSection[]): WikiA
   return normalized.length > 0
     ? normalized
     : visibleSections.map(section => ({
-        sectionId: section.sectionId,
-        heading: section.heading,
-        anchor: section.anchor,
-      }));
+      sectionId: section.sectionId,
+      heading: section.heading,
+      anchor: section.anchor,
+    }));
 }
 
 function normalizeHiddenSections(input: unknown): string[] {
@@ -163,32 +165,38 @@ function toNumber(value: unknown, fallback: number): number {
 }
 
 /**
- * Known wiki domains from design.
- * Frontend iterates these to build complete domain browse view.
+ * Flat project summary returned by GET /api/wiki/projects.
  */
-const KNOWN_DOMAINS = ['web', 'mobile', 'data', 'devtools', 'ml'];
+export interface WikiProjectSummary {
+  projectExternalId: string;
+  fullName: string;
+  description?: string;
+  stars?: number;
+  language?: string;
+  summary?: string; // content of first summary chunk
+}
+
+export interface WikiProjectListResponse {
+  projects: WikiProjectSummary[];
+}
 
 /**
- * Get domain browse cards for wiki discovery.
- * Returns list of domains with top projects per domain.
- * Fetches each domain individually and aggregates results.
+ * Fetch flat list of all projects that have wiki content.
+ * Sorted by stars DESC by the backend.
  *
- * @returns Domain browse cards with project summaries
+ * @returns List of wiki-ready project summaries
  */
-export async function getDomainBrowseCards(): Promise<unknown[]> {
+export async function getWikiProjects(): Promise<WikiProjectListResponse> {
   try {
-    const responses = await Promise.all(
-      KNOWN_DOMAINS.map(domain => 
-        fetch(`${API_BASE_URL}/api/wiki/domains/${encodeURIComponent(domain)}`)
-          .then(r => r.ok ? r.json() : null)
-          .catch(() => null)
-      )
-    );
+    const response = await fetch(`${API_BASE_URL}/api/wiki/projects`);
 
-    // Filter out failed requests and return valid domain responses
-    return responses.filter(response => response !== null);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch wiki projects: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
   } catch (error) {
-    console.error('Domain browse cards fetch error:', error);
+    console.error('Wiki projects fetch error:', error);
     throw error;
   }
 }
@@ -203,7 +211,7 @@ export async function getDomainBrowseCards(): Promise<unknown[]> {
 export async function getWikiProject(projectExternalId: string): Promise<unknown | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/wiki/projects/${encodeURIComponent(projectExternalId)}`);
-    
+
     if (response.status === 404) {
       return null;
     }

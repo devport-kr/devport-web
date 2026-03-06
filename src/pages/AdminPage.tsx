@@ -10,14 +10,16 @@ import {
   adminProcessArticleWithLLM,
   adminPreviewArticleLLM,
   adminListArticles,
-  adminCreateGitRepo,
+  adminCreateProject,
+  adminCreateProjectsBulk,
   adminCreateLLMModel,
   adminCreateModelCreator,
   adminCreateBenchmark,
   type CreateArticleRequest,
   type ArticleLLMCreateRequest,
   type ArticleLLMPreviewResponse,
-  type CreateGitRepoRequest,
+  type CreateProjectRequest,
+  type BulkProjectCreateResponse,
   type CreateLLMModelRequest,
   type CreateModelCreatorRequest,
   type CreateLLMBenchmarkRequest,
@@ -30,6 +32,7 @@ import {
 
 type TabType = 'article' | 'wiki' | 'gitrepo' | 'llmmodel' | 'modelcreator' | 'benchmark';
 type ArticleSubView = 'list' | 'llm-process' | 'manual-create';
+type RepoSubView = 'single' | 'bulk';
 
 const CATEGORIES = ['AI_LLM', 'DEVOPS_SRE', 'INFRA_CLOUD', 'DATABASE', 'BLOCKCHAIN', 'SECURITY', 'DATA_SCIENCE', 'ARCHITECTURE', 'MOBILE', 'FRONTEND', 'BACKEND', 'OTHER'];
 const SOURCES = ['hackernews', 'reddit', 'medium', 'devto', 'hashnode', 'github'];
@@ -99,10 +102,12 @@ const AdminPage = () => {
   });
 
   // Other tab forms
-  const [gitRepoForm, setGitRepoForm] = useState<CreateGitRepoRequest>({
-    fullName: '', url: '', description: '', language: '', stars: 0, forks: 0,
-    starsThisWeek: 0, summaryKoTitle: '', summaryKoBody: '', category: 'AI_LLM', score: 0,
-  });
+  const [projectForm, setProjectForm] = useState<CreateProjectRequest>({ fullName: '' });
+  const [repoSubView, setRepoSubView] = useState<RepoSubView>('single');
+  // Bulk form
+  const [bulkInput, setBulkInput] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkProjectCreateResponse | null>(null);
   const [llmModelForm, setLLMModelForm] = useState<CreateLLMModelRequest>({
     modelId: '', modelName: '', slug: '', provider: '', description: '',
     priceInput: undefined, priceOutput: undefined, priceBlended: undefined, contextWindow: undefined,
@@ -166,8 +171,6 @@ const AdminPage = () => {
     return wikiProjects.filter(project =>
       project.fullName.toLowerCase().includes(query)
       || (project.projectExternalId || '').toLowerCase().includes(query)
-      || project.portName.toLowerCase().includes(query)
-      || project.portSlug.toLowerCase().includes(query)
       || (project.language || '').toLowerCase().includes(query)
       || String(project.projectId).includes(query),
     );
@@ -320,14 +323,67 @@ const AdminPage = () => {
   };
 
   // Other tab handlers
-  const handleSubmitGitRepo = async (e: React.FormEvent) => {
+
+  const handleSubmitProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await adminCreateGitRepo(gitRepoForm);
-      showMessage('success', 'Git Repository created successfully');
-      setGitRepoForm({ fullName: '', url: '', description: '', language: '', stars: 0, forks: 0, starsThisWeek: 0, summaryKoTitle: '', summaryKoBody: '', category: 'AI_LLM', score: 0 });
+      // Strip undefined / empty-string optional fields before sending
+      const payload: CreateProjectRequest = { fullName: projectForm.fullName.trim() };
+      if (projectForm.repoUrl?.trim()) payload.repoUrl = projectForm.repoUrl.trim();
+      if (projectForm.homepageUrl?.trim()) payload.homepageUrl = projectForm.homepageUrl.trim();
+      if (projectForm.description?.trim()) payload.description = projectForm.description.trim();
+      if (projectForm.language?.trim()) payload.language = projectForm.language.trim();
+      if (projectForm.license?.trim()) payload.license = projectForm.license.trim();
+      if (projectForm.summaryKoTitle?.trim()) payload.summaryKoTitle = projectForm.summaryKoTitle.trim();
+      if (projectForm.category?.trim()) payload.category = projectForm.category.trim();
+      if (projectForm.stars !== undefined && projectForm.stars !== null) payload.stars = projectForm.stars;
+      if (projectForm.forks !== undefined && projectForm.forks !== null) payload.forks = projectForm.forks;
+      if (projectForm.starsThisWeek !== undefined && projectForm.starsThisWeek !== null) payload.starsThisWeek = projectForm.starsThisWeek;
+      if (projectForm.score !== undefined && projectForm.score !== null) payload.score = projectForm.score;
+      await adminCreateProject(payload);
+      showMessage('success', `Project "${payload.fullName}" created with GitHub data auto-fetched`);
+      setProjectForm({ fullName: '' });
     } catch (error: any) {
       showMessage('error', `Error: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleSubmitBulk = async () => {
+    if (!bulkInput.trim()) return;
+    setBulkLoading(true);
+    setBulkResult(null);
+    try {
+      // Parse input: one fullName per line, or JSON array
+      let items: CreateProjectRequest[];
+      const trimmed = bulkInput.trim();
+      if (trimmed.startsWith('[')) {
+        // JSON array mode
+        items = JSON.parse(trimmed) as CreateProjectRequest[];
+      } else {
+        // One fullName per line (skip blank lines and comments)
+        items = trimmed
+          .split('\n')
+          .map(l => l.trim())
+          .filter(l => l && !l.startsWith('#'))
+          .map(fullName => ({ fullName }));
+      }
+      if (items.length === 0) {
+        showMessage('error', 'No valid entries found');
+        return;
+      }
+      const result = await adminCreateProjectsBulk(items);
+      setBulkResult(result);
+      const ok = result.created.length;
+      const fail = result.failed.length;
+      if (fail === 0) {
+        showMessage('success', `All ${ok} project${ok === 1 ? '' : 's'} created`);
+      } else {
+        showMessage('error', `${ok} created, ${fail} failed — see results below`);
+      }
+    } catch (error: any) {
+      showMessage('error', `Bulk create failed: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -607,11 +663,10 @@ const AdminPage = () => {
             <span className="text-xs text-text-muted">{user?.name}</span>
           </div>
           {message && (
-            <div className={`px-3 py-1.5 rounded-lg text-xs font-medium animate-fade-in ${
-              message.type === 'success'
-                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                : 'bg-red-500/10 border border-red-500/20 text-red-400'
-            }`}>
+            <div className={`px-3 py-1.5 rounded-lg text-xs font-medium animate-fade-in ${message.type === 'success'
+              ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+              : 'bg-red-500/10 border border-red-500/20 text-red-400'
+              }`}>
               {message.text}
             </div>
           )}
@@ -631,11 +686,10 @@ const AdminPage = () => {
                       closeEditor();
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-surface-card text-text-primary border border-surface-border'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated border border-transparent'
-                  }`}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-all ${activeTab === tab.id
+                    ? 'bg-surface-card text-text-primary border border-surface-border'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated border border-transparent'
+                    }`}
                 >
                   <span className="font-medium">{tab.label}</span>
                   <span className="text-[10px] text-text-muted/60 font-mono">{tab.shortcut}</span>
@@ -666,11 +720,10 @@ const AdminPage = () => {
                           <button
                             key={sub.id}
                             onClick={() => setArticleSubView(sub.id)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                              articleSubView === sub.id
-                                ? 'bg-surface-card text-text-primary shadow-sm'
-                                : 'text-text-muted hover:text-text-secondary'
-                            }`}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${articleSubView === sub.id
+                              ? 'bg-surface-card text-text-primary shadow-sm'
+                              : 'text-text-muted hover:text-text-secondary'
+                              }`}
                           >
                             {sub.label}
                           </button>
@@ -1045,7 +1098,6 @@ const AdminPage = () => {
                           <thead>
                             <tr className="border-b border-surface-border bg-surface-elevated text-[10px] uppercase tracking-widest text-text-muted font-semibold">
                               <th className="px-3 py-2 text-left">Repository</th>
-                              <th className="px-3 py-2 text-left">Port</th>
                               <th className="px-3 py-2 text-right">Stars</th>
                               <th className="px-3 py-2 text-left">Language</th>
                               <th className="px-3 py-2 text-right w-24"></th>
@@ -1058,7 +1110,6 @@ const AdminPage = () => {
                                   <div className="font-medium text-text-primary text-sm">{project.fullName}</div>
                                   <div className="text-[10px] text-text-muted font-mono">#{project.projectId}</div>
                                 </td>
-                                <td className="px-3 py-2 text-text-secondary text-xs">{project.portName}</td>
                                 <td className="px-3 py-2 text-right text-text-muted text-xs font-mono">{project.stars.toLocaleString()}</td>
                                 <td className="px-3 py-2 text-text-muted text-xs">{project.language || '—'}</td>
                                 <td className="px-3 py-2 text-right">
@@ -1081,62 +1132,203 @@ const AdminPage = () => {
 
                 {/* ═══ GIT REPOS TAB ═══ */}
                 {activeTab === 'gitrepo' && (
-                  <form onSubmit={handleSubmitGitRepo} className="max-w-2xl space-y-4">
-                    <div>
-                      <h2 className="text-base font-semibold text-text-primary">Create Repository</h2>
-                      <p className="text-xs text-text-muted mt-0.5">Seed repository metadata into the system.</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="max-w-2xl space-y-4">
+                    {/* Sub-view switcher */}
+                    <div className="flex items-center justify-between">
                       <div>
-                        <label className={labelClass}>Full Name</label>
-                        <input type="text" value={gitRepoForm.fullName} onChange={(e) => setGitRepoForm({ ...gitRepoForm, fullName: e.target.value })} className={inputClass} required placeholder="facebook/react" />
+                        <h2 className="text-base font-semibold text-text-primary">Create Project</h2>
+                        <p className="text-xs text-text-muted mt-0.5">GitHub metadata auto-fetched from fullName.</p>
                       </div>
-                      <div>
-                        <label className={labelClass}>URL</label>
-                        <input type="url" value={gitRepoForm.url} onChange={(e) => setGitRepoForm({ ...gitRepoForm, url: e.target.value })} className={inputClass} required />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelClass}>Description</label>
-                      <textarea value={gitRepoForm.description} onChange={(e) => setGitRepoForm({ ...gitRepoForm, description: e.target.value })} className={inputClass} rows={2} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className={labelClass}>Language</label>
-                        <input type="text" value={gitRepoForm.language} onChange={(e) => setGitRepoForm({ ...gitRepoForm, language: e.target.value })} className={inputClass} placeholder="JavaScript" />
-                      </div>
-                      <div>
-                        <label className={labelClass}>Category</label>
-                        <select value={gitRepoForm.category} onChange={(e) => setGitRepoForm({ ...gitRepoForm, category: e.target.value })} className={inputClass}>
-                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                      <div className="flex items-center gap-1 bg-surface-elevated rounded-lg p-0.5">
+                        {([['single', 'Single'], ['bulk', 'Bulk']] as const).map(([id, label]) => (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => { setRepoSubView(id); setBulkResult(null); }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${repoSubView === id ? 'bg-surface-card text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                          >
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className={labelClass}>Stars</label>
-                        <input type="number" value={gitRepoForm.stars} onChange={(e) => setGitRepoForm({ ...gitRepoForm, stars: parseInt(e.target.value) || 0 })} className={inputClass} />
+
+                    {/* ── Single Create ── */}
+                    {repoSubView === 'single' && (
+                      <form onSubmit={handleSubmitProject} className="space-y-4">
+                        {/* Required: fullName only */}
+                        <div>
+                          <label className={labelClass}>Full Name <span className="text-accent">*</span></label>
+                          <input
+                            type="text"
+                            value={projectForm.fullName}
+                            onChange={(e) => setProjectForm({ ...projectForm, fullName: e.target.value })}
+                            className={inputClass}
+                            required
+                            placeholder="ollama/ollama"
+                            spellCheck={false}
+                          />
+                        </div>
+
+                        {/* Info banner */}
+                        <div className="flex items-start gap-2.5 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2.5">
+                          <svg className="w-3.5 h-3.5 text-accent mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 2 12z" />
+                          </svg>
+                          <p className="text-[11px] text-text-muted leading-relaxed">
+                            <span className="text-accent font-medium">GitHub data is auto-fetched</span> — stars, forks, language, license, description, and repo URL are filled in automatically. Use the overrides below only if you need to supply a different value.
+                          </p>
+                        </div>
+
+                        {/* Optional overrides */}
+                        <details className="group">
+                          <summary className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer hover:text-text-secondary transition-colors select-none list-none">
+                            <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                            Override GitHub values (optional)
+                          </summary>
+                          <div className="mt-3 pt-3 border-t border-surface-border/50 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className={labelClass}>Repo URL</label>
+                                <input type="url" value={projectForm.repoUrl ?? ''} onChange={(e) => setProjectForm({ ...projectForm, repoUrl: e.target.value || undefined })} className={inputClass} placeholder="https://github.com/owner/repo" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Homepage URL</label>
+                                <input type="url" value={projectForm.homepageUrl ?? ''} onChange={(e) => setProjectForm({ ...projectForm, homepageUrl: e.target.value || undefined })} className={inputClass} placeholder="https://..." />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <label className={labelClass}>Language</label>
+                                <input type="text" value={projectForm.language ?? ''} onChange={(e) => setProjectForm({ ...projectForm, language: e.target.value || undefined })} className={inputClass} placeholder="Go" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>License (SPDX)</label>
+                                <input type="text" value={projectForm.license ?? ''} onChange={(e) => setProjectForm({ ...projectForm, license: e.target.value || undefined })} className={inputClass} placeholder="MIT" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Category</label>
+                                <select value={projectForm.category ?? 'AI_LLM'} onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })} className={inputClass}>
+                                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-4 gap-3">
+                              <div>
+                                <label className={labelClass}>Stars</label>
+                                <input type="number" value={projectForm.stars ?? ''} onChange={(e) => setProjectForm({ ...projectForm, stars: parseOptionalInt(e.target.value) })} className={inputClass} placeholder="auto" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Forks</label>
+                                <input type="number" value={projectForm.forks ?? ''} onChange={(e) => setProjectForm({ ...projectForm, forks: parseOptionalInt(e.target.value) })} className={inputClass} placeholder="auto" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Stars /wk</label>
+                                <input type="number" value={projectForm.starsThisWeek ?? ''} onChange={(e) => setProjectForm({ ...projectForm, starsThisWeek: parseOptionalInt(e.target.value) })} className={inputClass} placeholder="0" />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Score</label>
+                                <input type="number" value={projectForm.score ?? ''} onChange={(e) => setProjectForm({ ...projectForm, score: parseOptionalInt(e.target.value) })} className={inputClass} placeholder="0" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className={labelClass}>Description</label>
+                              <textarea value={projectForm.description ?? ''} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value || undefined })} className={inputClass} rows={2} placeholder="Override GitHub description..." />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Korean Title</label>
+                              <input type="text" value={projectForm.summaryKoTitle ?? ''} onChange={(e) => setProjectForm({ ...projectForm, summaryKoTitle: e.target.value || undefined })} className={inputClass} placeholder="한국어 제목" />
+                            </div>
+                          </div>
+                        </details>
+
+                        <button
+                          type="submit"
+                          disabled={!projectForm.fullName.trim()}
+                          className={`w-full ${btnPrimary} ${!projectForm.fullName.trim() ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                          Create Project
+                        </button>
+                      </form>
+                    )}
+
+                    {/* ── Bulk Create ── */}
+                    {repoSubView === 'bulk' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className={labelClass}>Repos — one per line, or JSON array</label>
+                          <textarea
+                            value={bulkInput}
+                            onChange={(e) => setBulkInput(e.target.value)}
+                            className={`${inputClass} font-mono text-xs leading-relaxed`}
+                            rows={10}
+                            placeholder={`ollama/ollama\nvercel/next.js\nsupabase/supabase\n\n# Or paste a JSON array:\n# [\n#   { "fullName": "ollama/ollama" },\n#   { "fullName": "vercel/next.js", "stars": 99999 }\n# ]`}
+                            spellCheck={false}
+                          />
+                          <p className="text-[10px] text-text-muted mt-1">Lines starting with # are ignored. JSON array also accepted.</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleSubmitBulk}
+                          disabled={bulkLoading || !bulkInput.trim()}
+                          className={`w-full ${btnPrimary} ${bulkLoading || !bulkInput.trim() ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                          {bulkLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Creating...
+                            </span>
+                          ) : 'Bulk Create Projects'}
+                        </button>
+
+                        {/* Result panel */}
+                        {bulkResult && (
+                          <div className="rounded-lg border border-surface-border overflow-hidden text-sm">
+                            {/* Created */}
+                            {bulkResult.created.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/8 border-b border-surface-border/50">
+                                  <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400">Created ({bulkResult.created.length})</span>
+                                </div>
+                                <div className="divide-y divide-surface-border/30">
+                                  {bulkResult.created.map((r, i) => (
+                                    <div key={i} className="flex items-center justify-between px-3 py-2">
+                                      <span className="font-mono text-xs text-text-primary">{r.fullName}</span>
+                                      {r.id && <span className="text-[10px] text-text-muted font-mono">id:{r.id}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Failed */}
+                            {bulkResult.failed.length > 0 && (
+                              <div className={bulkResult.created.length > 0 ? 'border-t border-surface-border' : ''}>
+                                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/8 border-b border-surface-border/50">
+                                  <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-red-400">Failed ({bulkResult.failed.length})</span>
+                                </div>
+                                <div className="divide-y divide-surface-border/30">
+                                  {bulkResult.failed.map((r, i) => (
+                                    <div key={i} className="flex items-start justify-between px-3 py-2 gap-4">
+                                      <span className="font-mono text-xs text-text-primary shrink-0">{r.fullName}</span>
+                                      <span className="text-[10px] text-red-400/80 text-right leading-relaxed">{r.error}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <label className={labelClass}>Forks</label>
-                        <input type="number" value={gitRepoForm.forks} onChange={(e) => setGitRepoForm({ ...gitRepoForm, forks: parseInt(e.target.value) || 0 })} className={inputClass} />
-                      </div>
-                      <div>
-                        <label className={labelClass}>Stars /wk</label>
-                        <input type="number" value={gitRepoForm.starsThisWeek} onChange={(e) => setGitRepoForm({ ...gitRepoForm, starsThisWeek: parseInt(e.target.value) || 0 })} className={inputClass} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelClass}>Korean Title</label>
-                      <input type="text" value={gitRepoForm.summaryKoTitle} onChange={(e) => setGitRepoForm({ ...gitRepoForm, summaryKoTitle: e.target.value })} className={inputClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Score</label>
-                      <input type="number" value={gitRepoForm.score} onChange={(e) => setGitRepoForm({ ...gitRepoForm, score: parseInt(e.target.value) })} className={inputClass} required />
-                    </div>
-                    <button type="submit" className={`w-full ${btnPrimary}`}>Create Repository</button>
-                  </form>
+                    )}
+                  </div>
                 )}
+
 
                 {/* ═══ LLM MODELS TAB ═══ */}
                 {activeTab === 'llmmodel' && (

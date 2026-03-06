@@ -39,6 +39,28 @@ export interface CreateGitRepoRequest {
   score: number;
 }
 
+/**
+ * Request for POST /api/admin/projects (GitHub auto-fetch endpoint).
+ * Only fullName is required; all other fields are optional overrides.
+ * The backend will auto-fetch stars, forks, language, license, description,
+ * repoUrl, and homepageUrl from GitHub's public API.
+ */
+export interface CreateProjectRequest {
+  fullName: string;
+  repoUrl?: string;
+  homepageUrl?: string;
+  description?: string;
+  stars?: number;
+  forks?: number;
+  language?: string;
+  license?: string;
+  starsThisWeek?: number;
+  summaryKoTitle?: string;
+  summaryKoBody?: string;
+  category?: string;
+  score?: number;
+}
+
 export interface CreateLLMModelRequest {
   externalId?: string;
   slug?: string;
@@ -168,6 +190,43 @@ export const adminUpdateGitRepo = async (id: number, data: Partial<CreateGitRepo
 
 export const adminDeleteGitRepo = async (id: number): Promise<void> => {
   await apiClient.delete(`/api/admin/git-repos/${id}`);
+};
+
+// ─── Admin Project APIs (GitHub auto-fetch) ──────────────────────
+
+/**
+ * Create a project by fullName only. The backend auto-fetches metadata from
+ * GitHub. Any supplied fields override the auto-fetched values.
+ */
+export const adminCreateProject = async (data: CreateProjectRequest): Promise<GitRepo> => {
+  const response = await apiClient.post<GitRepo>('/api/admin/projects', data);
+  return response.data;
+};
+
+export interface BulkProjectCreateResult {
+  id?: number;
+  externalId?: string;
+  fullName: string;
+  error?: string;
+}
+
+export interface BulkProjectCreateResponse {
+  created: BulkProjectCreateResult[];
+  failed: BulkProjectCreateResult[];
+}
+
+/**
+ * Bulk-create projects from a list of fullName entries.
+ * Returns HTTP 201 if all succeed, HTTP 207 on partial failure.
+ */
+export const adminCreateProjectsBulk = async (
+  items: CreateProjectRequest[],
+): Promise<BulkProjectCreateResponse> => {
+  const response = await apiClient.post<BulkProjectCreateResponse>(
+    '/api/admin/projects/bulk',
+    items,
+  );
+  return response.data;
 };
 
 // ─── Admin LLM Model APIs ───────────────────────────────────────

@@ -38,8 +38,6 @@ export interface WikiAdminProjectSummary {
   fullName: string;
   stars: number;
   language: string;
-  portName: string;
-  portSlug: string;
 }
 
 export async function listAdminWikiProjects(): Promise<WikiAdminProjectSummary[]> {
