@@ -1,4 +1,5 @@
-import { Children, isValidElement, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import { Children, isValidElement, useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import mermaid from 'mermaid';
 
@@ -240,11 +241,46 @@ function sanitizeWikiMarkdown(rawContent: string): string {
   return cleaned.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+function MermaidModal({ svg, onClose }: { svg: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-w-[92vw] max-h-[88vh] overflow-auto rounded-xl border border-surface-border bg-[#080f1c] p-6 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 flex items-center justify-center w-7 h-7 rounded-md bg-surface-elevated/80 hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors z-10"
+          aria-label="Close"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M1 1l12 12M13 1L1 13" />
+          </svg>
+        </button>
+        <div className="wiki-mermaid-diagram wiki-mermaid-modal-diagram" dangerouslySetInnerHTML={{ __html: svg }} />
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function MermaidCodeBlock({ source, title = null }: { source: string; title?: string | null }) {
   const diagram = normalizeMermaidSource(source);
   const [svg, setSvg] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const renderId = useId().replace(/:/g, '');
+
+  const closeModal = useCallback(() => setModalOpen(false), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -289,9 +325,22 @@ export function MermaidCodeBlock({ source, title = null }: { source: string; tit
           <code className="text-[12px] leading-6 text-text-secondary font-mono whitespace-pre-wrap">{diagram}</code>
         </pre>
       ) : svg ? (
-        <div className="overflow-x-auto py-2">
-          <div className="wiki-mermaid-diagram" dangerouslySetInnerHTML={{ __html: svg }} />
-        </div>
+        <>
+          <div
+            className="group relative overflow-x-auto py-2 rounded-lg cursor-zoom-in"
+            onClick={() => setModalOpen(true)}
+            title="클릭하여 전체 화면으로 보기"
+          >
+            <div className="wiki-mermaid-diagram pointer-events-none" dangerouslySetInnerHTML={{ __html: svg }} />
+            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-surface-elevated/80 border border-surface-border/60 text-[11px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity select-none">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+              </svg>
+              전체 화면
+            </div>
+          </div>
+          {modalOpen && <MermaidModal svg={svg} onClose={closeModal} />}
+        </>
       ) : (
         <div className="px-1 py-2 text-xs text-text-muted">Rendering diagram...</div>
       )}

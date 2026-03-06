@@ -239,6 +239,13 @@
     height: auto !important;
   }
 
+  .wiki-mermaid-modal-diagram svg {
+    width: auto !important;
+    min-width: min(80vw, 64rem);
+    max-width: 88vw !important;
+    height: auto !important;
+  }
+
   .wiki-mermaid-diagram .node rect,
   .wiki-mermaid-diagram .node polygon,
   .wiki-mermaid-diagram .node path,
