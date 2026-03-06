@@ -7,10 +7,10 @@ interface WikiMarkdownRendererProps {
   content: string;
   className?: string;
   headingIdPrefix?: string;
+  highlightQuotedCodeLikeText?: boolean;
 }
 
 interface CodeComponentProps {
-  inline?: boolean;
   className?: string;
   children?: ReactNode;
 }
@@ -20,6 +20,9 @@ interface PreComponentProps {
 }
 
 const WIKI_IDENTIFIER_LINE_RE = /^지금 항목 식별자는\s+sec-\d+\/sub-\d+-\d+\/\d+이다\.?/;
+const QUOTED_CODE_LIKE_TEXT_RE = /(^|[^\p{L}\p{N}_`])'([^'\n]{1,160})'/gu;
+const COMMAND_LIKE_PREFIX_RE =
+  /^(?:npm|pnpm|yarn|bun|npx|node|deno|claude|bash|sh|zsh|curl|wget|git|gh|docker|kubectl|python|python3|pip|pip3|uv|poetry|cargo|go|java|javac|mvn|gradle|make|cmake|brew|apt|apt-get|yum|dnf|rpm|dpkg|ls|cd|cat|cp|mv|rm|chmod|chown|export|source|sudo|ssh|scp|tar)\b/i;
 
 function slugify(text: string) {
   return text
@@ -241,6 +244,109 @@ function sanitizeWikiMarkdown(rawContent: string): string {
   return cleaned.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+function looksLikeQuotedCodeLikeText(rawValue: string): boolean {
+  const value = rawValue.trim();
+
+  if (!value || value.length > 160 || /`/.test(value)) {
+    return false;
+  }
+
+  if (/[\\/]/.test(value)) {
+    return true;
+  }
+
+  if (/\.[a-z0-9]{1,8}$/i.test(value)) {
+    return true;
+  }
+
+  if (/^[A-Z_][A-Z0-9_]*=/.test(value)) {
+    return true;
+  }
+
+  if (COMMAND_LIKE_PREFIX_RE.test(value) || /^--?[A-Za-z0-9][A-Za-z0-9-]*$/.test(value)) {
+    return true;
+  }
+
+  if (/^[@$A-Za-z0-9_.:/]+$/.test(value) && /[@$_.:/]/.test(value)) {
+    return true;
+  }
+
+  if (!/\s/.test(value)) {
+    // Single-word identifier (e.g. jq, uname, sha256sum, download_file(), etc.)
+    return /^[A-Za-z$_][A-Za-z0-9_$]*(\(.*\))?$/.test(value);
+  }
+
+  if (/[|><]/.test(value) || /\s--?[A-Za-z0-9]/.test(` ${value}`)) {
+    return true;
+  }
+  return /\b[A-Za-z0-9_.-]+\.[A-Za-z0-9]{1,8}\b/.test(value);
+}
+
+function replaceQuotedCodeLikeTextInSegment(segment: string): string {
+  return segment.replace(QUOTED_CODE_LIKE_TEXT_RE, (match, prefix: string, quotedValue: string) => {
+    if (!looksLikeQuotedCodeLikeText(quotedValue)) {
+      return match;
+    }
+
+    return `${prefix}\`${quotedValue.trim()}\``;
+  });
+}
+
+function replaceQuotedCodeLikeTextInLine(line: string): string {
+  if (!line.includes("'")) {
+    return line;
+  }
+
+  let normalized = '';
+  let cursor = 0;
+
+  while (cursor < line.length) {
+    const nextTickIndex = line.indexOf('`', cursor);
+    if (nextTickIndex === -1) {
+      normalized += replaceQuotedCodeLikeTextInSegment(line.slice(cursor));
+      break;
+    }
+
+    normalized += replaceQuotedCodeLikeTextInSegment(line.slice(cursor, nextTickIndex));
+
+    let tickCount = 1;
+    while (line[nextTickIndex + tickCount] === '`') {
+      tickCount += 1;
+    }
+
+    const fence = '`'.repeat(tickCount);
+    const closingTickIndex = line.indexOf(fence, nextTickIndex + tickCount);
+
+    if (closingTickIndex === -1) {
+      normalized += line.slice(nextTickIndex);
+      break;
+    }
+
+    normalized += line.slice(nextTickIndex, closingTickIndex + tickCount);
+    cursor = closingTickIndex + tickCount;
+  }
+
+  return normalized;
+}
+
+function highlightQuotedCodeLikeText(markdown: string): string {
+  const lines = markdown.split('\n');
+  const highlighted: string[] = [];
+  let insideFence = false;
+
+  for (const line of lines) {
+    if (line.trimStart().startsWith('```')) {
+      insideFence = !insideFence;
+      highlighted.push(line);
+      continue;
+    }
+
+    highlighted.push(insideFence ? line : replaceQuotedCodeLikeTextInLine(line));
+  }
+
+  return highlighted.join('\n');
+}
+
 function MermaidModal({ svg, onClose }: { svg: string; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -355,20 +461,13 @@ function getCodeText(children: ReactNode | undefined): string {
     .join('');
 }
 
-function WikiCodeBlock({ inline, className, children }: CodeComponentProps) {
+function WikiCodeBlock({ children }: CodeComponentProps) {
   const codeText = useMemo(() => getCodeText(children).replace(/\n$/, ''), [children]);
   if (!codeText) return null;
 
-  if (inline) {
-    return (
-      <code className="px-1 py-0.5 rounded bg-surface-elevated/80 text-text-secondary border border-surface-border text-[12px] font-mono">
-        {codeText}
-      </code>
-    );
-  }
-
+  // This component is only invoked for inline code (block code is rendered directly in WikiPreBlock).
   return (
-    <code className={`${className ? `${className} ` : ''}text-xs text-text-secondary leading-relaxed font-mono break-words`}>
+    <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[12px] font-mono">
       {codeText}
     </code>
   );
@@ -385,6 +484,15 @@ function WikiPreBlock({ children }: PreComponentProps) {
     if (language === 'mermaid') {
       return <MermaidCodeBlock source={codeText} />;
     }
+
+    // Render block code directly so WikiCodeBlock is only ever used for inline code.
+    return (
+      <pre className="overflow-x-auto rounded-lg border border-surface-border bg-surface-elevated/70 p-3">
+        <code className={`${codeProps.className ? `${codeProps.className} ` : ''}text-xs text-text-secondary leading-relaxed font-mono break-words`}>
+          {codeText}
+        </code>
+      </pre>
+    );
   }
 
   return <pre className="overflow-x-auto rounded-lg border border-surface-border bg-surface-elevated/70 p-3">{children}</pre>;
@@ -394,8 +502,12 @@ export default function WikiMarkdownRenderer({
   content,
   className = '',
   headingIdPrefix,
+  highlightQuotedCodeLikeText: shouldHighlightQuotedCodeLikeText = false,
 }: WikiMarkdownRendererProps) {
-  const markdown = useMemo(() => sanitizeWikiMarkdown(content).trim(), [content]);
+  const markdown = useMemo(() => {
+    const sanitized = sanitizeWikiMarkdown(content).trim();
+    return shouldHighlightQuotedCodeLikeText ? highlightQuotedCodeLikeText(sanitized) : sanitized;
+  }, [content, shouldHighlightQuotedCodeLikeText]);
   if (!markdown) return null;
 
   // Fresh counter map per render so heading IDs are stable across re-renders.

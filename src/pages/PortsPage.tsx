@@ -591,6 +591,7 @@ export default function PortsPage() {
                                           content={ws.summary}
                                           className="wiki-markdown--summary"
                                           headingIdPrefix={`wiki-${ws.sectionId}-summary-`}
+                                          highlightQuotedCodeLikeText
                                         />
                                       </div>
                                     )}
@@ -601,6 +602,7 @@ export default function PortsPage() {
                                       <WikiMarkdownRenderer
                                         content={ws.deepDiveMarkdown}
                                         headingIdPrefix={`wiki-${ws.sectionId}-deepdive-`}
+                                        highlightQuotedCodeLikeText
                                       />
                                     )}
                                   </div>
