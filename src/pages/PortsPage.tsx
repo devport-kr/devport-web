@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type {
   ProjectDetail,
   ProjectEvent,
-  EventType,
   ProjectCommentTreeNode,
 } from '../types';
 import type { WikiSnapshot } from '../types/wiki';
@@ -23,13 +22,13 @@ import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiM
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-const EVENT_TYPE: Record<EventType, { label: string; cls: string; dot: string }> = {
-  FEATURE: { label: 'Feature', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: '#22c55e' },
-  FIX: { label: 'Fix', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20', dot: '#3b82f6' },
-  SECURITY: { label: 'Security', cls: 'bg-red-500/10 text-red-400 border-red-500/20', dot: '#ef4444' },
-  BREAKING: { label: 'Breaking', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20', dot: '#f97316' },
-  PERF: { label: 'Perf', cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', dot: '#06b6d4' },
-  MISC: { label: 'Misc', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20', dot: '#6b7280' },
+const EVENT_BADGE: Record<string, { label: string; cls: string }> = {
+  FEATURE: { label: 'feat', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  FIX: { label: 'fix', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  SECURITY: { label: 'sec', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  BREAKING: { label: 'break', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  PERF: { label: 'perf', cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  MISC: { label: 'misc', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
 };
 
 interface TocSubsection {
@@ -42,6 +41,20 @@ interface TocSectionItem {
   id: string;
   label: string;
   children?: TocSubsection[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getWikiSubsectionTitles(metadata: Record<string, unknown> | null | undefined): string[] {
+  if (!metadata || !Array.isArray(metadata.subsections)) return [];
+
+  return metadata.subsections.flatMap((subsection) => {
+    if (!isRecord(subsection)) return [];
+    const title = typeof subsection.titleKo === 'string' ? subsection.titleKo.trim() : '';
+    return title ? [title] : [];
+  });
 }
 
 function cleanChildLabel(parentLabel: string, childLabel: string): string {
@@ -101,8 +114,6 @@ function buildCommentTree(comments: any[]): ProjectCommentTreeNode[] {
   return roots;
 }
 
-const ACCENT_COLOR = '#6366f1'; // default indigo accent for events dot
-
 // ─── Page ───────────────────────────────────────────────────
 
 export default function PortsPage() {
@@ -110,7 +121,7 @@ export default function PortsPage() {
   const params = useParams<{ '*': string }>();
   const fullNameFromUrl = params['*'] || '';
   const navigate = useNavigate();
-  const [eventFilter, setEventFilter] = useState<EventType | 'all'>('all');
+
   const [activeSection, setActiveSection] = useState('wiki-what');
 
   // Directory data
@@ -129,7 +140,6 @@ export default function PortsPage() {
   // Wiki data
   const [wikiSnapshot, setWikiSnapshot] = useState<WikiSnapshot | null>(null);
   const [wikiLoading, setWikiLoading] = useState(false);
-  const [expandedTocSections, setExpandedTocSections] = useState<Set<string>>(new Set());
   const [tocSections, setTocSections] = useState<TocSectionItem[]>([]);
 
   const viewType = fullNameFromUrl ? 'project' : 'directory';
@@ -203,10 +213,7 @@ export default function PortsPage() {
     );
   }, [wikiProjects, searchQuery]);
 
-  const filteredEvents = useMemo(() => {
-    if (eventFilter === 'all') return projectEvents;
-    return projectEvents.filter(e => e.eventTypes.includes(eventFilter));
-  }, [projectEvents, eventFilter]);
+  const latestReleases = useMemo(() => projectEvents.slice(0, 5), [projectEvents]);
 
   // Visible wiki sections from dynamic sections array
   const visibleWikiSections = useMemo(() => {
@@ -233,14 +240,20 @@ export default function PortsPage() {
         const sectionEl = document.getElementById(sectionId);
         const children: TocSubsection[] = [];
         const seenHeadingIds = new Set<string>();
+        const subsectionTitles = getWikiSubsectionTitles(ws.metadata);
 
         if (sectionEl) {
-          const headingEls = Array.from(sectionEl.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6'));
-          for (const headingEl of headingEls) {
+          const headingEls = Array.from(sectionEl.querySelectorAll<HTMLElement>('h2, h3, h4, h5, h6'))
+            .filter((headingEl) => {
+              const id = headingEl.getAttribute('id');
+              return Boolean(id && id.startsWith(`${sectionId}-deepdive-`));
+            });
+
+          for (const [index, headingEl] of headingEls.entries()) {
             const id = headingEl.getAttribute('id');
-            const label = (headingEl.textContent || '').trim();
+            const labelFromMetadata = subsectionTitles[index];
+            const label = (labelFromMetadata || headingEl.textContent || '').trim();
             if (!id || !label) continue;
-            if (!id.startsWith(`${sectionId}-`)) continue;
             const normalizedLabel = cleanChildLabel(ws.heading, label);
             if (!normalizedLabel || normalizedLabel === ws.heading) continue;
             if (normalizedLabel === ws.heading.trim()) continue;
@@ -293,15 +306,6 @@ export default function PortsPage() {
     return ids;
   }, [tocSections]);
 
-  const expandTocSection = (sectionId: string) => {
-    setExpandedTocSections((prev) => {
-      if (prev.has(sectionId)) return prev;
-      const next = new Set(prev);
-      next.add(sectionId);
-      return next;
-    });
-  };
-
   const scrollToTocAnchor = (anchorId: string) => {
     const target =
       document.getElementById(anchorId)
@@ -319,52 +323,73 @@ export default function PortsPage() {
   };
 
   useEffect(() => {
-    const activeParent = tocSections.find((section) =>
-      (section.children || []).some((child) => child.id === activeSection)
-    );
-    if (activeParent) {
-      expandTocSection(activeParent.id);
-    }
-  }, [activeSection, tocSections]);
+    if (tocAnchorIds.length === 0) return;
 
-  // IntersectionObserver for active section
+    const flattenedIds = tocAnchorIds;
+    const hash = window.location.hash.replace(/^#/, '');
+
+    if (hash && flattenedIds.includes(hash)) {
+      setActiveSection(hash);
+      return;
+    }
+
+    setActiveSection((prev) => (flattenedIds.includes(prev) ? prev : flattenedIds[0]));
+  }, [tocAnchorIds]);
+
   useEffect(() => {
     if (tocAnchorIds.length === 0) return;
 
-    const elements = tocAnchorIds
-      .map((id) => document.getElementById(id))
-      .filter((element): element is HTMLElement => Boolean(element));
+    let frameId = 0;
 
-    if (elements.length === 0) return;
+    const updateActiveFromScroll = () => {
+      frameId = 0;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the topmost visible element
-        const visible = entries.filter((entry) => entry.isIntersecting);
-        if (visible.length === 0) return;
+      const elements = tocAnchorIds
+        .map((id) => document.getElementById(id))
+        .filter((element): element is HTMLElement => Boolean(element));
 
-        // Pick the one closest to the top of the viewport
-        const topEntry = visible.reduce((prev, curr) => {
-          return (Math.abs(curr.boundingClientRect.top) < Math.abs(prev.boundingClientRect.top)) ? curr : prev;
-        });
+      if (elements.length === 0) return;
 
-        if (topEntry.target.id !== activeSection) {
-          setActiveSection(topEntry.target.id);
-        }
-      },
-      { rootMargin: '-10% 0px -70% 0px', threshold: 0 }
-    );
+      const readerOffset = Math.max(140, Math.min(window.innerHeight * 0.28, 240));
+      const scrollMarker = window.scrollY + readerOffset;
+      const sortedAnchors = elements
+        .map((element) => ({
+          id: element.id,
+          top: element.getBoundingClientRect().top + window.scrollY,
+        }))
+        .sort((left, right) => left.top - right.top);
+      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      const current = isAtBottom
+        ? sortedAnchors[sortedAnchors.length - 1]
+        : sortedAnchors.filter((anchor) => anchor.top <= scrollMarker).at(-1) ?? sortedAnchors[0];
 
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, [tocAnchorIds, activeSection]);
+      setActiveSection((prev) => (prev === current.id ? prev : current.id));
+    };
+
+    const scheduleUpdate = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(updateActiveFromScroll);
+    };
+
+    updateActiveFromScroll();
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [tocAnchorIds]);
 
 
   const goProject = (externalId: string) => {
     // Encode the full externalId (e.g. github:12345 → github%3A12345).
     // No slash in numeric IDs, so the wildcard route captures it cleanly.
     navigate(`/ports/${encodeURIComponent(externalId)}`);
-    setEventFilter('all');
   };
 
   // ─── Render ────────────────────────────────────────────────
@@ -428,9 +453,6 @@ export default function PortsPage() {
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setActiveSection(section.id);
-                                    if (section.children?.length) {
-                                      expandTocSection(section.id);
-                                    }
                                     scrollToTocAnchor(section.id);
                                   }}
                                   className={`group relative block rounded-sm px-2 py-1.5 transition-colors ${isActiveSection
@@ -449,7 +471,7 @@ export default function PortsPage() {
                               );
                             })()}
 
-                            {section.children && section.children.length > 0 && expandedTocSections.has(section.id) && (
+                            {section.children && section.children.length > 0 && (
                               <div className="mt-0.5">
                                 {section.children.map((child) => (
                                   <button
@@ -458,7 +480,6 @@ export default function PortsPage() {
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setActiveSection(child.id);
-                                      expandTocSection(section.id);
                                       scrollToTocAnchor(child.id);
                                     }}
                                     className={`group relative block rounded-sm px-2 py-1 transition-colors ${activeSection === child.id
@@ -507,18 +528,27 @@ export default function PortsPage() {
                         {project && (
                           <div className="mb-10">
                             <div className="flex items-start justify-between gap-4 mb-4">
-                              <div className="min-w-0 flex-1">
-                                <h1 className="text-2xl font-semibold text-text-primary mb-2">{project.fullName}</h1>
-                                {Array.isArray(project.tags) && project.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden">
-                                    {project.tags.slice(0, 12).map((tag) => (
-                                      <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
-                                    ))}
-                                    {project.tags.length > 12 && (
-                                      <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
-                                    )}
-                                  </div>
-                                )}
+                              <div className="flex items-start gap-4 min-w-0 flex-1">
+                                <div className="w-12 h-12 rounded-xl border border-surface-border bg-surface-elevated overflow-hidden shrink-0">
+                                  <img
+                                    src={`https://github.com/${project.fullName.split('/')[0]}.png?size=100`}
+                                    alt={project.fullName.split('/')[0]}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <h1 className="text-2xl font-semibold text-text-primary mb-2">{project.fullName}</h1>
+                                  {Array.isArray(project.tags) && project.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden">
+                                      {project.tags.slice(0, 12).map((tag) => (
+                                        <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
+                                      ))}
+                                      {project.tags.length > 12 && (
+                                        <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border text-xs text-text-muted">
@@ -557,12 +587,15 @@ export default function PortsPage() {
                                   className="scroll-mt-24 pb-12 border-b border-surface-border/50 last:border-b-0 last:pb-0"
                                 >
                                   <div className="space-y-6">
+                                    <h2 className="text-lg font-semibold text-text-primary">{ws.heading}</h2>
                                     {ws.summary && (
-                                      <WikiMarkdownRenderer
-                                        content={ws.summary}
-                                        className="wiki-markdown--summary"
-                                        headingIdPrefix={`wiki-${ws.sectionId}-summary-`}
-                                      />
+                                      <div className="rounded-lg border border-surface-border/60 bg-surface-elevated/30 pl-4 pr-5 py-4 border-l-[3px] border-l-accent/50">
+                                        <WikiMarkdownRenderer
+                                          content={ws.summary}
+                                          className="wiki-markdown--summary"
+                                          headingIdPrefix={`wiki-${ws.sectionId}-summary-`}
+                                        />
+                                      </div>
                                     )}
                                     {ws.generatedDiagramDsl && (
                                       <MermaidCodeBlock source={ws.generatedDiagramDsl || ''} />
@@ -583,86 +616,47 @@ export default function PortsPage() {
                             </div>
                           )}
 
-                          {/* Activity Section - GitHub Events */}
-                          <section id="activity" className="bg-surface-card rounded-xl border border-surface-border p-6 scroll-mt-24">
-                            <div className="flex items-center justify-between mb-6">
-                              <h2 className="text-sm font-medium text-text-secondary uppercase tracking-widest">릴리스</h2>
-                              <div className="flex gap-0.5 bg-surface-elevated rounded-lg p-0.5">
-                                <button
-                                  onClick={() => setEventFilter('all')}
-                                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${eventFilter === 'all' ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
-                                >
-                                  All
-                                </button>
-                                {(Object.keys(EVENT_TYPE) as EventType[]).map(t => (
-                                  <button
-                                    key={t}
-                                    onClick={() => setEventFilter(t)}
-                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${eventFilter === t ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-secondary'}`}
-                                  >
-                                    {EVENT_TYPE[t].label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
+                          {/* Activity Section - Latest Releases (compact) */}
+                          <section id="activity" className="bg-surface-card rounded-xl border border-surface-border p-5 scroll-mt-24">
+                            <h2 className="text-xs font-medium text-text-muted uppercase tracking-widest mb-4">최근 릴리스</h2>
 
                             {eventsLoading ? (
-                              <div className="text-center py-8 text-text-muted text-sm">Loading releases...</div>
-                            ) : filteredEvents.length === 0 ? (
-                              <div className="text-center py-8 text-text-muted text-sm">No releases found</div>
+                              <div className="text-center py-4 text-text-muted text-xs">Loading releases...</div>
+                            ) : latestReleases.length === 0 ? (
+                              <div className="text-center py-4 text-text-muted text-xs">No releases found</div>
                             ) : (
-                              <div className="relative pl-6">
-                                <div className="absolute left-[3px] top-1 bottom-1 w-px bg-surface-border" />
-
-                                {filteredEvents.map((ev) => {
-                                  const types = ev.eventTypes || [];
-                                  const dotColor = types.includes('SECURITY') ? EVENT_TYPE.SECURITY.dot
-                                    : types.includes('BREAKING') ? EVENT_TYPE.BREAKING.dot
-                                      : ACCENT_COLOR;
-
-                                  return (
-                                    <div key={ev.id} className="relative pb-8 last:pb-0">
-                                      <div className="absolute -left-[23px] top-1.5 w-2 h-2 rounded-full border-2 bg-surface" style={{ borderColor: dotColor }}>
-                                        <div className="absolute inset-[1px] rounded-full" style={{ background: dotColor }} />
-                                      </div>
-
-                                      <div className="flex items-center gap-3 mb-2">
-                                        <span className="font-mono text-sm font-semibold text-text-primary">{ev.version}</span>
-                                        <span className="text-xs text-text-muted">{ev.releasedAt?.split('T')[0]}</span>
-                                        <div className="flex gap-1.5 ml-auto">
-                                          {(ev.eventTypes || []).map(t => EVENT_TYPE[t] && (
-                                            <span key={t} className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${EVENT_TYPE[t].cls}`}>
-                                              {EVENT_TYPE[t].label}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
-
-                                      <p className="text-sm text-text-primary mb-3 leading-relaxed">{ev.summary}</p>
-
-                                      <ul className="space-y-1.5 mb-3">
-                                        {(ev.bullets || []).map((b, i) => (
-                                          <li key={i} className="text-xs text-text-muted flex items-start gap-2 leading-relaxed">
-                                            <span className="text-surface-border mt-1 shrink-0">·</span>
-                                            <span>{b}</span>
-                                          </li>
+                              <div className="divide-y divide-surface-border/50">
+                                {latestReleases.map((ev) => (
+                                  <div key={ev.id} className="py-2.5 first:pt-0 last:pb-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                      {ev.sourceUrl ? (
+                                        <a
+                                          href={ev.sourceUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="font-mono text-xs font-semibold text-accent hover:text-accent-light transition-colors"
+                                        >
+                                          {ev.version}
+                                        </a>
+                                      ) : (
+                                        <span className="font-mono text-xs font-semibold text-text-primary">{ev.version}</span>
+                                      )}
+                                      <span className="text-[11px] text-text-muted">{ev.releasedAt?.split('T')[0]}</span>
+                                      <div className="flex gap-1 ml-auto">
+                                        {(ev.eventTypes || []).map(t => EVENT_BADGE[t] && (
+                                          <span key={t} className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-px rounded border ${EVENT_BADGE[t].cls}`}>
+                                            {EVENT_BADGE[t].label}
+                                          </span>
                                         ))}
-                                      </ul>
-
-                                      <div className="flex items-center gap-3 text-xs text-text-muted">
-                                        {ev.sourceUrl && (
-                                          <a href={ev.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-light transition-colors underline underline-offset-4">릴리스 노트</a>
-                                        )}
                                       </div>
                                     </div>
-                                  );
-                                })}
+                                    {ev.summary && (
+                                      <p className="text-xs text-text-muted leading-snug line-clamp-1">{ev.summary}</p>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             )}
-
-                            <div className="text-center mt-8 pt-6 border-t border-surface-border/50">
-                              <span className="text-2xs text-text-muted uppercase tracking-widest font-medium">릴리스 요약은 LLM으로 생성 · 원문 확인 필수</span>
-                            </div>
                           </section>
 
                           {/* Comments Section */}
@@ -821,4 +815,3 @@ export default function PortsPage() {
     </div>
   );
 }
-

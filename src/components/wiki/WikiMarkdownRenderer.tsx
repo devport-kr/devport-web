@@ -338,20 +338,16 @@ export default function WikiMarkdownRenderer({
   const markdown = useMemo(() => sanitizeWikiMarkdown(content).trim(), [content]);
   if (!markdown) return null;
 
-  const headingState = useMemo(
-    () => ({
-      counters: new Map<string, number>(),
-    }),
-    [content, headingIdPrefix]
-  );
+  // Fresh counter map per render so heading IDs are stable across re-renders.
+  const headingCounters = new Map<string, number>();
 
   const buildHeadingId = (level: number, children: ReactNode): string => {
     if (!headingIdPrefix) return '';
     const text = extractNodeText(children).trim() || `section-${level}`;
     const baseSlug = slugify(text);
     const key = `${level}:${baseSlug}`;
-    const currentCount = headingState.counters.get(key) ?? 0;
-    headingState.counters.set(key, currentCount + 1);
+    const currentCount = headingCounters.get(key) ?? 0;
+    headingCounters.set(key, currentCount + 1);
     const uniqueSlug = currentCount > 0 ? `${baseSlug}-${currentCount + 1}` : baseSlug;
     return `${headingIdPrefix}${uniqueSlug}`;
   };
