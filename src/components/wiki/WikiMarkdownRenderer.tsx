@@ -53,7 +53,7 @@ function extractNodeText(children: ReactNode): string {
 
 mermaid.initialize({
   startOnLoad: false,
-  securityLevel: 'strict',
+  securityLevel: 'antiscript',
   suppressErrorRendering: true,
   theme: 'dark',
   fontFamily: 'General Sans, sans-serif',
@@ -89,17 +89,25 @@ mermaid.initialize({
   },
 });
 
+function sanitizeMermaidDiagram(source: string): string {
+  // Mermaid treats [/label] and [\label] as trapezoid shapes.
+  // Labels that start with / but lack a matching closing / before ] cause parse errors.
+  // Wrap them in quotes to force plain rectangle rendering.
+  return source
+    .replace(/\[\/([^\/\]"]+)\]/g, '[\"/$1\"]')
+    .replace(/\[\\([^\\>\]"]+)\]/g, '[\"\\$1\"]');
+}
+
 function normalizeMermaidSource(rawSource: string): string {
   const trimmed = rawSource.trim();
-  if (!trimmed.startsWith('```')) {
-    return trimmed;
-  }
-
-  return trimmed
-    .replace(/^```\s*mermaid\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/```\s*$/, '')
-    .trim();
+  const stripped = trimmed.startsWith('```')
+    ? trimmed
+        .replace(/^```\s*mermaid\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/, '')
+        .trim()
+    : trimmed;
+  return sanitizeMermaidDiagram(stripped);
 }
 
 function normalizeRenderedSvg(rawSvg: string): string {
@@ -243,6 +251,9 @@ export function MermaidCodeBlock({ source, title = null }: { source: string; tit
 
     async function renderDiagram() {
       if (!diagram) return;
+
+      // Clean up any leftover element from a prior cancelled render to avoid ID collision.
+      document.getElementById(`wiki-mermaid-${renderId}`)?.remove();
 
       try {
         const { svg: renderedSvg } = await mermaid.render(`wiki-mermaid-${renderId}`, diagram);
