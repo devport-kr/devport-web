@@ -191,7 +191,14 @@ export default function PortsProjectPage() {
   const visibleWikiSections = useMemo(() => {
     if (!wikiSnapshot?.sections?.length) return [];
     const hidden = wikiSnapshot.hiddenSections || [];
-    return wikiSnapshot.sections.filter(s => !hidden.includes(s.sectionId));
+    const visible = wikiSnapshot.sections.filter(s => !hidden.includes(s.sectionId));
+
+    // Sort to ensure 'overview' section is always first
+    return visible.sort((a, b) => {
+      if (a.sectionId === 'overview') return -1;
+      if (b.sectionId === 'overview') return 1;
+      return 0; // Maintain original order for others
+    });
   }, [wikiSnapshot]);
 
   const wikiGeneratedLabel = useMemo(() => {
@@ -542,9 +549,14 @@ export default function PortsProjectPage() {
                                   <p className="text-2xs text-text-muted">최근 릴리즈: {ago(project.lastRelease)}</p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
+                              <a
+                                href="https://github.com/devport-kr/portki"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 hover:opacity-80 transition-opacity"
+                              >
                                 <span className="text-[13px] font-semibold text-accent">Powered by Portki</span>
-                              </div>
+                              </a>
                             </div>
 
                             {visibleWikiSections.map((ws) => (
@@ -555,6 +567,7 @@ export default function PortsProjectPage() {
                               >
                                 <div className="space-y-6">
                                   <h2 className="text-lg font-semibold text-text-primary">{ws.heading}</h2>
+
                                   {ws.summary && (
                                     <div className="rounded-lg border border-surface-border/60 bg-surface-elevated/30 pl-4 pr-5 py-4 border-l-[3px] border-l-accent/50">
                                       <WikiMarkdownRenderer
