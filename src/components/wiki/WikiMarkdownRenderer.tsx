@@ -95,14 +95,32 @@ mermaid.initialize({
 
 function sanitizeMermaidDiagram(source: string): string {
   // Strip backticks to prevent Mermaid parsing errors for node labels like A[`routes.tsx`]
-  const noBackticks = source.replace(/`/g, '');
+  let safeSource = source.replace(/`/g, '');
 
-  // Mermaid treats [/label] and [\label] as trapezoid shapes.
-  // Labels that start with / but lack a matching closing / before ] cause parse errors.
-  // Wrap them in quotes to force plain rectangle rendering.
-  return noBackticks
-    .replace(/\[\/([^\/\]"]+)\]/g, '[\"/$1\"]')
-    .replace(/\[\\([^\\>\]"]+)\]/g, '[\"\\$1\"]');
+  // Remove empty parentheses often attached to function names which break Mermaid shapes
+  safeSource = safeSource.replace(/\(\)/g, '');
+
+  // Wrap standard rectangle node labels in quotes if they aren't already.
+  // This prevents parse errors when labels contain /, \, ), (, or form tokens like /]
+  safeSource = safeSource.replace(/\[([^\]]+)\]/g, (match, inner) => {
+    const i = inner.trim();
+    // Leave unrecognized shapes alone
+    if (i.startsWith('/') && i.endsWith('/')) return match;
+    if (i.startsWith('\\') && i.endsWith('\\')) return match;
+    if (i.startsWith('/') && i.endsWith('\\')) return match;
+    if (i.startsWith('\\') && i.endsWith('/')) return match;
+    if (i.startsWith('(') && i.endsWith(')')) return match;
+    if (i.startsWith('[') && i.endsWith(']')) return match;
+
+    // Check if it's already quoted
+    if (i.startsWith('"') && i.endsWith('"')) return match;
+
+    // Standard rectangle node. Safely wrap its content in quotes.
+    const escapedInner = inner.replace(/"/g, "'");
+    return `["${escapedInner}"]`;
+  });
+
+  return safeSource;
 }
 
 function normalizeMermaidSource(rawSource: string): string {
