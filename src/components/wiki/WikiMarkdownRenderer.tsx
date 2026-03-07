@@ -94,10 +94,13 @@ mermaid.initialize({
 });
 
 function sanitizeMermaidDiagram(source: string): string {
+  // Strip backticks to prevent Mermaid parsing errors for node labels like A[`routes.tsx`]
+  const noBackticks = source.replace(/`/g, '');
+
   // Mermaid treats [/label] and [\label] as trapezoid shapes.
   // Labels that start with / but lack a matching closing / before ] cause parse errors.
   // Wrap them in quotes to force plain rectangle rendering.
-  return source
+  return noBackticks
     .replace(/\[\/([^\/\]"]+)\]/g, '[\"/$1\"]')
     .replace(/\[\\([^\\>\]"]+)\]/g, '[\"\\$1\"]');
 }
@@ -106,10 +109,10 @@ function normalizeMermaidSource(rawSource: string): string {
   const trimmed = rawSource.trim();
   const stripped = trimmed.startsWith('```')
     ? trimmed
-        .replace(/^```\s*mermaid\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/```\s*$/, '')
-        .trim()
+      .replace(/^```\s*mermaid\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/, '')
+      .trim()
     : trimmed;
   return sanitizeMermaidDiagram(stripped);
 }
@@ -176,7 +179,7 @@ function sanitizeMermaidSvgColors(rawSvg: string): string {
 
       const fill = el.getAttribute('fill');
       const stroke = el.getAttribute('stroke');
-      
+
       const elementWithStyle = el as HTMLElement | SVGElement;
 
       if (isText) {

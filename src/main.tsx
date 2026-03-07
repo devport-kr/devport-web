@@ -19,7 +19,8 @@ import ArticleDetailPage from './pages/ArticleDetailPage'
 import MyPage from './pages/MyPage'
 import AdminPage from './pages/AdminPage'
 import SearchResultsPage from './pages/SearchResultsPage'
-import PortsPage from './pages/PortsPage'
+import PortsDirectoryPage from './pages/PortsDirectoryPage'
+import PortsProjectPage from './pages/PortsProjectPage'
 import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
@@ -39,8 +40,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/llm-rankings" element={<LLMRankingsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/ports" element={<PortsPage />} />
-          <Route path="/ports/*" element={<PortsPage />} />
+          <Route path="/ports" element={<PortsDirectoryPage />} />
+          <Route path="/ports/*" element={<PortsProjectPage />} />
           <Route
             path="/admin"
             element={

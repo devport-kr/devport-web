@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { BookOpen, BotMessageSquare, SparklesIcon, TrendingUp, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
