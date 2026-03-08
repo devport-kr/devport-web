@@ -1,19 +1,19 @@
 /**
- * WikiChatPanel - Chat interface with repo-specific Q&A.
- * Uses short-lived session memory and handles clarification requests.
+ * WikiChatPanel - Streaming chat interface with repo-specific Q&A.
+ *
+ * Uses SSE (fetch + ReadableStream) via useWikiChat to progressively
+ * render answer tokens, clarification chips, and suggested question chips.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import apiClient from '../../lib/http/apiClient';
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  needsClarification?: boolean;
-}
+import { useWikiChat } from '../../services/wiki/useWikiChat';
+import WikiMarkdownRenderer from './WikiMarkdownRenderer';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface WikiChatPanelProps {
   projectExternalId: string;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const SUGGESTION_PROMPTS = [
@@ -23,13 +23,27 @@ const SUGGESTION_PROMPTS = [
   '시작하려면 어떻게 해야 하나요?',
   '최근 주요 변경 사항이 있나요?',
   '프로덕션에서 사용해도 될까요?',
+  '주요 기능은 무엇인가요?',
+  '기여(Contributing) 가이드가 있나요?',
 ];
 
-export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleExpand }: WikiChatPanelProps) {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    error,
+    clarificationOptions,
+    suggestedNextQuestions,
+    sessionReset,
+    networkDisconnected,
+    sendMessage,
+    cancelStream,
+    clearError,
+    retryLastMessage,
+  } = useWikiChat({ projectId: projectExternalId });
+
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -46,67 +60,41 @@ export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, streamingContent, error, networkDisconnected]);
 
-  const sendMessage = async (text?: string) => {
-    const messageText = text ?? input;
-    if (!messageText.trim()) return;
-
-    const currentSessionId = sessionId ?? crypto.randomUUID();
-    if (!sessionId) {
-      setSessionId(currentSessionId);
-    }
-
-    const userMessage: ChatMessage = { role: 'user', content: messageText.trim() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const response = await apiClient.post(`/api/wiki/projects/${encodeURIComponent(projectExternalId)}/chat`, {
-        question: userMessage.content,
-        sessionId: currentSessionId,
-        includeCitations: false,
-      }, {
-        skipAuthRedirect: true,
-      } as any);
-
-      const data = response.data;
-
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: data.answer,
-        needsClarification: data.isClarification || false,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Chat error:', error);
-      const message = (error as any)?.response?.data?.message;
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: message || '요청 처리 중 오류가 발생했습니다.',
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleSend = useCallback(
+    (text?: string) => {
+      const question = text ?? input;
+      if (!question.trim() || isStreaming) return;
+      setInput('');
+      sendMessage(question);
+    },
+    [input, isStreaming, sendMessage],
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSend();
     }
   };
 
+  const hasMessages = messages.length > 0 || isStreaming || error || networkDisconnected;
+
   return (
-    <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-full flex flex-col">
+    <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-full flex flex-col relative group">
+      {onToggleExpand && (
+        <button
+          onClick={onToggleExpand}
+          className="absolute top-2 right-2 p-1.5 rounded-lg bg-surface-elevated/80 text-text-muted hover:text-text-primary hover:bg-surface-hover border border-surface-border/50 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
+          title={isExpanded ? "채팅 축소" : "채팅 넓히기"}
+        >
+          {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+        </button>
+      )}
       {/* Chat Messages / Empty State */}
-      <div className="px-4 py-3 flex-1 min-h-0 overflow-y-auto space-y-3">
-        {messages.length === 0 ? (
+      <div className="px-4 py-3 flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-minimal">
+        {!hasMessages ? (
           <div className="flex flex-col h-full">
             {/* Logo + instruction — upper portion */}
             <div className="flex-1 flex flex-col items-center justify-center text-center relative">
@@ -132,11 +120,11 @@ export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps)
             {/* Suggestion chips — bottom portion */}
             <div className="shrink-0 pt-4 pb-1 space-y-2">
               <p className="text-2xs text-text-muted/50 uppercase tracking-widest font-medium mb-2">추천 질문</p>
-              {SUGGESTION_PROMPTS.map((prompt) => (
+              {SUGGESTION_PROMPTS.map(prompt => (
                 <button
                   key={prompt}
                   type="button"
-                  onClick={() => sendMessage(prompt)}
+                  onClick={() => handleSend(prompt)}
                   className="w-full text-left px-3 py-2.5 rounded-lg border border-surface-border/60 text-xs text-text-muted hover:text-text-secondary hover:border-accent/30 hover:bg-accent/5 transition-all"
                 >
                   {prompt}
@@ -146,33 +134,130 @@ export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps)
           </div>
         ) : (
           <>
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
-                    msg.role === 'user'
-                      ? 'bg-accent/15 text-text-primary'
-                      : 'bg-surface-elevated text-text-secondary'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+            {/* Session reset notice */}
+            {sessionReset && (
+              <div className="flex justify-center">
+                <span className="text-2xs text-text-muted/70 bg-surface-elevated px-3 py-1 rounded-full border border-surface-border/40">
+                  대화 기억이 초기화되었습니다.
+                </span>
+              </div>
+            )}
 
-                  {msg.needsClarification && (
-                    <p className="text-2xs text-text-muted mt-2 italic">
-                      더 자세한 내용을 알려주시면 정확하게 답변드릴 수 있어요.
-                    </p>
+            {/* Committed messages */}
+            {messages.map((msg, idx) => {
+              const isLast = idx === messages.length - 1;
+              const showClarification =
+                isLast && msg.role === 'assistant' && !isStreaming && clarificationOptions.length > 0;
+              const showSuggested =
+                isLast && msg.role === 'assistant' && !isStreaming && suggestedNextQuestions.length > 0;
+
+              return (
+                <div key={idx}>
+                  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user'
+                          ? 'bg-accent/15 text-text-primary'
+                          : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal'
+                        }`}
+                    >
+                      {msg.role === 'user' ? (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      ) : (
+                        <WikiMarkdownRenderer content={msg.content} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Clarification chips — auto-fill and submit */}
+                  {showClarification && (
+                    <div className="mt-2 flex flex-wrap gap-1.5 pl-0">
+                      {clarificationOptions.map(option => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => handleSend(option)}
+                          className="px-3 py-1.5 rounded-full border border-accent/40 text-2xs text-accent hover:bg-accent/10 transition-colors"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Suggested next questions chips */}
+                  {showSuggested && (
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      <p className="text-2xs text-text-muted/50 uppercase tracking-widest font-medium">관련 질문</p>
+                      {suggestedNextQuestions.map(q => (
+                        <button
+                          key={q}
+                          type="button"
+                          onClick={() => handleSend(q)}
+                          className="text-left px-3 py-2 rounded-lg border border-surface-border/60 text-xs text-text-muted hover:text-text-secondary hover:border-accent/30 hover:bg-accent/5 transition-all"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Live streaming bubble */}
+            {isStreaming && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] bg-surface-elevated rounded-lg px-3 py-2 text-xs text-text-secondary overflow-x-auto scrollbar-minimal">
+                  {streamingContent ? (
+                    <div className="relative">
+                      <WikiMarkdownRenderer content={streamingContent + ' ▍'} />
+                    </div>
+                  ) : (
+                    /* Typing indicator before first token */
+                    <span className="flex items-center gap-1 text-text-muted">
+                      <span className="inline-block w-1 h-1 rounded-full bg-text-muted/60 animate-bounce [animation-delay:0ms]" />
+                      <span className="inline-block w-1 h-1 rounded-full bg-text-muted/60 animate-bounce [animation-delay:150ms]" />
+                      <span className="inline-block w-1 h-1 rounded-full bg-text-muted/60 animate-bounce [animation-delay:300ms]" />
+                    </span>
                   )}
                 </div>
               </div>
-            ))}
+            )}
 
-            {loading && (
+            {/* Error state */}
+            {error && !isStreaming && (
               <div className="flex justify-start">
-                <div className="bg-surface-elevated rounded-lg px-3 py-2">
-                  <span className="text-xs text-text-muted">생각하는 중...</span>
+                <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
+                  <span>⚠</span>
+                  <span>{error}</span>
+                  <button
+                    type="button"
+                    onClick={clearError}
+                    className="ml-1 opacity-60 hover:opacity-100 transition-opacity shrink-0"
+                    aria-label="오류 닫기"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             )}
+
+            {/* Network disconnect + retry */}
+            {networkDisconnected && !isStreaming && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-2 bg-surface-elevated border border-surface-border/60 rounded-lg px-3 py-2 text-xs text-text-muted">
+                  <span>연결이 끊겼습니다.</span>
+                  <button
+                    type="button"
+                    onClick={retryLastMessage}
+                    className="text-accent hover:underline"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </>
         )}
@@ -187,17 +272,29 @@ export default function WikiChatPanel({ projectExternalId }: WikiChatPanelProps)
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="질문을 입력하세요..."
-            disabled={loading}
+            disabled={isStreaming}
             rows={1}
             className="flex-1 bg-surface-elevated/50 border border-surface-border/50 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors resize-none overflow-hidden"
           />
-          <button
-            onClick={() => sendMessage()}
-            disabled={loading || !input.trim()}
-            className="px-3 py-2 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium shrink-0"
-          >
-            Send
-          </button>
+
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={cancelStream}
+              className="px-3 py-2 rounded-lg bg-surface-elevated border border-surface-border/60 text-text-muted hover:text-text-secondary hover:border-surface-border transition-colors text-xs font-medium shrink-0"
+            >
+              취소
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSend()}
+              disabled={!input.trim()}
+              className="px-3 py-2 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium shrink-0"
+            >
+              Send
+            </button>
+          )}
         </div>
       </div>
     </div>

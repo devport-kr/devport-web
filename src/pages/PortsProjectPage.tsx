@@ -14,6 +14,7 @@ import {
 import { getWikiSnapshot } from '../services/wiki/wikiService';
 
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
 import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiMarkdownRenderer';
@@ -120,6 +121,7 @@ export default function PortsProjectPage() {
   const fullNameFromUrl = params['*'] || '';
 
   const [activeSection, setActiveSection] = useState('wiki-what');
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Project detail data
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
@@ -371,10 +373,11 @@ export default function PortsProjectPage() {
 
   return (
     <div className="min-h-screen bg-glow">
+      <Navbar />
       <div className="min-h-[calc(100vh-4rem)]">
         {/* Left Sidebar - Fixed */}
         <div
-          className={`fixed left-0 top-0 h-screen z-40 hidden lg:block w-14`}
+          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 hidden lg:block w-14`}
         >
           <Sidebar compact={true} />
         </div>
@@ -386,11 +389,18 @@ export default function PortsProjectPage() {
           ) : (
             <>
               {/* Fixed right sidebar - ALWAYS visible */}
-              <aside className="fixed right-0 top-0 w-[320px] 2xl:w-[520px] h-screen pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-20">
+              <aside
+                className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-40 transition-all duration-300 ease-in-out ${isChatExpanded ? 'w-[800px] max-w-[calc(100vw-3.5rem)] shadow-2xl bg-surface/95 backdrop-blur-md' : 'w-[320px] 2xl:w-[520px]'
+                  }`}
+              >
                 {/* Chat Panel — fills remaining height */}
                 {decodedProjectExternalId && (
                   <div className="flex-1 min-h-0">
-                    <WikiChatPanel projectExternalId={decodedProjectExternalId} />
+                    <WikiChatPanel
+                      projectExternalId={decodedProjectExternalId}
+                      isExpanded={isChatExpanded}
+                      onToggleExpand={() => setIsChatExpanded(!isChatExpanded)}
+                    />
                   </div>
                 )}
               </aside>
@@ -398,7 +408,7 @@ export default function PortsProjectPage() {
               {/* TOC Sidebar - Fixed next to global sidebar */}
               {tocSections.length > 0 && (
                 <div
-                  className={`fixed left-14 top-0 w-56 h-screen z-30 hidden xl:block`}
+                  className={`fixed left-14 top-16 w-56 h-[calc(100vh-4rem)] z-30 hidden xl:block transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}
                 >
                   <div className="h-full pl-4 pr-3 pt-12">
                     <nav className="space-y-0.5 border-l border-surface-border/80 pl-3 pr-1 text-left">
@@ -482,7 +492,7 @@ export default function PortsProjectPage() {
               )}
 
               {/* Main content — centered between TOC and right rail */}
-              <div className="xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-6 py-12">
+              <div className={`xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-6 py-12 transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
                 <div className="max-w-3xl mx-auto">
                   {projectLoading ? (
                     <div className="text-center py-12 text-text-muted">Loading project...</div>

@@ -2,6 +2,9 @@ import { Children, isValidElement, useCallback, useEffect, useId, useMemo, useSt
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import mermaid from 'mermaid';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Check, Copy } from 'lucide-react';
 
 interface WikiMarkdownRendererProps {
   content: string;
@@ -448,13 +451,13 @@ export function MermaidCodeBlock({ source, title = null }: { source: string; tit
     <div className="my-4">
       {title && <div className="mb-2 text-xs text-text-muted uppercase tracking-wide">{title}</div>}
       {errorMessage ? (
-        <pre className="overflow-x-auto rounded-lg border border-surface-border p-3 bg-surface-elevated/60">
+        <pre className="overflow-x-auto scrollbar-minimal rounded-lg border border-surface-border p-3 bg-surface-elevated/60">
           <code className="text-[12px] leading-6 text-text-secondary font-mono whitespace-pre-wrap">{diagram}</code>
         </pre>
       ) : svg ? (
         <>
           <div
-            className="group relative overflow-x-auto py-2 rounded-lg cursor-zoom-in"
+            className="group relative overflow-x-auto scrollbar-minimal py-2 rounded-lg cursor-zoom-in"
             onClick={() => setModalOpen(true)}
             title="클릭하여 전체 화면으로 보기"
           >
@@ -495,6 +498,14 @@ function WikiCodeBlock({ children }: CodeComponentProps) {
 }
 
 function WikiPreBlock({ children }: PreComponentProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, []);
+
   const firstChild = Children.toArray(children)[0];
 
   if (isValidElement<CodeComponentProps>(firstChild)) {
@@ -506,17 +517,39 @@ function WikiPreBlock({ children }: PreComponentProps) {
       return <MermaidCodeBlock source={codeText} />;
     }
 
-    // Render block code directly so WikiCodeBlock is only ever used for inline code.
     return (
-      <pre className="overflow-x-auto rounded-lg border border-surface-border bg-surface-elevated/70 p-3">
-        <code className={`${codeProps.className ? `${codeProps.className} ` : ''}text-xs text-text-secondary leading-relaxed font-mono break-words`}>
-          {codeText}
-        </code>
-      </pre>
+      <div className="my-4 rounded-lg border border-surface-border bg-[#1E1E1E] overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-surface-border/50 select-none">
+          <span className="text-xs font-mono text-gray-400">{language || 'text'}</span>
+          <button
+            onClick={() => handleCopy(codeText)}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            title="Copy code"
+            type="button"
+          >
+            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            <span>{copied ? 'Copied!' : 'Copy'}</span>
+          </button>
+        </div>
+        <div className="text-[13px] overflow-x-auto scrollbar-minimal">
+          <SyntaxHighlighter
+            language={language || 'text'}
+            style={vscDarkPlus}
+            customStyle={{
+              margin: 0,
+              padding: '1rem',
+              background: 'transparent',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            }}
+          >
+            {codeText}
+          </SyntaxHighlighter>
+        </div>
+      </div>
     );
   }
 
-  return <pre className="overflow-x-auto rounded-lg border border-surface-border bg-surface-elevated/70 p-3">{children}</pre>;
+  return <pre className="overflow-x-auto scrollbar-minimal rounded-lg border border-surface-border bg-surface-elevated/70 p-3">{children}</pre>;
 }
 
 export default function WikiMarkdownRenderer({

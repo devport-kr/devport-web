@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { WikiProjectSummary } from '../services/wiki/wikiService';
 import { getWikiProjects } from '../services/wiki/wikiService';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 function fmt(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1) + 'k';
@@ -50,10 +51,11 @@ export default function PortsDirectoryPage() {
 
   return (
     <div className="min-h-screen bg-glow">
+      <Navbar />
       <div className="min-h-[calc(100vh-4rem)]">
         {/* Left Sidebar - Fixed */}
         <div
-          className={`fixed left-0 top-0 h-screen z-40 hidden lg:block w-52`}
+          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 hidden lg:block w-52`}
         >
           <Sidebar compact={false} />
         </div>

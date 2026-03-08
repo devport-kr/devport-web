@@ -181,7 +181,7 @@
   }
 
   .wiki-markdown pre {
-    @apply overflow-x-auto rounded-lg border border-surface-border bg-surface-elevated/70 p-3 text-xs text-text-secondary leading-relaxed font-mono break-words;
+    @apply overflow-x-auto scrollbar-minimal rounded-lg border border-surface-border bg-surface-elevated/70 p-3 text-xs text-text-secondary leading-relaxed font-mono break-words;
   }
 
   .wiki-markdown code {
