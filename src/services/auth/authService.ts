@@ -47,7 +47,9 @@ export interface PasswordChangeRequest {
 // ─── Auth APIs ───────────────────────────────────────────────────
 
 export const getCurrentUser = async (): Promise<UserResponse> => {
-  const response = await apiClient.get<UserResponse>('/api/auth/me');
+  const response = await apiClient.get<UserResponse>('/api/auth/me', {
+    skipAuthRedirect: true,
+  } as any);
   return response.data;
 };
 

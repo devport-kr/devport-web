@@ -5,6 +5,7 @@ import type { WikiProjectSummary } from '../services/wiki/wikiService';
 import { getWikiProjects } from '../services/wiki/wikiService';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
 
 function fmt(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1) + 'k';
@@ -20,6 +21,7 @@ export default function PortsDirectoryPage() {
   const [wikiProjects, setWikiProjects] = useState<WikiProjectSummary[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Load flat project list for directory view
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function PortsDirectoryPage() {
             hero={{
               titleLine1: '바이브 코더들을 위한 허브',
               titleLine2Gradient: 'Ports',
-              subtitle: <>매일 쏟아지는 AI 프로젝트들, <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>Ports</span>가 대신 확인하고 정리해드립니다.</>,
+              subtitle: <>매일 쏟아지는 AI 프로젝트들, <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>portki</span>가 대신 확인하고 정리해드립니다.</>,
               subtitleBottom: <>가장 중요한 정보만 확인하고 <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
             }}
             showAnimatedBackground={true}
@@ -75,9 +77,8 @@ export default function PortsDirectoryPage() {
 
           {/* PORTS PROJECT LIST */}
           <div id="ports-list" className="relative z-10 max-w-[1200px] mx-auto px-6 py-24">
-            {/* Search bar */}
-            <div className="mb-10">
-              <div className="relative max-w-2xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 max-w-3xl mx-auto mb-16 items-center">
+              <div className="relative flex-1 w-full">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
@@ -99,6 +100,16 @@ export default function PortsDirectoryPage() {
                   </button>
                 )}
               </div>
+
+              <button
+                onClick={() => setIsChatExpanded(true)}
+                className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                portki 챗봇
+              </button>
             </div>
 
             {projectsLoading ? (
@@ -113,7 +124,6 @@ export default function PortsDirectoryPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((p) => {
-                  // Extract owner from fullName (e.g., "ollama/ollama" -> "ollama")
                   const owner = p.fullName.split('/')[0];
                   const avatarUrl = `https://github.com/${owner}.png?size=100`;
 
@@ -160,6 +170,30 @@ export default function PortsDirectoryPage() {
             )}
           </div>
         </main>
+
+        {/* Global Chat Slide-out Panel */}
+        <aside
+          className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-6 pb-6 px-5 border-l border-surface-border/50 flex flex-col bg-surface/95 backdrop-blur-xl z-50 transition-transform duration-300 ease-in-out w-full sm:w-[450px] 2xl:w-[550px] shadow-2xl ${isChatExpanded ? 'translate-x-0' : 'translate-x-full'
+            }`}
+        >
+          <div className="flex justify-between items-center mb-5 px-1">
+            <h3 className="font-semibold text-text-primary text-xl flex items-center gap-2">
+              <span className="text-accent">💡</span> portki 챗봇
+            </h3>
+            <button
+              onClick={() => setIsChatExpanded(false)}
+              className="p-1.5 text-text-muted hover:text-text-primary rounded-lg hover:bg-surface-elevated transition-colors"
+              aria-label="닫기"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 relative shadow-[0_0_20px_-10px_rgba(99,102,241,0.15)] rounded-xl overflow-hidden border border-accent/20">
+            <GlobalWikiChatPanel />
+          </div>
+        </aside>
 
       </div>
     </div>

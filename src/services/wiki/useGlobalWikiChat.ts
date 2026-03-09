@@ -1,46 +1,23 @@
-/**
- * useWikiChat — React hook for streaming wiki chat sessions.
- *
- * State:
- *   messages          — committed history (user + assistant turns)
- *   streamingContent  — live token accumulation while streaming
- *   isStreaming       — true while a stream is open
- *   error             — last error message, null when clear
- *   clarificationOptions   — chips to show when isClarification is true
- *   suggestedNextQuestions — chips to show after a regular answer
- *   sessionReset      — true when the server signals session expiry
- *
- * Actions:
- *   sendMessage(question)  — aborts any in-flight stream, then streams the new question
- *   cancelStream()         — aborts current stream and resets streaming state
- *   clearError()           — clear error state
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { streamWikiChat } from './wikiChatStream';
+import { streamGlobalWikiChat, type WikiGlobalChatResponse } from './globalWikiChatStream';
 import { chatSessionsApi } from './chatSessions';
 
-export type ChatMessage = {
+export type GlobalChatMessage = {
     role: 'user' | 'assistant';
     content: string;
+    relatedProjects?: WikiGlobalChatResponse['relatedProjects'];
 };
 
-type UseChatOptions = {
-    projectId: string;
-};
-
-export function useWikiChat({ projectId }: UseChatOptions) {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function useGlobalWikiChat() {
+    const [messages, setMessages] = useState<GlobalChatMessage[]>([]);
     const [streamingContent, setStreamingContent] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [clarificationOptions, setClarificationOptions] = useState<string[]>([]);
-    const [suggestedNextQuestions, setSuggestedNextQuestions] = useState<string[]>([]);
     const [sessionReset, setSessionReset] = useState(false);
     const [networkDisconnected, setNetworkDisconnected] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
-    const STORAGE_KEY = `wiki-session:${projectId}`;
+    const STORAGE_KEY = `wiki-session:global`;
     const getOrCreateSessionId = () => {
         let id = localStorage.getItem(STORAGE_KEY);
         if (!id) {
@@ -52,7 +29,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
 
     const sessionIdRef = useRef<string>(getOrCreateSessionId());
     const abortControllerRef = useRef<AbortController | null>(null);
-    // Keep track of the last question so the caller can retry on network failure
     const lastQuestionRef = useRef<string>('');
 
     const loadHistory = useCallback(async (sessionId: string) => {
@@ -80,13 +56,12 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         };
         initHistory();
         return () => { mounted = false; };
-    }, [projectId, loadHistory]);
+    }, [loadHistory]);
 
     const sendMessage = useCallback(
         async (question: string) => {
             if (!question.trim()) return;
 
-            // Abort any in-flight stream before starting a new one
             abortControllerRef.current?.abort();
             const controller = new AbortController();
             abortControllerRef.current = controller;
@@ -97,16 +72,13 @@ export function useWikiChat({ projectId }: UseChatOptions) {
             setStreamingContent('');
             setIsStreaming(true);
             setError(null);
-            setClarificationOptions([]);
-            setSuggestedNextQuestions([]);
             setSessionReset(false);
             setNetworkDisconnected(false);
 
             let accumulated = '';
 
             try {
-                await streamWikiChat(
-                    projectId,
+                await streamGlobalWikiChat(
                     question.trim(),
                     sessionIdRef.current,
                     {
@@ -115,21 +87,21 @@ export function useWikiChat({ projectId }: UseChatOptions) {
                             setStreamingContent(accumulated);
                         },
                         onDone(payload) {
-                            // Commit the streamed message to history
-                            setMessages(prev => [...prev, { role: 'assistant', content: accumulated }]);
+                            setMessages(prev => [
+                                ...prev,
+                                {
+                                    role: 'assistant',
+                                    content: payload.answer || accumulated,
+                                    relatedProjects: payload.hasRelatedProjects ? payload.relatedProjects : undefined
+                                }
+                            ]);
                             setStreamingContent('');
                             setIsStreaming(false);
 
-                            // Update session ID (echo from server — good hygiene)
                             sessionIdRef.current = payload.sessionId;
 
                             if (payload.sessionReset) {
                                 setSessionReset(true);
-                            }
-                            if (payload.isClarification) {
-                                setClarificationOptions(payload.clarificationOptions);
-                            } else if (payload.suggestedNextQuestions.length > 0) {
-                                setSuggestedNextQuestions(payload.suggestedNextQuestions);
                             }
                         },
                         onError(message) {
@@ -141,7 +113,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
                     controller.signal,
                 );
             } catch {
-                // streamWikiChat only throws on unexpected network disconnect (non-abort)
                 if (!controller.signal.aborted) {
                     setStreamingContent('');
                     setIsStreaming(false);
@@ -149,7 +120,7 @@ export function useWikiChat({ projectId }: UseChatOptions) {
                 }
             }
         },
-        [projectId],
+        [],
     );
 
     const cancelStream = useCallback(() => {
@@ -162,17 +133,14 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         setError(null);
     }, []);
 
-    /** Retry the last question after a network disconnect */
     const retryLastMessage = useCallback(() => {
         if (lastQuestionRef.current) {
-            // Remove the failed user message that was already appended
             setMessages(prev => prev.slice(0, -1));
             setNetworkDisconnected(false);
             sendMessage(lastQuestionRef.current);
         }
     }, [sendMessage]);
 
-    /** Start a brand-new session (resets history and generates a new session ID) */
     const resetSession = useCallback(() => {
         abortControllerRef.current?.abort();
         const newId = crypto.randomUUID();
@@ -182,13 +150,10 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         setStreamingContent('');
         setIsStreaming(false);
         setError(null);
-        setClarificationOptions([]);
-        setSuggestedNextQuestions([]);
         setSessionReset(false);
         setNetworkDisconnected(false);
     }, [STORAGE_KEY]);
 
-    /** Load an existing session */
     const loadSession = useCallback(async (sessionId: string) => {
         abortControllerRef.current?.abort();
         localStorage.setItem(STORAGE_KEY, sessionId);
@@ -196,8 +161,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         setStreamingContent('');
         setIsStreaming(false);
         setError(null);
-        setClarificationOptions([]);
-        setSuggestedNextQuestions([]);
         setSessionReset(false);
         setNetworkDisconnected(false);
         setIsLoadingHistory(true);
@@ -210,8 +173,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         streamingContent,
         isStreaming,
         error,
-        clarificationOptions,
-        suggestedNextQuestions,
         sessionReset,
         networkDisconnected,
         isLoadingHistory,

@@ -8,7 +8,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useWikiChat } from '../../services/wiki/useWikiChat';
 import WikiMarkdownRenderer from './WikiMarkdownRenderer';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, History, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import SessionHistoryDrawer from './SessionHistoryDrawer';
 
 interface WikiChatPanelProps {
   projectExternalId: string;
@@ -19,12 +21,9 @@ interface WikiChatPanelProps {
 const SUGGESTION_PROMPTS = [
   '이 프로젝트는 어떤 문제를 해결하나요?',
   '핵심 아키텍처를 설명해 주세요',
-  '비슷한 프로젝트와 비교하면?',
   '시작하려면 어떻게 해야 하나요?',
   '최근 주요 변경 사항이 있나요?',
-  '프로덕션에서 사용해도 될까요?',
   '주요 기능은 무엇인가요?',
-  '기여(Contributing) 가이드가 있나요?',
 ];
 
 export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleExpand }: WikiChatPanelProps) {
@@ -41,9 +40,13 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
     cancelStream,
     clearError,
     retryLastMessage,
+    isLoadingHistory,
+    loadSession,
+    resetSession,
   } = useWikiChat({ projectId: projectExternalId });
 
   const [input, setInput] = useState('');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -83,19 +86,56 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
 
   return (
     <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-full flex flex-col relative group">
-      {onToggleExpand && (
-        <button
-          onClick={onToggleExpand}
-          className="absolute top-2 right-2 p-1.5 rounded-lg bg-surface-elevated/80 text-text-muted hover:text-text-primary hover:bg-surface-hover border border-surface-border/50 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
-          title={isExpanded ? "채팅 축소" : "채팅 넓히기"}
-        >
-          {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-        </button>
+      <SessionHistoryDrawer
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        projectExternalId={projectExternalId}
+        onSelectSession={loadSession}
+      />
+
+      {/* Top Header inside chat panel */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-surface-border/50 shrink-0 bg-surface-card z-10">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsHistoryOpen(true)}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+            title="이전 대화록"
+          >
+            <History size={14} />
+          </button>
+          <button
+            onClick={() => resetSession()}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+            title="새 대화 시작"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+
+        {onToggleExpand && (
+          <button
+            onClick={onToggleExpand}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+            title={isExpanded ? "채팅 축소" : "채팅 넓히기"}
+          >
+            {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
+        )}
+      </div>
+
+      {isLoadingHistory && (
+        <div className="absolute inset-0 z-50 bg-surface-card flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
+            <p className="text-xs text-text-muted">이전 대화 불러오는 중...</p>
+          </div>
+        </div>
       )}
+
       {/* Chat Messages / Empty State */}
-      <div className="px-4 py-3 flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-minimal">
+      <div className="px-4 py-3 flex-1 min-h-[300px] overflow-y-auto space-y-3 z-0 scrollbar-minimal relative">
         {!hasMessages ? (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full items-center justify-center -mt-6">
             {/* Logo + instruction — upper portion */}
             <div className="flex-1 flex flex-col items-center justify-center text-center relative">
               <div
@@ -156,8 +196,8 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
                   <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
                       className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user'
-                          ? 'bg-accent/15 text-text-primary'
-                          : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal'
+                        ? 'bg-accent/15 text-text-primary'
+                        : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal'
                         }`}
                     >
                       {msg.role === 'user' ? (
@@ -227,18 +267,36 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
             {/* Error state */}
             {error && !isStreaming && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
-                  <span>⚠</span>
-                  <span>{error}</span>
-                  <button
-                    type="button"
-                    onClick={clearError}
-                    className="ml-1 opacity-60 hover:opacity-100 transition-opacity shrink-0"
-                    aria-label="오류 닫기"
-                  >
-                    ✕
-                  </button>
-                </div>
+                {error.includes('로그인') || error.includes('1번만') || error.includes('무료 질문') ? (
+                  // Anonymous Nudge UI
+                  <div className="max-w-[85%] bg-surface-elevated border border-accent/20 rounded-lg px-4 py-3 text-xs flex flex-col gap-3">
+                    <p className="text-text-primary">
+                      사용 가능한 대화를 모두 사용했습니다.
+                      <br />
+                      대화를 이어나가고 싶으면 로그인을 해주세요.
+                    </p>
+                    <Link
+                      to="/login"
+                      className="text-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
+                    >
+                      로그인
+                    </Link>
+                  </div>
+                ) : (
+                  // Standard Error UI
+                  <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
+                    <span>⚠</span>
+                    <span>{error}</span>
+                    <button
+                      type="button"
+                      onClick={clearError}
+                      className="ml-1 opacity-60 hover:opacity-100 transition-opacity shrink-0"
+                      aria-label="오류 닫기"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

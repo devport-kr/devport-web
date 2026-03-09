@@ -157,7 +157,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({
                             <DatabaseWithRestApi
                                 className="w-full max-w-[650px]"
                                 title="Port AI agent"
-                                circleText="PORTS"
+                                circleText="portki"
                                 buttonTexts={{
                                     first: "챗봇",
                                     second: "위키",
