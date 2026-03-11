@@ -23,10 +23,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     const error = searchParams.get('error');
+    if (!error) {
+      setErrorMessage(null);
+      return;
+    }
+
     if (error === 'auth_failed') {
       setErrorMessage('로그인에 실패했습니다. 다시 시도해주세요.');
     } else if (error === 'turnstile_failed') {
       setErrorMessage('봇 검증에 실패했습니다. 페이지를 새로고침해주세요.');
+    } else if (error === 'Bot verification failed') {
+      setErrorMessage('봇 검증에 실패했습니다. 다시 시도해주세요.');
+    } else if (error === 'Turnstile token is missing') {
+      setErrorMessage('봇 검증 토큰이 누락되었습니다. 다시 시도해주세요.');
+    }
+    else {
+      setErrorMessage(error);
     }
   }, [searchParams]);
 

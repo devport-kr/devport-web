@@ -10,9 +10,17 @@ export default function OAuth2RedirectPage() {
 
   useEffect(() => {
     const code = searchParams.get('code');
+    const error = searchParams.get('error');
+
+    const redirectToLoginWithError = (message: string) => {
+      const target = message
+        ? `/login?error=${encodeURIComponent(message)}`
+        : '/login?error=auth_failed';
+      navigate(target, { replace: true });
+    };
 
     if (!code) {
-      navigate('/login?error=auth_failed', { replace: true });
+      redirectToLoginWithError(error ?? 'auth_failed');
       return;
     }
 
@@ -22,9 +30,14 @@ export default function OAuth2RedirectPage() {
         window.history.replaceState({}, document.title, '/oauth2/redirect');
         await authenticate(response.accessToken);
         navigate('/', { replace: true });
-      } catch {
+      } catch (exchangeError: any) {
         window.history.replaceState({}, document.title, '/oauth2/redirect');
-        navigate('/login?error=auth_failed', { replace: true });
+        const message =
+          exchangeError?.response?.data?.message ||
+          exchangeError?.response?.data?.error ||
+          exchangeError?.message ||
+          'auth_failed';
+        redirectToLoginWithError(message);
       }
     };
 
