@@ -1,3 +1,4 @@
+import { authenticatedFetch } from '../../lib/http/authenticatedFetch';
 import { parseSSEMessage, type StreamCallbacks } from './wikiChatStream';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -30,15 +31,13 @@ export async function streamGlobalWikiChat(
     signal?: AbortSignal,
 ): Promise<void> {
     const url = `${API_BASE_URL}/api/wiki/chat/stream`;
-    const accessToken = localStorage.getItem('accessToken') ?? '';
 
     let response: Response;
     try {
-        response = await fetch(url, {
+        response = await authenticatedFetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
                 Accept: 'text/event-stream',
             },
             body: JSON.stringify({ question, sessionId }),

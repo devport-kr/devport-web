@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { streamGlobalWikiChat, type WikiGlobalChatResponse } from './globalWikiChatStream';
 import { chatSessionsApi } from './chatSessions';
+import { ensureAccessToken } from '../../lib/http/authRefresh';
 
 export type GlobalChatMessage = {
     role: 'user' | 'assistant';
@@ -32,18 +33,21 @@ export function useGlobalWikiChat() {
     const lastQuestionRef = useRef<string>('');
 
     const loadHistory = useCallback(async (sessionId: string) => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            try {
-                const history = await chatSessionsApi.getSessionMessages(sessionId);
-                setMessages(history.map(msg => ({
-                    role: msg.role,
-                    content: msg.content
-                })));
-            } catch (err) {
-                console.error('Failed to load chat history:', err);
-                setMessages([]);
-            }
+        const token = await ensureAccessToken();
+        if (!token) {
+            setMessages([]);
+            return;
+        }
+
+        try {
+            const history = await chatSessionsApi.getSessionMessages(sessionId);
+            setMessages(history.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            })));
+        } catch (err) {
+            console.error('Failed to load chat history:', err);
+            setMessages([]);
         }
     }, []);
 

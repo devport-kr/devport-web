@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { signup, checkUsernameAvailability, checkEmailAvailability } from '../services/auth/authService';
+import { signup } from '../services/auth/authService';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SignupPage() {
@@ -17,17 +17,11 @@ export default function SignupPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Real-time validation states
-  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [passwordValidation, setPasswordValidation] = useState({
     minLength: false,
     hasSpecialChar: false,
     passwordsMatch: false,
   });
-  const usernameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -90,20 +84,17 @@ export default function SignupPage() {
     setErrors({});
 
     try {
-      const response = await signup({
+      await signup({
         username: formData.username,
         password: formData.password,
         email: formData.email,
         name: formData.name || undefined,
       });
 
-      // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-
-      // Redirect to home
-      navigate('/', { replace: true });
-      window.location.reload(); // Refresh to update auth context
+      navigate('/check-email', {
+        replace: true,
+        state: { email: formData.email },
+      });
     } catch (error: any) {
       console.error('Signup error:', error);
       if (error.response?.status === 409) {
@@ -135,48 +126,6 @@ export default function SignupPage() {
       });
     }
 
-    // Real-time username validation
-    if (name === 'username') {
-      setUsernameStatus('idle');
-      if (usernameTimeoutRef.current) {
-        clearTimeout(usernameTimeoutRef.current);
-      }
-
-      // Only check if username is valid format
-      if (value.length >= 3 && value.length <= 20 && /^[a-zA-Z0-9_-]+$/.test(value)) {
-        setUsernameStatus('checking');
-        usernameTimeoutRef.current = setTimeout(async () => {
-          try {
-            const available = await checkUsernameAvailability(value);
-            setUsernameStatus(available ? 'available' : 'taken');
-          } catch (error) {
-            setUsernameStatus('taken');
-          }
-        }, 500); // 500ms debounce
-      }
-    }
-
-    // Real-time email validation
-    if (name === 'email') {
-      setEmailStatus('idle');
-      if (emailTimeoutRef.current) {
-        clearTimeout(emailTimeoutRef.current);
-      }
-
-      // Only check if email is valid format
-      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        setEmailStatus('checking');
-        emailTimeoutRef.current = setTimeout(async () => {
-          try {
-            const available = await checkEmailAvailability(value);
-            setEmailStatus(available ? 'available' : 'taken');
-          } catch (error) {
-            setEmailStatus('taken');
-          }
-        }, 500); // 500ms debounce
-      }
-    }
-
     // Real-time password validation
     if (name === 'password') {
       setPasswordValidation((prev) => ({
@@ -195,14 +144,6 @@ export default function SignupPage() {
       }));
     }
   };
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (usernameTimeoutRef.current) clearTimeout(usernameTimeoutRef.current);
-      if (emailTimeoutRef.current) clearTimeout(emailTimeoutRef.current);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
@@ -240,42 +181,21 @@ export default function SignupPage() {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2.5 pr-12 bg-surface-elevated border ${
+                  className={`w-full px-4 py-2.5 bg-surface-elevated border ${
                     errors.username
                       ? 'border-red-500'
-                      : usernameStatus === 'available'
+                      : formData.username && /^[a-zA-Z0-9_-]{3,20}$/.test(formData.username)
                       ? 'border-green-500'
-                      : usernameStatus === 'taken'
-                      ? 'border-red-500'
                       : 'border-surface-border'
                   } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`}
                   placeholder="영문, 숫자, -, _ 사용 (3-20자)"
                 />
-                {/* Status Icon */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {usernameStatus === 'checking' && (
-                    <div className="w-5 h-5 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
-                  )}
-                  {usernameStatus === 'available' && (
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {usernameStatus === 'taken' && (
-                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                </div>
               </div>
               {errors.username && (
                 <p className="mt-1.5 text-sm text-red-400">{errors.username}</p>
               )}
-              {!errors.username && usernameStatus === 'available' && (
-                <p className="mt-1.5 text-sm text-green-400">사용 가능한 아이디입니다.</p>
-              )}
-              {!errors.username && usernameStatus === 'taken' && (
-                <p className="mt-1.5 text-sm text-red-400">이미 사용 중인 아이디입니다.</p>
+              {!errors.username && formData.username && /^[a-zA-Z0-9_-]{3,20}$/.test(formData.username) && (
+                <p className="mt-1.5 text-sm text-green-400">형식이 올바릅니다. 실제 중복 여부는 가입 시 확인됩니다.</p>
               )}
             </div>
 
@@ -396,42 +316,21 @@ export default function SignupPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2.5 pr-12 bg-surface-elevated border ${
+                  className={`w-full px-4 py-2.5 bg-surface-elevated border ${
                     errors.email
                       ? 'border-red-500'
-                      : emailStatus === 'available'
+                      : formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
                       ? 'border-green-500'
-                      : emailStatus === 'taken'
-                      ? 'border-red-500'
                       : 'border-surface-border'
                   } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`}
                   placeholder="email@example.com"
                 />
-                {/* Status Icon */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {emailStatus === 'checking' && (
-                    <div className="w-5 h-5 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
-                  )}
-                  {emailStatus === 'available' && (
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {emailStatus === 'taken' && (
-                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                </div>
               </div>
               {errors.email && (
                 <p className="mt-1.5 text-sm text-red-400">{errors.email}</p>
               )}
-              {!errors.email && emailStatus === 'available' && (
-                <p className="mt-1.5 text-sm text-green-400">사용 가능한 이메일입니다.</p>
-              )}
-              {!errors.email && emailStatus === 'taken' && (
-                <p className="mt-1.5 text-sm text-red-400">이미 사용 중인 이메일입니다.</p>
+              {!errors.email && formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                <p className="mt-1.5 text-sm text-green-400">형식이 올바릅니다. 실제 중복 여부는 가입 시 확인됩니다.</p>
               )}
             </div>
 

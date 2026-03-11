@@ -1,12 +1,15 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { getCurrentUser, logout as apiLogout, type UserResponse } from '../services/auth/authService';
+import { clearAccessToken, setAccessToken } from '../lib/http/authSession';
+import { ensureAccessToken } from '../lib/http/authRefresh';
 
 interface AuthContextType {
   user: UserResponse | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  logout: () => void;
+  authenticate: (accessToken: string) => Promise<void>;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -29,7 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = await ensureAccessToken();
     if (!token) {
       setUser(null);
       setIsLoading(false);
@@ -41,17 +44,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(userData);
     } catch (error) {
       console.error('Failed to fetch user:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      clearAccessToken();
       setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const authenticate = async (accessToken: string) => {
+    setIsLoading(true);
+    setAccessToken(accessToken);
+    await refreshUser();
+  };
+
+  const logout = async () => {
     setUser(null);
-    apiLogout();
+
+    try {
+      await apiLogout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      clearAccessToken();
+      window.location.href = '/';
+    }
   };
 
   useEffect(() => {
@@ -62,6 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     isAuthenticated: !!user,
     isLoading,
+    authenticate,
     logout,
     refreshUser,
   };

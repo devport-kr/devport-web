@@ -1,31 +1,35 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { exchangeOAuthCode } from '../services/auth/authService';
 
 export default function OAuth2RedirectPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { authenticate } = useAuth();
 
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
+    const code = searchParams.get('code');
 
-    if (accessToken && refreshToken) {
-      // Store both tokens
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-
-      // Refresh user data and redirect to home
-      refreshUser().then(() => {
-        navigate('/', { replace: true });
-      });
-    } else {
-      // If tokens are missing, redirect to login with error
-      console.error('OAuth2 callback missing tokens');
+    if (!code) {
       navigate('/login?error=auth_failed', { replace: true });
+      return;
     }
-  }, [searchParams, navigate, refreshUser]);
+
+    const exchangeCode = async () => {
+      try {
+        const response = await exchangeOAuthCode({ code });
+        window.history.replaceState({}, document.title, '/oauth2/redirect');
+        await authenticate(response.accessToken);
+        navigate('/', { replace: true });
+      } catch {
+        window.history.replaceState({}, document.title, '/oauth2/redirect');
+        navigate('/login?error=auth_failed', { replace: true });
+      }
+    };
+
+    void exchangeCode();
+  }, [searchParams, navigate, authenticate]);
 
   return (
     <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">

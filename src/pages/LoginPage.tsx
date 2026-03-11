@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { initiateOAuthLogin, login } from '../services/auth/authService';
+import { initiateOAuthLogin, login, resendVerification } from '../services/auth/authService';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useAuth();
+  const { authenticate, isAuthenticated } = useAuth();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loginMode, setLoginMode] = useState<'oauth' | 'local'>('oauth');
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -71,6 +75,8 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setVerificationRequired(false);
+    setVerificationMessage(null);
 
     try {
       const response = await login({
@@ -78,17 +84,16 @@ export default function LoginPage() {
         password: formData.password,
       });
 
-      // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-
-      // Redirect to home
+      await authenticate(response.accessToken);
       navigate('/', { replace: true });
-      window.location.reload(); // Refresh to update auth context
     } catch (error: any) {
       console.error('Login error:', error);
       if (error.response?.status === 401) {
         setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      } else if (error.response?.status === 403) {
+        setVerificationRequired(true);
+        setVerificationEmail('');
+        setErrorMessage('이메일 인증이 완료되어야 로그인할 수 있습니다.');
       } else {
         setErrorMessage('로그인에 실패했습니다. 다시 시도해주세요.');
       }
@@ -100,6 +105,27 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleResendVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!verificationEmail.trim()) {
+      setVerificationMessage('이메일을 입력해주세요.');
+      return;
+    }
+
+    setIsResendingVerification(true);
+    setVerificationMessage(null);
+
+    try {
+      await resendVerification({ email: verificationEmail.trim() });
+      setVerificationMessage('계정이 인증 대상이면 인증 메일이 발송됩니다.');
+    } catch {
+      setVerificationMessage('계정이 인증 대상이면 인증 메일이 발송됩니다.');
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   return (
@@ -122,6 +148,37 @@ export default function LoginPage() {
           {errorMessage && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
               <p className="text-sm text-red-400 text-center">{errorMessage}</p>
+            </div>
+          )}
+
+          {verificationRequired && (
+            <div className="mb-6 p-4 bg-accent/10 border border-accent/20 rounded-xl">
+              <p className="text-sm text-text-secondary text-center leading-relaxed">
+                인증 메일을 다시 받으려면 아래에 이메일 주소를 입력하세요.
+              </p>
+
+              <form onSubmit={handleResendVerification} className="mt-4 space-y-3">
+                <input
+                  type="email"
+                  value={verificationEmail}
+                  onChange={(e) => setVerificationEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full px-4 py-2.5 bg-surface-elevated border border-surface-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={isResendingVerification}
+                  className="w-full px-5 py-3 bg-surface-elevated hover:bg-surface-border text-text-primary text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResendingVerification ? '전송 중...' : '인증 메일 다시 보내기'}
+                </button>
+              </form>
+
+              {verificationMessage && (
+                <p className="mt-3 text-sm text-center text-text-secondary">
+                  {verificationMessage}
+                </p>
+              )}
             </div>
           )}
 

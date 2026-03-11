@@ -4,6 +4,8 @@
  * EventSource is NOT used because the endpoint requires a POST body and Authorization header.
  */
 
+import { authenticatedFetch } from '../../lib/http/authenticatedFetch';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export type StreamDonePayload = {
@@ -41,15 +43,13 @@ export async function streamWikiChat(
 ): Promise<void> {
     // Query-param variant avoids double-encoding issues for IDs containing "/"
     const url = `${API_BASE_URL}/api/wiki/projects/chat/stream?id=${encodeURIComponent(projectId)}`;
-    const accessToken = localStorage.getItem('accessToken') ?? '';
 
     let response: Response;
     try {
-        response = await fetch(url, {
+        response = await authenticatedFetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
                 Accept: 'text/event-stream',
             },
             body: JSON.stringify({ question, sessionId }),

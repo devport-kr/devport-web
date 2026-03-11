@@ -28,9 +28,23 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface TokenResponse {
+export interface AccessTokenResponse {
   accessToken: string;
-  refreshToken: string;
+  expiresIn?: number;
+}
+
+export interface SignupResponse {
+  verificationRequired?: boolean;
+  email?: string;
+  message?: string;
+}
+
+export interface OAuthExchangeRequest {
+  code: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
 }
 
 export interface ProfileUpdateRequest {
@@ -60,45 +74,43 @@ export const initiateOAuthLogin = (provider: 'github' | 'google' | 'naver', turn
 };
 
 export const logout = async (): Promise<void> => {
-  try {
-    // Call backend to revoke refresh tokens
-    await apiClient.post('/api/auth/logout');
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    // Clear tokens from localStorage regardless of API call result
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    window.location.href = '/';
-  }
+  await apiClient.post('/api/auth/logout', undefined, {
+    withCredentials: true,
+    skipAuthRefresh: true,
+  } as any);
 };
 
-export const signup = async (data: SignupRequest): Promise<TokenResponse> => {
-  const response = await apiClient.post<TokenResponse>('/api/auth/signup', data);
+export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
+  const response = await apiClient.post<SignupResponse>('/api/auth/signup', data, {
+    skipAuthRefresh: true,
+  } as any);
   return response.data;
 };
 
-export const login = async (data: LoginRequest): Promise<TokenResponse> => {
-  const response = await apiClient.post<TokenResponse>('/api/auth/login', data);
+export const login = async (data: LoginRequest): Promise<AccessTokenResponse> => {
+  const response = await apiClient.post<AccessTokenResponse>('/api/auth/login', data, {
+    withCredentials: true,
+    skipAuthRefresh: true,
+  } as any);
   return response.data;
 };
 
-export const checkUsernameAvailability = async (username: string): Promise<boolean> => {
-  try {
-    await apiClient.get('/api/auth/check-username', { params: { username } });
-    return true; // Available
-  } catch (error) {
-    return false; // Not available
-  }
+export const exchangeOAuthCode = async (
+  data: OAuthExchangeRequest
+): Promise<AccessTokenResponse> => {
+  const response = await apiClient.post<AccessTokenResponse>('/api/auth/oauth2/exchange', data, {
+    withCredentials: true,
+    skipAuthRefresh: true,
+  } as any);
+  return response.data;
 };
 
-export const checkEmailAvailability = async (email: string): Promise<boolean> => {
-  try {
-    await apiClient.get('/api/auth/check-email', { params: { email } });
-    return true; // Available
-  } catch (error) {
-    return false; // Not available
-  }
+export const resendVerification = async (
+  data: ResendVerificationRequest
+): Promise<void> => {
+  await apiClient.post('/api/auth/resend-verification', data, {
+    skipAuthRefresh: true,
+  } as any);
 };
 
 // ─── Profile APIs ────────────────────────────────────────────────

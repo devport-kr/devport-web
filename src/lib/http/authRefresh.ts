@@ -1,39 +1,25 @@
 import axios from 'axios';
 import apiClient, { API_BASE_URL } from './apiClient';
+import { clearAccessToken, getAccessToken, setAccessToken } from './authSession';
 
-// Flag to prevent multiple refresh attempts
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value: string) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token!);
-    }
-  });
-
-  failedQueue = [];
-};
+let refreshPromise: Promise<string> | null = null;
 
 /**
  * Register request and response interceptors on the shared apiClient.
  * Call this once at app startup (e.g. in main.tsx or an init module).
  *
- * - Request interceptor: attaches accessToken from localStorage.
- * - Response interceptor: handles 401 by refreshing the token,
- *   queuing concurrent requests, and retrying once.
+ * - Request interceptor: attaches the in-memory access token.
+ * - Response interceptor: handles 401 by refreshing the token through
+ *   a shared refresh promise and retrying once.
  */
 export function registerAuthInterceptors(): void {
   // Add access token to requests if available
   apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
     }
     return config;
   });
@@ -44,75 +30,75 @@ export function registerAuthInterceptors(): void {
     async (error) => {
       const originalRequest = error.config as any;
       const skipAuthRedirect = Boolean(originalRequest?.skipAuthRedirect);
-
-      if (error.response?.status === 401 && skipAuthRedirect) {
-        return Promise.reject(error);
-      }
+      const skipAuthRefresh = Boolean(originalRequest?.skipAuthRefresh);
 
       // If error is 401 and we haven't tried to refresh yet
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        if (isRefreshing) {
-          // Wait for the token refresh to complete
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then((token) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return apiClient(originalRequest);
-            })
-            .catch((err) => Promise.reject(err));
-        }
-
+      if (error.response?.status === 401 && !originalRequest._retry && !skipAuthRefresh) {
         originalRequest._retry = true;
-        isRefreshing = true;
-
-        const refreshToken = localStorage.getItem('refreshToken');
-
-        if (!refreshToken) {
-          // No refresh token, redirect to login
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          if (!skipAuthRedirect) {
-            window.location.href = '/login';
-          }
-          return Promise.reject(error);
-        }
+        originalRequest.headers = originalRequest.headers ?? {};
 
         try {
-          // Call refresh endpoint
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-            refreshToken,
-          });
-
-          const { accessToken } = response.data;
-
-          // Store new access token
-          localStorage.setItem('accessToken', accessToken);
-
-          // Update authorization header
-          apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+          const accessToken = await refreshAccessToken();
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-          // Process queued requests
-          processQueue(null, accessToken);
-
-          // Retry original request
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, logout user
-          processQueue(refreshError, null);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
           if (!skipAuthRedirect) {
             window.location.href = '/login';
           }
           return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
         }
       }
 
       return Promise.reject(error);
     }
   );
+}
+
+export async function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = axios
+    .post<{ accessToken: string }>(
+      `${API_BASE_URL}/api/auth/refresh`,
+      undefined,
+      {
+        withCredentials: true,
+      }
+    )
+    .then((response) => {
+      const nextAccessToken = response.data.accessToken;
+      if (!nextAccessToken) {
+        throw new Error('Refresh response missing access token');
+      }
+
+      setAccessToken(nextAccessToken);
+      apiClient.defaults.headers.common.Authorization = `Bearer ${nextAccessToken}`;
+
+      return nextAccessToken;
+    })
+    .catch((error) => {
+      clearAccessToken();
+      delete apiClient.defaults.headers.common.Authorization;
+      throw error;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
+
+export async function ensureAccessToken(): Promise<string | null> {
+  const token = getAccessToken();
+  if (token) {
+    return token;
+  }
+
+  try {
+    return await refreshAccessToken();
+  } catch {
+    return null;
+  }
 }
