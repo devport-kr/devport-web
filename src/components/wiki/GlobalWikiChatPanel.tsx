@@ -10,13 +10,11 @@ export default function GlobalWikiChatPanel() {
         messages,
         streamingContent,
         isStreaming,
-        error,
         sessionReset,
         networkDisconnected,
         isLoadingHistory,
         sendMessage,
         cancelStream,
-        clearError,
         retryLastMessage,
         resetSession,
         loadSession,
@@ -40,7 +38,7 @@ export default function GlobalWikiChatPanel() {
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, streamingContent, error, networkDisconnected]);
+    }, [messages, streamingContent, networkDisconnected]);
 
     const handleSend = useCallback(
         (text?: string) => {
@@ -59,7 +57,7 @@ export default function GlobalWikiChatPanel() {
         }
     };
 
-    const hasMessages = messages.length > 0 || isStreaming || error || networkDisconnected;
+    const hasMessages = messages.length > 0 || isStreaming || networkDisconnected;
 
     return (
         <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-full flex flex-col relative group">
@@ -140,20 +138,45 @@ export default function GlobalWikiChatPanel() {
                         {messages.map((msg, idx) => {
                             return (
                                 <div key={idx} className="flex flex-col gap-2">
-                                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                        <div
-                                            className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user'
-                                                ? 'bg-accent/15 text-text-primary'
-                                                : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal'
-                                                }`}
-                                        >
-                                            {msg.role === 'user' ? (
-                                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                                    {msg.role === 'error' ? (
+                                        /* Inline error bubble */
+                                        <div className="flex justify-start">
+                                            {msg.content.includes('로그인') || msg.content.includes('1번만') || msg.content.includes('무료 질문') ? (
+                                                <div className="max-w-[85%] bg-surface-elevated border border-accent/20 rounded-lg px-4 py-3 text-xs flex flex-col gap-3">
+                                                    <p className="text-text-primary">
+                                                        오늘 무료 질문을 모두 사용했습니다. 로그인하면 하루 100번까지 이용할 수 있어요.
+                                                    </p>
+                                                    <Link
+                                                        to="/login"
+                                                        className="text-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
+                                                    >
+                                                        로그인하기
+                                                    </Link>
+                                                </div>
                                             ) : (
-                                                <WikiMarkdownRenderer content={msg.content} />
+                                                <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
+                                                    <span>⚠</span>
+                                                    <span>{msg.content}</span>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
+                                    ) : (
+                                        /* User / assistant bubble */
+                                        <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div
+                                                className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user'
+                                                    ? 'bg-accent/15 text-text-primary'
+                                                    : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal'
+                                                    }`}
+                                            >
+                                                {msg.role === 'user' ? (
+                                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                                ) : (
+                                                    <WikiMarkdownRenderer content={msg.content} />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Render related projects if present for assistant messages */}
                                     {msg.role === 'assistant' && msg.relatedProjects && msg.relatedProjects.length > 0 && (
@@ -204,37 +227,6 @@ export default function GlobalWikiChatPanel() {
                                         </span>
                                     )}
                                 </div>
-                            </div>
-                        )}
-
-                        {error && !isStreaming && (
-                            <div className="flex justify-start">
-                                {error.includes('로그인') || error.includes('1번만') || error.includes('무료 질문') ? (
-                                    <div className="max-w-[85%] bg-surface-elevated border border-accent/20 rounded-lg px-4 py-3 text-xs flex flex-col gap-3">
-                                        <p className="text-text-primary">
-                                            오늘 무료 질문을 모두 사용했습니다. 로그인하면 하루 100번까지 이용할 수 있어요.
-                                        </p>
-                                        <Link
-                                            to="/login"
-                                            className="text-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
-                                        >
-                                            로그인하기
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
-                                        <span>⚠</span>
-                                        <span>{error}</span>
-                                        <button
-                                            type="button"
-                                            onClick={clearError}
-                                            className="ml-1 opacity-60 hover:opacity-100 transition-opacity shrink-0"
-                                            aria-label="오류 닫기"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         )}
 

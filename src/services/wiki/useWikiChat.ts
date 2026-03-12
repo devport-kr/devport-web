@@ -22,7 +22,7 @@ import { chatSessionsApi } from './chatSessions';
 import { ensureAccessToken } from '../../lib/http/authRefresh';
 
 export type ChatMessage = {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'error';
     content: string;
 };
 
@@ -34,7 +34,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [streamingContent, setStreamingContent] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [clarificationOptions, setClarificationOptions] = useState<string[]>([]);
     const [suggestedNextQuestions, setSuggestedNextQuestions] = useState<string[]>([]);
     const [sessionReset, setSessionReset] = useState(false);
@@ -100,7 +99,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
             setMessages(prev => [...prev, { role: 'user', content: question.trim() }]);
             setStreamingContent('');
             setIsStreaming(true);
-            setError(null);
             setClarificationOptions([]);
             setSuggestedNextQuestions([]);
             setSessionReset(false);
@@ -137,7 +135,7 @@ export function useWikiChat({ projectId }: UseChatOptions) {
                             }
                         },
                         onError(message) {
-                            setError(message);
+                            setMessages(prev => [...prev, { role: 'error', content: message }]);
                             setStreamingContent('');
                             setIsStreaming(false);
                         },
@@ -162,10 +160,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         setStreamingContent('');
     }, []);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
     /** Retry the last question after a network disconnect */
     const retryLastMessage = useCallback(() => {
         if (lastQuestionRef.current) {
@@ -185,7 +179,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         setMessages([]);
         setStreamingContent('');
         setIsStreaming(false);
-        setError(null);
         setClarificationOptions([]);
         setSuggestedNextQuestions([]);
         setSessionReset(false);
@@ -199,7 +192,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         sessionIdRef.current = sessionId;
         setStreamingContent('');
         setIsStreaming(false);
-        setError(null);
         setClarificationOptions([]);
         setSuggestedNextQuestions([]);
         setSessionReset(false);
@@ -213,7 +205,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         messages,
         streamingContent,
         isStreaming,
-        error,
         clarificationOptions,
         suggestedNextQuestions,
         sessionReset,
@@ -221,7 +212,6 @@ export function useWikiChat({ projectId }: UseChatOptions) {
         isLoadingHistory,
         sendMessage,
         cancelStream,
-        clearError,
         retryLastMessage,
         resetSession,
         loadSession,

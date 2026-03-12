@@ -4,7 +4,7 @@ import { chatSessionsApi } from './chatSessions';
 import { ensureAccessToken } from '../../lib/http/authRefresh';
 
 export type GlobalChatMessage = {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'error';
     content: string;
     relatedProjects?: WikiGlobalChatResponse['relatedProjects'];
 };
@@ -13,7 +13,6 @@ export function useGlobalWikiChat() {
     const [messages, setMessages] = useState<GlobalChatMessage[]>([]);
     const [streamingContent, setStreamingContent] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [sessionReset, setSessionReset] = useState(false);
     const [networkDisconnected, setNetworkDisconnected] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -75,7 +74,6 @@ export function useGlobalWikiChat() {
             setMessages(prev => [...prev, { role: 'user', content: question.trim() }]);
             setStreamingContent('');
             setIsStreaming(true);
-            setError(null);
             setSessionReset(false);
             setNetworkDisconnected(false);
 
@@ -109,7 +107,7 @@ export function useGlobalWikiChat() {
                             }
                         },
                         onError(message) {
-                            setError(message);
+                            setMessages(prev => [...prev, { role: 'error', content: message }]);
                             setStreamingContent('');
                             setIsStreaming(false);
                         },
@@ -133,10 +131,6 @@ export function useGlobalWikiChat() {
         setStreamingContent('');
     }, []);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
     const retryLastMessage = useCallback(() => {
         if (lastQuestionRef.current) {
             setMessages(prev => prev.slice(0, -1));
@@ -153,7 +147,6 @@ export function useGlobalWikiChat() {
         setMessages([]);
         setStreamingContent('');
         setIsStreaming(false);
-        setError(null);
         setSessionReset(false);
         setNetworkDisconnected(false);
     }, [STORAGE_KEY]);
@@ -164,7 +157,6 @@ export function useGlobalWikiChat() {
         sessionIdRef.current = sessionId;
         setStreamingContent('');
         setIsStreaming(false);
-        setError(null);
         setSessionReset(false);
         setNetworkDisconnected(false);
         setIsLoadingHistory(true);
@@ -176,13 +168,11 @@ export function useGlobalWikiChat() {
         messages,
         streamingContent,
         isStreaming,
-        error,
         sessionReset,
         networkDisconnected,
         isLoadingHistory,
         sendMessage,
         cancelStream,
-        clearError,
         retryLastMessage,
         resetSession,
         loadSession,
