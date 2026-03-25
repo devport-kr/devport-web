@@ -213,6 +213,14 @@
     @apply text-accent hover:text-accent-light underline underline-offset-2;
   }
 
+  .legal-markdown > :first-child {
+    margin-top: 0;
+  }
+
+  .legal-markdown > :last-child {
+    margin-bottom: 0;
+  }
+
   section[id] {
     scroll-margin-top: 88px;
   }

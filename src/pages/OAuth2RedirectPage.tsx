@@ -1,7 +1,13 @@
 import { useEffect } from 'react';
+import type { AxiosError } from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { exchangeOAuthCode } from '../services/auth/authService';
+
+type ApiErrorPayload = {
+  message?: string;
+  error?: string;
+};
 
 export default function OAuth2RedirectPage() {
   const navigate = useNavigate();
@@ -11,6 +17,10 @@ export default function OAuth2RedirectPage() {
   useEffect(() => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    const oauthIntent = sessionStorage.getItem('devport.oauth.intent') as
+      | 'login'
+      | 'signup'
+      | null;
 
     const redirectToLoginWithError = (message: string) => {
       const target = message
@@ -19,24 +29,52 @@ export default function OAuth2RedirectPage() {
       navigate(target, { replace: true });
     };
 
+    const redirectToSignupWithError = (message: string) => {
+      const target = message
+        ? `/signup?error=${encodeURIComponent(message)}`
+        : '/signup';
+      navigate(target, { replace: true });
+    };
+
     if (!code) {
-      redirectToLoginWithError(error ?? 'auth_failed');
+      if (oauthIntent === 'signup') {
+        redirectToSignupWithError(error ?? 'auth_failed');
+      } else {
+        redirectToLoginWithError(error ?? 'auth_failed');
+      }
       return;
     }
 
     const exchangeCode = async () => {
       try {
         const response = await exchangeOAuthCode({ code });
+        sessionStorage.removeItem('devport.oauth.intent');
         window.history.replaceState({}, document.title, '/oauth2/redirect');
         await authenticate(response.accessToken);
         navigate('/', { replace: true });
-      } catch (exchangeError: any) {
+      } catch (exchangeError: unknown) {
+        const axiosError = exchangeError as AxiosError<ApiErrorPayload>;
+        sessionStorage.removeItem('devport.oauth.intent');
         window.history.replaceState({}, document.title, '/oauth2/redirect');
         const message =
-          exchangeError?.response?.data?.message ||
-          exchangeError?.response?.data?.error ||
-          exchangeError?.message ||
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.error ||
+          axiosError.message ||
           'auth_failed';
+
+        if (oauthIntent === 'signup') {
+          redirectToSignupWithError(message);
+          return;
+        }
+
+        if (
+          typeof message === 'string' &&
+          /signup|sign up|register|not found/i.test(message)
+        ) {
+          redirectToSignupWithError(message);
+          return;
+        }
+
         redirectToLoginWithError(message);
       }
     };

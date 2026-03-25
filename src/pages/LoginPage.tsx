@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
+import type { AxiosError } from 'axios';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { initiateOAuthLogin, login, resendVerification } from '../services/auth/authService';
 import { useAuth } from '../contexts/AuthContext';
+
+type ApiErrorPayload = {
+  message?: string;
+  error?: string;
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -36,8 +42,9 @@ export default function LoginPage() {
       setErrorMessage('봇 검증에 실패했습니다. 다시 시도해주세요.');
     } else if (error === 'Turnstile token is missing') {
       setErrorMessage('봇 검증 토큰이 누락되었습니다. 다시 시도해주세요.');
-    }
-    else {
+    } else if (error === 'signup_required') {
+      setErrorMessage('계정을 찾을 수 없습니다. 회원가입 페이지에서 약관 동의 후 가입을 진행해주세요.');
+    } else {
       setErrorMessage(error);
     }
   }, [searchParams]);
@@ -98,11 +105,12 @@ export default function LoginPage() {
 
       await authenticate(response.accessToken);
       navigate('/', { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<ApiErrorPayload>;
       console.error('Login error:', error);
-      if (error.response?.status === 401) {
+      if (axiosError.response?.status === 401) {
         setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
-      } else if (error.response?.status === 403) {
+      } else if (axiosError.response?.status === 403) {
         setVerificationRequired(true);
         setVerificationEmail('');
         setErrorMessage('이메일 인증이 완료되어야 로그인할 수 있습니다.');
@@ -221,6 +229,14 @@ export default function LoginPage() {
           {/* OAuth Login */}
           {loginMode === 'oauth' && (
             <div className="space-y-3">
+              <div className="rounded-xl border border-surface-border bg-surface-elevated/60 p-4 text-sm leading-relaxed text-text-secondary">
+                이 화면의 소셜 로그인은 기존 계정용입니다. 처음 가입하는 경우{' '}
+                <Link to="/signup" className="text-accent hover:text-accent/80">
+                  회원가입 페이지
+                </Link>
+                에서 필수 약관 동의 후 진행해주세요.
+              </div>
+
               {/* GitHub */}
               <button
                 onClick={handleGitHubLogin}
@@ -328,11 +344,9 @@ export default function LoginPage() {
 
           {/* Terms */}
           <p className="mt-4 text-xs text-text-muted text-center leading-relaxed">
-            로그인하면{' '}
-            <Link to="/terms" className="text-text-secondary hover:text-text-primary underline">이용약관</Link>
-            과{' '}
-            <Link to="/privacy" className="text-text-secondary hover:text-text-primary underline">개인정보 처리방침</Link>
-            에 동의하는 것으로 간주됩니다.
+            로그인은 기존 계정 인증만 처리합니다. 약관 동의가 필요한 신규 가입은{' '}
+            <Link to="/signup" className="text-text-secondary hover:text-text-primary underline">회원가입</Link>
+            에서 진행해주세요.
           </p>
         </div>
 

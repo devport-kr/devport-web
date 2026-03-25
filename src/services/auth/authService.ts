@@ -21,6 +21,7 @@ export interface SignupRequest {
   password: string;
   email: string;
   name?: string;
+  agreedTermsVersion: string;
 }
 
 export interface LoginRequest {
@@ -67,10 +68,15 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
   return response.data;
 };
 
-export const initiateOAuthLogin = (provider: 'github' | 'google' | 'naver', turnstileToken: string): void => {
+export const initiateOAuthLogin = (
+  provider: 'github' | 'google' | 'naver',
+  turnstileToken: string,
+  intent: 'login' | 'signup' = 'login'
+): void => {
   // Spring Security OAuth2 default endpoint is /oauth2/authorization/{registrationId}
-  // Append Turnstile token as query parameter for backend validation
-  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}?turnstile_token=${encodeURIComponent(turnstileToken)}`;
+  // Append intent so backend can distinguish login vs signup enforcement.
+  sessionStorage.setItem('devport.oauth.intent', intent);
+  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}?turnstile_token=${encodeURIComponent(turnstileToken)}&intent=${encodeURIComponent(intent)}`;
 };
 
 export const logout = async (): Promise<void> => {
