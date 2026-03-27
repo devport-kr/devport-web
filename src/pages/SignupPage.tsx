@@ -4,6 +4,7 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import LegalDocumentModal from '../components/LegalDocumentModal';
 import {
   type LegalDocumentKey,
+  CURRENT_TERMS_VERSION,
 } from '../content/legalDocuments';
 import { useAuth } from '../contexts/AuthContext';
 import { initiateOAuthLogin } from '../services/auth/authService';
@@ -82,7 +83,7 @@ export default function SignupPage() {
     }
 
     setErrors({});
-    initiateOAuthLogin(provider, turnstileToken, 'signup');
+    initiateOAuthLogin(provider, turnstileToken, 'signup', CURRENT_TERMS_VERSION);
   };
 
   return (

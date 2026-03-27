@@ -229,14 +229,6 @@ export default function LoginPage() {
           {/* OAuth Login */}
           {loginMode === 'oauth' && (
             <div className="space-y-3">
-              <div className="rounded-xl border border-surface-border bg-surface-elevated/60 p-4 text-sm leading-relaxed text-text-secondary">
-                이 화면의 소셜 로그인은 기존 계정용입니다. 처음 가입하는 경우{' '}
-                <Link to="/signup" className="text-accent hover:text-accent/80">
-                  회원가입 페이지
-                </Link>
-                에서 필수 약관 동의 후 진행해주세요.
-              </div>
-
               {/* GitHub */}
               <button
                 onClick={handleGitHubLogin}

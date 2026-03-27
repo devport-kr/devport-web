@@ -71,12 +71,17 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
 export const initiateOAuthLogin = (
   provider: 'github' | 'google' | 'naver',
   turnstileToken: string,
-  intent: 'login' | 'signup' = 'login'
+  intent: 'login' | 'signup' = 'login',
+  agreedTermsVersion?: string
 ): void => {
   // Spring Security OAuth2 default endpoint is /oauth2/authorization/{registrationId}
   // Append intent so backend can distinguish login vs signup enforcement.
   sessionStorage.setItem('devport.oauth.intent', intent);
-  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}?turnstile_token=${encodeURIComponent(turnstileToken)}&intent=${encodeURIComponent(intent)}`;
+  let url = `${API_BASE_URL}/oauth2/authorization/${provider}?turnstile_token=${encodeURIComponent(turnstileToken)}&intent=${encodeURIComponent(intent)}`;
+  if (agreedTermsVersion) {
+    url += `&agreed_terms_version=${encodeURIComponent(agreedTermsVersion)}`;
+  }
+  window.location.href = url;
 };
 
 export const logout = async (): Promise<void> => {
