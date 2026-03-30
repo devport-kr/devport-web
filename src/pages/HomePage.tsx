@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
+import MobileBottomNav from '../components/MobileBottomNav';
 import TrendingTicker from '../components/TrendingTicker';
 import GitHubLeaderboard from '../components/GitHubLeaderboard';
 import LLMLeaderboard from '../components/LLMLeaderboard';
@@ -236,7 +238,7 @@ export default function HomePage() {
         </aside>
 
         {/* Center - Articles (truly centered on viewport) */}
-        <main className="pt-8 pb-8 px-8">
+        <main className="pt-8 pb-8 lg:pb-8 px-8 pb-24">
           <div className="max-w-xl mx-auto">
             {/* Articles Section */}
             <section>
@@ -340,22 +342,8 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="pt-16 pb-10 px-8">
-        <div className="max-w-xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-0.5 mb-2">
-            <span className="text-sm font-semibold text-text-muted">devport</span>
-            <span className="text-accent text-sm font-semibold">.</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs mb-4">
-            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">About</a>
-            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Privacy</a>
-            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Terms</a>
-            <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Contact</a>
-          </div>
-          <p className="text-2xs text-text-muted/50">© 2025 devport.kr</p>
-        </div>
-      </footer>
+      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
+      <MobileBottomNav />
     </div>
   );
 }
