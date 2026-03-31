@@ -24,6 +24,14 @@ export default function GlobalWikiChatPanel() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isUserNearBottom = useRef(true);
+
+    const handleChatScroll = useCallback(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    }, []);
 
     const autoResize = useCallback(() => {
         const el = textareaRef.current;
@@ -37,13 +45,16 @@ export default function GlobalWikiChatPanel() {
     }, [input, autoResize]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (isUserNearBottom.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     }, [messages, streamingContent, networkDisconnected]);
 
     const handleSend = useCallback(
         (text?: string) => {
             const question = text ?? input;
             if (!question.trim() || isStreaming) return;
+            isUserNearBottom.current = true;
             setInput('');
             sendMessage(question);
         },
@@ -101,7 +112,7 @@ export default function GlobalWikiChatPanel() {
             )}
 
             {/* Chat Messages / Empty State */}
-            <div className="px-4 py-3 flex-1 min-h-[300px] overflow-y-auto space-y-3 z-0 scrollbar-minimal relative">
+            <div ref={scrollContainerRef} onScroll={handleChatScroll} className="px-4 py-3 flex-1 min-h-[300px] overflow-y-auto space-y-3 z-0 scrollbar-minimal relative">
                 {!hasMessages ? (
                     <div className="flex flex-col h-full items-center justify-center -mt-6">
                         {/* Logo + instruction */}

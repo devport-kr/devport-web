@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MobileBottomNav from '../components/MobileBottomNav';
 import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
+import MobileWikiChatSheet from '../components/wiki/MobileWikiChatSheet';
 
 function fmt(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1) + 'k';
@@ -24,6 +25,7 @@ export default function PortsDirectoryPage() {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   // Load flat project list for directory view
   useEffect(() => {
@@ -104,7 +106,14 @@ export default function PortsDirectoryPage() {
               </div>
 
               <button
-                onClick={() => setIsChatExpanded(true)}
+                onClick={() => {
+                  // Desktop: open side panel, Mobile: open fullscreen sheet
+                  if (window.innerWidth >= 640) {
+                    setIsChatExpanded(true);
+                  } else {
+                    setIsMobileChatOpen(true);
+                  }
+                }}
                 className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,9 +182,9 @@ export default function PortsDirectoryPage() {
           </div>
         </main>
 
-        {/* Global Chat Slide-out Panel */}
+        {/* Global Chat Slide-out Panel (desktop only) */}
         <aside
-          className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-6 pb-6 px-5 border-l border-surface-border/50 flex flex-col bg-surface/95 backdrop-blur-xl z-50 transition-transform duration-300 ease-in-out w-full sm:w-[450px] 2xl:w-[550px] shadow-2xl ${isChatExpanded ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-6 pb-6 px-5 border-l border-surface-border/50 hidden sm:flex flex-col bg-surface/95 backdrop-blur-xl z-50 transition-transform duration-300 ease-in-out w-[450px] 2xl:w-[550px] shadow-2xl ${isChatExpanded ? 'translate-x-0' : 'translate-x-full'
             }`}
         >
           <div className="flex justify-between items-center mb-5 px-1">
@@ -196,6 +205,13 @@ export default function PortsDirectoryPage() {
             <GlobalWikiChatPanel />
           </div>
         </aside>
+
+        {/* Mobile Chat Sheet */}
+        <MobileWikiChatSheet
+          isOpen={isMobileChatOpen}
+          onClose={() => setIsMobileChatOpen(false)}
+          mode="global"
+        />
 
       </div>
       <Footer className="lg:ml-52 pb-16 lg:pb-0" />

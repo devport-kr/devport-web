@@ -19,6 +19,7 @@ import Footer from '../components/Footer';
 import MobileBottomNav from '../components/MobileBottomNav';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
+import MobileWikiChatSheet from '../components/wiki/MobileWikiChatSheet';
 import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiMarkdownRenderer';
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -124,6 +125,7 @@ export default function PortsProjectPage() {
 
   const [activeSection, setActiveSection] = useState('wiki-what');
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   // Project detail data
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
@@ -494,7 +496,7 @@ export default function PortsProjectPage() {
               )}
 
               {/* Main content — centered between TOC and right rail */}
-              <div className={`xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-6 py-12 transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
+              <div className={`xl:ml-56 xl:mr-[320px] 2xl:mr-[520px] px-4 sm:px-6 py-8 sm:py-12 transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
                 <div className="max-w-3xl mx-auto">
                   {projectLoading ? (
                     <div className="text-center py-12 text-text-muted">Loading project...</div>
@@ -502,10 +504,10 @@ export default function PortsProjectPage() {
                     <>
                       {/* Header */}
                       {project && (
-                        <div className="mb-10">
-                          <div className="flex items-start justify-between gap-4 mb-4">
-                            <div className="flex items-start gap-4 min-w-0 flex-1">
-                              <div className="w-12 h-12 rounded-xl border border-surface-border bg-surface-elevated overflow-hidden shrink-0">
+                        <div className="mb-8 sm:mb-10">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
+                            <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-surface-border bg-surface-elevated overflow-hidden shrink-0">
                                 <img
                                   src={`https://github.com/${project.fullName.split('/')[0]}.png?size=100`}
                                   alt={project.fullName.split('/')[0]}
@@ -513,20 +515,20 @@ export default function PortsProjectPage() {
                                 />
                               </div>
                               <div className="min-w-0">
-                                <h1 className="text-2xl font-semibold text-text-primary mb-2">{project.fullName}</h1>
+                                <h1 className="text-xl sm:text-2xl font-semibold text-text-primary mb-1 sm:mb-2 break-words">{project.fullName}</h1>
                                 {Array.isArray(project.tags) && project.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 overflow-hidden">
-                                    {project.tags.slice(0, 12).map((tag) => (
+                                    {project.tags.slice(0, 8).map((tag) => (
                                       <span key={tag} className="text-2xs text-text-muted whitespace-nowrap">#{tag}</span>
                                     ))}
-                                    {project.tags.length > 12 && (
-                                      <span className="text-2xs text-text-muted">+{project.tags.length - 12}</span>
+                                    {project.tags.length > 8 && (
+                                      <span className="text-2xs text-text-muted">+{project.tags.length - 8}</span>
                                     )}
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                               <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border text-xs text-text-muted">
                                 <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                                 {fmt(project.stars)}
@@ -542,18 +544,18 @@ export default function PortsProjectPage() {
                               </a>
                             </div>
                           </div>
-                          <p className="text-base text-text-muted leading-relaxed">{project.description}</p>
+                          <p className="text-sm sm:text-base text-text-muted leading-relaxed">{project.description}</p>
                         </div>
                       )}
 
-                      <div className="space-y-16">
+                      <div className="space-y-10 sm:space-y-16">
                         {/* Wiki Sections */}
                         {wikiLoading ? (
                           <div className="text-center py-12 text-text-muted">Loading wiki...</div>
                         ) : visibleWikiSections.length > 0 ? (
                           <>
-                            <div className="flex items-center justify-between gap-4 flex-wrap">
-                              <div className="flex items-center gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 flex-wrap">
+                              <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                                 {wikiGeneratedLabel && (
                                   <p className="text-2xs text-text-muted">마지막 위키 업데이트 시각: {wikiGeneratedLabel}</p>
                                 )}
@@ -575,13 +577,13 @@ export default function PortsProjectPage() {
                               <section
                                 key={ws.sectionId}
                                 id={`wiki-${ws.sectionId}`}
-                                className="scroll-mt-24 pb-12 border-b border-surface-border/50 last:border-b-0 last:pb-0"
+                                className="scroll-mt-24 pb-8 sm:pb-12 border-b border-surface-border/50 last:border-b-0 last:pb-0"
                               >
-                                <div className="space-y-6">
-                                  <h2 className="text-lg font-semibold text-text-primary">{ws.heading}</h2>
+                                <div className="space-y-4 sm:space-y-6">
+                                  <h2 className="text-base sm:text-lg font-semibold text-text-primary">{ws.heading}</h2>
 
                                   {ws.summary && (
-                                    <div className="rounded-lg border border-surface-border/60 bg-surface-elevated/30 pl-4 pr-5 py-4 border-l-[3px] border-l-accent/50">
+                                    <div className="rounded-lg border border-surface-border/60 bg-surface-elevated/30 pl-3 pr-4 sm:pl-4 sm:pr-5 py-3 sm:py-4 border-l-[3px] border-l-accent/50 overflow-x-auto">
                                       <WikiMarkdownRenderer
                                         content={ws.summary}
                                         className="wiki-markdown--summary"
@@ -591,7 +593,9 @@ export default function PortsProjectPage() {
                                     </div>
                                   )}
                                   {ws.generatedDiagramDsl && (
-                                    <MermaidCodeBlock source={ws.generatedDiagramDsl || ''} />
+                                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                                      <MermaidCodeBlock source={ws.generatedDiagramDsl || ''} />
+                                    </div>
                                   )}
                                   {ws.deepDiveMarkdown && (
                                     <WikiMarkdownRenderer
@@ -702,6 +706,32 @@ export default function PortsProjectPage() {
         </div>
 
       </div>
+
+      {/* ─── Mobile Chat FAB ────────────────────────────────────── */}
+      <button
+        onClick={() => setIsMobileChatOpen(true)}
+        className="xl:hidden fixed right-4 z-[9990] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-white font-semibold text-sm shadow-lg animate-fab-pulse active:scale-95 transition-transform"
+        style={{
+          bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
+        }}
+        aria-label="Portki agent랑 대화하기"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <span className="hidden sm:inline">Portki agent랑 대화하기</span>
+        <span className="sm:hidden">Chat</span>
+      </button>
+
+      {/* ─── Mobile Chat Sheet ─────────────────────────────────── */}
+      <MobileWikiChatSheet
+        isOpen={isMobileChatOpen}
+        onClose={() => setIsMobileChatOpen(false)}
+        mode="project"
+        projectExternalId={decodedProjectExternalId}
+        projectName={project?.fullName}
+      />
+
       <Footer className="lg:ml-52 pb-16 lg:pb-0" />
       <MobileBottomNav />
     </div>
