@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type {
   ProjectDetail,
   ProjectEvent,
@@ -125,7 +125,11 @@ export default function PortsProjectPage() {
 
   const [activeSection, setActiveSection] = useState('wiki-what');
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+<<<<<<< HEAD
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+=======
+  const navigate = useNavigate();
+>>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
 
   // Project detail data
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
@@ -567,9 +571,9 @@ export default function PortsProjectPage() {
                                 href="https://github.com/devport-kr/portki"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 hover:opacity-80 transition-opacity"
+                                className="self-start flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-accent/10 border border-accent/20 hover:opacity-80 transition-opacity"
                               >
-                                <span className="text-[13px] font-semibold text-accent">Powered by Portki</span>
+                                <span className="text-2xs sm:text-[13px] font-semibold text-accent">Powered by Portki</span>
                               </a>
                             </div>
 
@@ -709,7 +713,11 @@ export default function PortsProjectPage() {
 
       {/* ─── Mobile Chat FAB ────────────────────────────────────── */}
       <button
+<<<<<<< HEAD
         onClick={() => setIsMobileChatOpen(true)}
+=======
+        onClick={() => navigate(`/ports/chat/${encodeURIComponent(decodedProjectExternalId || '')}`)}
+>>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
         className="xl:hidden fixed right-4 z-[9990] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-white font-semibold text-sm shadow-lg animate-fab-pulse active:scale-95 transition-transform"
         style={{
           bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
@@ -723,6 +731,7 @@ export default function PortsProjectPage() {
         <span className="sm:hidden">Chat</span>
       </button>
 
+<<<<<<< HEAD
       {/* ─── Mobile Chat Sheet ─────────────────────────────────── */}
       <MobileWikiChatSheet
         isOpen={isMobileChatOpen}
@@ -732,6 +741,8 @@ export default function PortsProjectPage() {
         projectName={project?.fullName}
       />
 
+=======
+>>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
       <Footer className="lg:ml-52 pb-16 lg:pb-0" />
       <MobileBottomNav />
     </div>

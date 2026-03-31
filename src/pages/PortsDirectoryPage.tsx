@@ -107,11 +107,18 @@ export default function PortsDirectoryPage() {
 
               <button
                 onClick={() => {
+<<<<<<< HEAD
                   // Desktop: open side panel, Mobile: open fullscreen sheet
                   if (window.innerWidth >= 640) {
                     setIsChatExpanded(true);
                   } else {
                     setIsMobileChatOpen(true);
+=======
+                  if (window.innerWidth >= 640) {
+                    setIsChatExpanded(true);
+                  } else {
+                    navigate('/ports/chat');
+>>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
                   }
                 }}
                 className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"

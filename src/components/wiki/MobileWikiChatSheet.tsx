@@ -201,11 +201,10 @@ function ChatBody({
             ) : (
               <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-accent/15 text-text-primary rounded-tr-md'
-                      : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal rounded-tl-md'
-                  }`}
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === 'user'
+                    ? 'bg-accent/15 text-text-primary rounded-tr-md'
+                    : 'bg-surface-elevated text-text-secondary overflow-x-auto scrollbar-minimal rounded-tl-md'
+                    }`}
                 >
                   {msg.role === 'user' ? (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -684,17 +683,15 @@ export default function MobileWikiChatSheet({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
       {/* Sheet */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-[9999] transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
+        className={`fixed inset-x-0 bottom-0 z-[10001] transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
         style={{
           top: 'env(safe-area-inset-top, 0px)',
           /* Force GPU layer for smooth animation */
