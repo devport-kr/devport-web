@@ -82,27 +82,27 @@ export default function PortsDirectoryPage() {
             <div className="flex flex-col max-w-3xl mx-auto mb-16 gap-3">
               <div className="flex flex-col sm:flex-row gap-4 items-center">
                 <div className="relative flex-1 w-full">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="프로젝트 이름, 설명, 언어로 검색..."
-                  className="w-full bg-surface-card border border-surface-border rounded-2xl pl-12 pr-4 py-4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all text-base"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="프로젝트 이름, 설명, 언어로 검색..."
+                    className="w-full bg-surface-card border border-surface-border rounded-2xl pl-12 pr-4 py-4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all text-base"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
 
                 <button
                   onClick={() => {
@@ -119,15 +119,6 @@ export default function PortsDirectoryPage() {
                   </svg>
                   portki 챗봇
                 </button>
-              </div>
-              <div className="text-center sm:text-right text-sm text-text-secondary px-2 sm:px-0 mt-1">
-                <span className="text-accent font-semibold font-mono">portki</span>는 매일 쏟아지는 AI 프로젝트 속에서 옥석을 가려내고, 핵심 컨텍스트만 추출해 위키를 자동 발행하는 자율형 오픈소스 AI 에이전트입니다.{' '}
-                <a href="https://github.com/devport-kr/portki" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:text-indigo-400 font-medium underline underline-offset-4 mt-1.5 sm:mt-0 transition-colors">
-                  GitHub에서 소스코드 확인하기
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
               </div>
             </div>
 
