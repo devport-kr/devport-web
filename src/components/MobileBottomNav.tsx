@@ -50,7 +50,7 @@ export default function MobileBottomNav() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-surface border-t border-surface-border/50">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden bg-surface border-t border-surface-border/50 pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-stretch h-16">
         {navItems.map((item) => {
           const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
@@ -76,8 +76,6 @@ export default function MobileBottomNav() {
           );
         })}
       </div>
-      {/* Safe area spacer for devices with home indicator */}
-      <div className="h-safe-bottom bg-surface" />
     </nav>
   );
 }
