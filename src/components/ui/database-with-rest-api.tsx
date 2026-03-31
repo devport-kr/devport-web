@@ -27,7 +27,6 @@ const DatabaseWithRestApi = ({
   className,
   circleText,
   badgeTexts,
-  buttonTexts,
   title,
   lightColor,
 }: DatabaseWithRestApiProps) => {
@@ -198,19 +197,19 @@ const DatabaseWithRestApi = ({
           {/* Badges */}
           <div className="absolute bottom-8 left-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm border border-surface-border text-text-secondary flex items-center gap-2">
             <BotMessageSquare className="size-4" />
-            <span>{buttonTexts?.first || "챗봇"}</span>
+            <span>AI</span>
           </div>
           <div className="absolute top-8 right-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <BookOpen className="size-4" />
-            <span>{buttonTexts?.second || "위키"}</span>
+            <span>분석</span>
           </div>
           <div className="absolute top-8 left-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <TrendingUp className="size-4" />
-            <span>{buttonTexts?.third || "트렌딩"}</span>
+            <span>탐색</span>
           </div>
           <div className="absolute bottom-8 right-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <Trophy className="size-4" />
-            <span>{buttonTexts?.fourth || "랭킹"}</span>
+            <span>비교</span>
           </div>
           {/* Circles */}
           <motion.div

@@ -71,7 +71,7 @@ export default function PortsDirectoryPage() {
             hero={{
               titleLine1: '바이브 코더들을 위한 허브',
               titleLine2Gradient: 'Ports',
-              subtitle: <>매일 새로 쏟아지는 AI 프로젝트: 노이즈는 줄이고, 맥락은 남깁니다.</>,
+              subtitle: <>매일 쏟아지는 AI 프로젝트들, <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>portki</span>가 대신 확인하고 정리해드립니다.</>,
               subtitleBottom: <>가장 중요한 정보만 확인하고 <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
             }}
             showAnimatedBackground={true}
