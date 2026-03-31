@@ -19,7 +19,6 @@ import Footer from '../components/Footer';
 import MobileBottomNav from '../components/MobileBottomNav';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
-import MobileWikiChatSheet from '../components/wiki/MobileWikiChatSheet';
 import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiMarkdownRenderer';
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -125,11 +124,7 @@ export default function PortsProjectPage() {
 
   const [activeSection, setActiveSection] = useState('wiki-what');
   const [isChatExpanded, setIsChatExpanded] = useState(false);
-<<<<<<< HEAD
-  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
-=======
   const navigate = useNavigate();
->>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
 
   // Project detail data
   const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
@@ -713,11 +708,7 @@ export default function PortsProjectPage() {
 
       {/* ─── Mobile Chat FAB ────────────────────────────────────── */}
       <button
-<<<<<<< HEAD
-        onClick={() => setIsMobileChatOpen(true)}
-=======
         onClick={() => navigate(`/ports/chat/${encodeURIComponent(decodedProjectExternalId || '')}`)}
->>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
         className="xl:hidden fixed right-4 z-[9990] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-white font-semibold text-sm shadow-lg animate-fab-pulse active:scale-95 transition-transform"
         style={{
           bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
@@ -731,18 +722,7 @@ export default function PortsProjectPage() {
         <span className="sm:hidden">Chat</span>
       </button>
 
-<<<<<<< HEAD
-      {/* ─── Mobile Chat Sheet ─────────────────────────────────── */}
-      <MobileWikiChatSheet
-        isOpen={isMobileChatOpen}
-        onClose={() => setIsMobileChatOpen(false)}
-        mode="project"
-        projectExternalId={decodedProjectExternalId}
-        projectName={project?.fullName}
-      />
 
-=======
->>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
       <Footer className="lg:ml-52 pb-16 lg:pb-0" />
       <MobileBottomNav />
     </div>

@@ -8,7 +8,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MobileBottomNav from '../components/MobileBottomNav';
 import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
-import MobileWikiChatSheet from '../components/wiki/MobileWikiChatSheet';
 
 function fmt(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1) + 'k';
@@ -25,7 +24,6 @@ export default function PortsDirectoryPage() {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatExpanded, setIsChatExpanded] = useState(false);
-  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   // Load flat project list for directory view
   useEffect(() => {
@@ -107,18 +105,10 @@ export default function PortsDirectoryPage() {
 
               <button
                 onClick={() => {
-<<<<<<< HEAD
-                  // Desktop: open side panel, Mobile: open fullscreen sheet
-                  if (window.innerWidth >= 640) {
-                    setIsChatExpanded(true);
-                  } else {
-                    setIsMobileChatOpen(true);
-=======
                   if (window.innerWidth >= 640) {
                     setIsChatExpanded(true);
                   } else {
                     navigate('/ports/chat');
->>>>>>> 1764348 (feat: 모바일 위키 레이아웃 수정 및 채팅 페이지 추가)
                   }
                 }}
                 className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"
@@ -212,13 +202,6 @@ export default function PortsDirectoryPage() {
             <GlobalWikiChatPanel />
           </div>
         </aside>
-
-        {/* Mobile Chat Sheet */}
-        <MobileWikiChatSheet
-          isOpen={isMobileChatOpen}
-          onClose={() => setIsMobileChatOpen(false)}
-          mode="global"
-        />
 
       </div>
       <Footer className="lg:ml-52 pb-16 lg:pb-0" />
