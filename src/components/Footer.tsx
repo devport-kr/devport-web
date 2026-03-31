@@ -34,7 +34,7 @@ export default function Footer({ className = '' }: FooterProps) {
               <span className="text-lg font-semibold text-text-primary">devport</span>
               <span className="text-accent text-lg font-semibold">.</span>
             </div>
-            <p className="text-sm text-text-muted">개발자를 위한 글로벌 트렌드 포털</p>
+            <p className="text-sm text-text-muted">노이즈는 줄이고, 맥락은 남깁니다.</p>
           </div>
 
           {/* Links */}

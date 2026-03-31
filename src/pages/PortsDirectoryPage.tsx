@@ -71,7 +71,7 @@ export default function PortsDirectoryPage() {
             hero={{
               titleLine1: '바이브 코더들을 위한 허브',
               titleLine2Gradient: 'Ports',
-              subtitle: <>매일 쏟아지는 AI 프로젝트들, <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>portki</span>가 대신 확인하고 정리해드립니다.</>,
+              subtitle: <>매일 새로 쏟아지는 AI 프로젝트: 노이즈는 줄이고, 맥락은 남깁니다.</>,
               subtitleBottom: <>가장 중요한 정보만 확인하고 <span style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontWeight: 500 }}>챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
             }}
             showAnimatedBackground={true}
@@ -79,8 +79,9 @@ export default function PortsDirectoryPage() {
 
           {/* PORTS PROJECT LIST */}
           <div id="ports-list" className="relative z-10 max-w-[1200px] mx-auto px-6 py-24">
-            <div className="flex flex-col sm:flex-row gap-4 max-w-3xl mx-auto mb-16 items-center">
-              <div className="relative flex-1 w-full">
+            <div className="flex flex-col max-w-3xl mx-auto mb-16 gap-3">
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
@@ -103,21 +104,31 @@ export default function PortsDirectoryPage() {
                 )}
               </div>
 
-              <button
-                onClick={() => {
-                  if (window.innerWidth >= 640) {
-                    setIsChatExpanded(true);
-                  } else {
-                    navigate('/ports/chat');
-                  }
-                }}
-                className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                portki 챗봇
-              </button>
+                <button
+                  onClick={() => {
+                    if (window.innerWidth >= 640) {
+                      setIsChatExpanded(true);
+                    } else {
+                      navigate('/ports/chat');
+                    }
+                  }}
+                  className="px-6 py-4 bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-[0_0_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  portki 챗봇
+                </button>
+              </div>
+              <div className="text-center sm:text-right text-sm text-text-secondary px-2 sm:px-0 mt-1">
+                <span className="text-accent font-semibold font-mono">portki</span>는 매일 쏟아지는 AI 프로젝트 속에서 옥석을 가려내고, 핵심 컨텍스트만 추출해 위키를 자동 발행하는 자율형 오픈소스 AI 에이전트입니다.{' '}
+                <a href="https://github.com/devport-kr/portki" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:text-indigo-400 font-medium underline underline-offset-4 mt-1.5 sm:mt-0 transition-colors">
+                  GitHub에서 소스코드 확인하기
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
             </div>
 
             {projectsLoading ? (
