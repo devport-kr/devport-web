@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// TODO: Replace this placeholder with the actual Google Survey URL once available.
-// This link is shown in the bug report dropdown in the footer.
-const GOOGLE_SURVEY_URL = 'https://forms.google.com/REPLACE_WITH_ACTUAL_SURVEY_LINK';
+// Google Forms bug report survey link shown in the footer dropdown.
+const GOOGLE_SURVEY_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScUyqrYaXwlHNAfGMHdPltjf52apSuQLfzMOTNux7yGU6MTaw/viewform?usp=publish-editor';
 
 const GITHUB_ISSUES_URL = 'https://github.com/devport-kr/devport-web/issues/new';
 
@@ -65,10 +64,7 @@ export default function Footer({ className = '' }: FooterProps) {
                 onClick={() => setShowBugMenu((prev) => !prev)}
                 className="flex items-center gap-1.5 text-text-muted hover:text-text-secondary transition-colors"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                </svg>
-                버그 신고
+                Feedback
               </button>
 
               {showBugMenu && (
