@@ -114,7 +114,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
   };
 
   return (
-    <div className="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-soft">
+    <div className="rounded-2xl border border-surface-border bg-surface-card p-4 sm:p-5 shadow-soft min-w-0 overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-text-primary mt-1">{config.label}</h3>
@@ -157,7 +157,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
           <div className="h-full flex items-center justify-center text-xs text-text-muted">데이터가 없습니다</div>
         ) : (
           <div className="h-full w-full overflow-x-auto scrollbar-minimal">
-            <div className="h-full min-w-[340px]">
+            <div className="h-full min-w-[280px] sm:min-w-[340px]">
               <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 24 }}>
               <CartesianGrid stroke="#30363d" strokeDasharray="3 3" vertical={false} />

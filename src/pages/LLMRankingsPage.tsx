@@ -105,7 +105,7 @@ export default function LLMRankingsPage() {
   const mediaTotalLabel = mediaModelCountAnimated !== null ? mediaModelCountAnimated.toLocaleString() : '-';
 
   return (
-    <div className="min-h-screen bg-glow">
+    <div className="min-h-screen bg-glow overflow-x-hidden">
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
