@@ -156,7 +156,9 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
         ) : chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-text-muted">데이터가 없습니다</div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <div className="h-full w-full overflow-x-auto scrollbar-minimal">
+            <div className="h-full min-w-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 24 }}>
               <CartesianGrid stroke="#30363d" strokeDasharray="3 3" vertical={false} />
               <XAxis
@@ -200,6 +202,8 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+            </div>
+          </div>
         )}
       </div>
 

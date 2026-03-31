@@ -124,7 +124,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-4">
+      <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mt-4">
         <div className="rounded-lg border border-surface-border bg-surface-elevated/60 p-2">
           <p className="text-[10px] text-text-muted">최고 스코어</p>
           <p className="text-sm font-semibold text-text-primary mt-1">
@@ -149,7 +149,9 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
         ) : chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-text-muted">데이터가 없습니다</div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <div className="h-full w-full overflow-x-auto scrollbar-minimal">
+            <div className="h-full min-w-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 24 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -199,6 +201,8 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+            </div>
+          </div>
         )}
       </div>
 
