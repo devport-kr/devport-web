@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
+import MobileBottomNav from '../components/MobileBottomNav';
 import TrendingTicker from '../components/TrendingTicker';
 import type { BenchmarkCategoryGroup, BenchmarkType } from '../types';
 import { benchmarkCategoryConfig } from '../types';
@@ -292,32 +294,8 @@ export default function LLMRankingsPage() {
         </main>
       </div>
 
-      <footer className="lg:ml-52 xl:mr-52 border-t border-surface-border mt-20">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div>
-              <div className="flex items-center gap-0.5 mb-2">
-                <span className="text-lg font-semibold text-text-primary">devport</span>
-                <span className="text-accent text-lg font-semibold">.</span>
-              </div>
-              <p className="text-sm text-text-muted">개발자를 위한 글로벌 트렌드 포털</p>
-            </div>
-
-            <div className="flex gap-8 text-sm">
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">About</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Privacy</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Terms</a>
-              <a href="#" className="text-text-muted hover:text-text-secondary transition-colors">Contact</a>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-surface-border">
-            <p className="text-xs text-text-muted text-center">
-              © 2025 devport.kr
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer className="lg:ml-52 xl:mr-52 pb-16 lg:pb-0" />
+      <MobileBottomNav />
     </div>
   );
 }
