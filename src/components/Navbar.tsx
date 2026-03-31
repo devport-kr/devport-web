@@ -108,7 +108,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50">
+    <nav
+      className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50"
+      style={{
+        WebkitTransform: 'translate3d(0,0,0)',
+        transform: 'translate3d(0,0,0)',
+      }}
+    >
       <div className="px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Search */}

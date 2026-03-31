@@ -50,7 +50,26 @@ export default function MobileBottomNav() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden bg-surface border-t border-surface-border/50 pb-[env(safe-area-inset-bottom)]">
+    <nav
+      className="lg:hidden bg-surface border-t border-surface-border/50"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        /* Force own compositing layer — this is the key fix for iOS Safari.
+           Without this, iOS can misplace fixed elements during
+           address-bar show/hide animations and rubber-band scrolling. */
+        WebkitTransform: 'translate3d(0,0,0)',
+        transform: 'translate3d(0,0,0)',
+        /* Ensure the nav paints on its own layer */
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+        /* Pad the bottom for the home indicator on notched iPhones */
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
       <div className="flex items-stretch h-16">
         {navItems.map((item) => {
           const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
@@ -79,3 +98,4 @@ export default function MobileBottomNav() {
     </nav>
   );
 }
+

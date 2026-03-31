@@ -11,14 +11,18 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100%;
+    min-height: 100dvh;
     background-color: #0d1117;
     overscroll-behavior-y: none;
+    /* Ensure smooth momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply text-text-primary font-sans;
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: #0d1117;
     overscroll-behavior-y: none;
     /* Subtle gradient background - softer than pitch black */
@@ -29,10 +33,13 @@
         #0f1419 80%,
         #0d1117 100%);
     background-attachment: fixed;
+    /* Prevent double-tap zoom on iOS which can interfere with fixed elements */
+    touch-action: manipulation;
   }
 
   #root {
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: transparent;
   }
 
