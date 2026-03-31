@@ -160,17 +160,17 @@ export default function PortsDirectoryPage() {
                           </h3>
                         </div>
                         {p.language && (
-                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent border border-accent/20 mb-3">{p.language}</span>
+                          <span className="inline-block px-2 py-1 rounded-md bg-surface-elevated/40 border border-surface-border/60 text-xs text-text-secondary mb-3">{p.language}</span>
                         )}
                         {p.description && (
                           <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed mb-4 min-h-[2.5rem]">{p.description}</p>
                         )}
                       </div>
 
-                      <div className="mt-auto pt-6 border-t border-surface-border/50 flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted group-hover:text-accent/70 transition-colors">View Details</span>
-                        <svg className="w-5 h-5 text-text-muted group-hover:text-accent group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      <div className="mt-auto pt-5 border-t border-surface-border/50 flex items-center justify-between">
+                        <span className="text-xs text-text-muted group-hover:text-text-primary transition-colors">자세히 보기</span>
+                        <svg className="w-4 h-4 text-text-muted group-hover:text-text-primary group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
                       </div>
                     </button>
