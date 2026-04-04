@@ -89,7 +89,7 @@ export default function SignupPage() {
   return (
     <>
       <div className="min-h-screen flex items-center justify-center px-6 py-12">
-        <div className="max-w-md w-full">
+        <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-0.5 mb-3">
               <span className="text-3xl font-semibold text-text-primary">devport</span>
@@ -98,16 +98,8 @@ export default function SignupPage() {
             <p className="text-sm text-text-muted">개발자를 위한 글로벌 트렌드 포털</p>
           </div>
 
-          <div className="bg-surface-card rounded-2xl p-8 border border-surface-border">
+          <div className="min-h-[42rem] rounded-2xl border border-surface-border bg-surface-card p-8">
             <h2 className="text-lg font-medium text-text-primary mb-6 text-center">회원가입</h2>
-            <p className="mb-6 text-center text-sm leading-relaxed text-text-muted">
-              기존 계정 로그인은{' '}
-              <Link to="/login" className="text-accent hover:text-accent/80">
-                로그인 페이지
-              </Link>
-              에서 진행하고, 신규 가입은 소셜 계정으로만 가능합니다.
-            </p>
-
             {generalError && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                 <p className="text-sm text-red-400 text-center">{generalError}</p>
@@ -115,13 +107,6 @@ export default function SignupPage() {
             )}
 
             <div className="mb-6 rounded-2xl border border-surface-border bg-surface-elevated/40 p-5">
-              <div className="mb-4">
-                <p className="text-sm font-medium text-text-primary">소셜 회원가입</p>
-                <p className="mt-1 text-sm text-text-muted">
-                  GitHub, Google, Naver 계정으로만 가입할 수 있습니다.
-                </p>
-              </div>
-
               <div className="space-y-3">
                 <button
                   type="button"

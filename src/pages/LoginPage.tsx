@@ -149,10 +149,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="max-w-sm w-full">
+    <div className="min-h-screen flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md">
         {/* Brand */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-0.5 mb-3">
             <span className="text-3xl font-semibold text-text-primary">devport</span>
             <span className="text-accent text-3xl font-semibold">.</span>
@@ -161,7 +161,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-surface-card rounded-2xl p-8 border border-surface-border">
+        <div className="min-h-[42rem] rounded-2xl border border-surface-border bg-surface-card p-8">
           <h2 className="text-lg font-medium text-text-primary mb-6 text-center">로그인</h2>
 
           {/* Error Message */}
