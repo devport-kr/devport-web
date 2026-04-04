@@ -1,8 +1,9 @@
-import type { Article } from '../types';
+import type { TrendingTickerResponse } from '../services/articles/articlesService';
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 interface TrendingTickerProps {
-  articles: Article[];
+  articles: TrendingTickerResponse[];
 }
 
 export default function TrendingTicker({ articles }: TrendingTickerProps) {
@@ -52,14 +53,12 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
       >
         <div className="flex gap-8 sm:gap-12 px-4 sm:px-6">
           {duplicatedArticles.map((article, index) => (
-             <a
-               key={`${article.id}-${index}`}
-               href={article.url}
-               target="_blank"
-               rel="noopener noreferrer"
-               className="flex-shrink-0 group"
-             >
-               <div className="flex items-center gap-4 sm:gap-6 min-w-[75vw] sm:min-w-[380px]">
+            <Link
+              key={`${article.id}-${index}`}
+              to={`/articles/${article.externalId}`}
+              className="flex-shrink-0 group"
+            >
+              <div className="flex items-center gap-4 sm:gap-6 min-w-[75vw] sm:min-w-[380px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                 <p className="text-sm text-text-secondary group-hover:text-text-primary transition-colors line-clamp-1">
                   {article.summaryKoTitle}
@@ -68,7 +67,7 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
                   {formatTimeAgo(article.createdAtSource)}
                 </span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

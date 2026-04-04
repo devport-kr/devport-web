@@ -20,7 +20,8 @@ export interface GitRepoPageResponse {
 }
 
 export interface TrendingTickerResponse {
-  id: string;
+  id: number;
+  externalId: string;
   summaryKoTitle: string;
   url: string;
   createdAtSource: string;
@@ -69,10 +70,32 @@ export const getArticleByExternalId = async (externalId: string): Promise<Articl
 };
 
 export const getTrendingTicker = async (limit: number = 20): Promise<TrendingTickerResponse[]> => {
-  const response = await apiClient.get<TrendingTickerResponse[]>('/api/articles/trending-ticker', {
-    params: { limit },
-  });
-  return response.data;
+  const [tickerResponse, articlesResponse] = await Promise.all([
+    apiClient.get<Array<Omit<TrendingTickerResponse, 'externalId'>>>('/api/articles/trending-ticker', {
+      params: { limit },
+    }),
+    apiClient.get<ArticlePageResponse>('/api/articles', {
+      params: { page: 0, size: 500 },
+    }),
+  ]);
+
+  const externalIdById = new Map(
+    articlesResponse.data.content.map((article) => [Number(article.id), article.externalId])
+  );
+
+  return tickerResponse.data
+    .map((article) => {
+      const externalId = externalIdById.get(article.id);
+      if (!externalId) {
+        return null;
+      }
+
+      return {
+        ...article,
+        externalId,
+      };
+    })
+    .filter((article): article is TrendingTickerResponse => article !== null);
 };
 
 /** @deprecated Use getGitRepos or getTrendingGitRepos instead */
