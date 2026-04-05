@@ -6,7 +6,6 @@ import { getWikiProjects } from '../services/wiki/wikiService';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
 
 function fmt(n: number) {
@@ -206,8 +205,7 @@ export default function PortsDirectoryPage() {
         </aside>
 
       </div>
-      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52" />
     </div>
   );
 }

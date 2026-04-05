@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import { getSavedArticles, getReadHistory, unsaveArticle } from '../services/me/meService';
 import { updateProfile, changePassword } from '../services/auth/authService';
 import type { SavedArticle, ReadHistory } from '../types';
@@ -777,8 +776,7 @@ export default function MyPage() {
           </div>
         </main>
       </div>
-      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52" />
     </div>
   );
 }
