@@ -39,7 +39,7 @@ const GLOBAL_SUGGESTIONS = [
 /*  Project Chat                                                       */
 /* ------------------------------------------------------------------ */
 
-function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
+function ProjectChat({ projectExternalId, isKeyboardOpen }: { projectExternalId: string; isKeyboardOpen: boolean }) {
   const {
     messages,
     streamingContent,
@@ -63,6 +63,7 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isUserNearBottom = useRef(true);
+  const isProgrammaticScroll = useRef(false);
 
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
@@ -78,6 +79,7 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
   }, []);
 
   const handleChatScroll = useCallback(() => {
+    if (isProgrammaticScroll.current) return;
     const el = scrollContainerRef.current;
     if (!el) return;
     isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -85,9 +87,33 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
 
   useEffect(() => {
     if (isUserNearBottom.current) {
+      isProgrammaticScroll.current = true;
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const t = window.setTimeout(() => { isProgrammaticScroll.current = false; }, 350);
+      return () => window.clearTimeout(t);
     }
   }, [messages, streamingContent, networkDisconnected]);
+
+  // Recalculate isUserNearBottom when the scroll container resizes (e.g. keyboard open/close
+  // changes clientHeight on mobile without firing an onScroll event).
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    let prevClientHeight = el.clientHeight;
+    const ro = new ResizeObserver(() => {
+      const newH = el.clientHeight;
+      const wasNearBottom = isUserNearBottom.current;
+      isUserNearBottom.current = el.scrollHeight - el.scrollTop - newH < 100;
+      if (newH > prevClientHeight && wasNearBottom) {
+        isProgrammaticScroll.current = true;
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+        window.setTimeout(() => { isProgrammaticScroll.current = false; }, 50);
+      }
+      prevClientHeight = newH;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleSend = useCallback(
     (text?: string) => {
@@ -288,7 +314,7 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
 
       {/* Input */}
       <div className="px-4 pt-3 border-t border-surface-border/50 shrink-0 bg-surface/95 backdrop-blur-sm"
-        style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
+        style={{ paddingBottom: isKeyboardOpen ? 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
@@ -323,7 +349,7 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
 /*  Global Chat                                                        */
 /* ------------------------------------------------------------------ */
 
-function GlobalChat() {
+function GlobalChat({ isKeyboardOpen }: { isKeyboardOpen: boolean }) {
   const {
     messages,
     streamingContent,
@@ -345,6 +371,7 @@ function GlobalChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isUserNearBottom = useRef(true);
+  const isProgrammaticScroll = useRef(false);
 
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
@@ -360,6 +387,7 @@ function GlobalChat() {
   }, []);
 
   const handleChatScroll = useCallback(() => {
+    if (isProgrammaticScroll.current) return;
     const el = scrollContainerRef.current;
     if (!el) return;
     isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -367,9 +395,33 @@ function GlobalChat() {
 
   useEffect(() => {
     if (isUserNearBottom.current) {
+      isProgrammaticScroll.current = true;
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const t = window.setTimeout(() => { isProgrammaticScroll.current = false; }, 350);
+      return () => window.clearTimeout(t);
     }
   }, [messages, streamingContent, networkDisconnected]);
+
+  // Recalculate isUserNearBottom when the scroll container resizes (e.g. keyboard open/close
+  // changes clientHeight on mobile without firing an onScroll event).
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    let prevClientHeight = el.clientHeight;
+    const ro = new ResizeObserver(() => {
+      const newH = el.clientHeight;
+      const wasNearBottom = isUserNearBottom.current;
+      isUserNearBottom.current = el.scrollHeight - el.scrollTop - newH < 100;
+      if (newH > prevClientHeight && wasNearBottom) {
+        isProgrammaticScroll.current = true;
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+        window.setTimeout(() => { isProgrammaticScroll.current = false; }, 50);
+      }
+      prevClientHeight = newH;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleSend = useCallback(
     (text?: string) => {
@@ -558,7 +610,7 @@ function GlobalChat() {
 
       {/* Input */}
       <div className="px-4 pt-3 border-t border-surface-border/50 shrink-0 bg-surface/95 backdrop-blur-sm"
-        style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
+        style={{ paddingBottom: isKeyboardOpen ? 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
@@ -605,15 +657,34 @@ export default function PortsChatPage() {
 
   const isGlobal = !decodedProjectId;
 
+  // Hide the bottom nav while the soft keyboard is open so it doesn't
+  // cover chat content in the reduced viewport.
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setIsKeyboardOpen(window.innerHeight - vv.offsetTop - vv.height > 100);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+
   return (
     <>
       <div className="h-[100dvh] bg-glow flex flex-col overflow-hidden">
         <Navbar />
         <div className="flex-1 flex flex-col min-h-0">
-          {isGlobal ? <GlobalChat /> : <ProjectChat projectExternalId={decodedProjectId!} />}
+          {isGlobal
+            ? <GlobalChat isKeyboardOpen={isKeyboardOpen} />
+            : <ProjectChat projectExternalId={decodedProjectId!} isKeyboardOpen={isKeyboardOpen} />}
         </div>
       </div>
-      <MobileBottomNav />
+      {!isKeyboardOpen && <MobileBottomNav />}
     </>
   );
 }

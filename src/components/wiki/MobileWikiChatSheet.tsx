@@ -90,8 +90,10 @@ function ChatBody({
 }: ChatBodyProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScroll = useRef(false);
 
   const handleChatScroll = useCallback(() => {
+    if (isProgrammaticScroll.current) return;
     const el = scrollContainerRef.current;
     if (!el) return;
     isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -99,9 +101,33 @@ function ChatBody({
 
   useEffect(() => {
     if (isUserNearBottom.current) {
+      isProgrammaticScroll.current = true;
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const t = window.setTimeout(() => { isProgrammaticScroll.current = false; }, 350);
+      return () => window.clearTimeout(t);
     }
   }, [messages, streamingContent, networkDisconnected, isUserNearBottom]);
+
+  // Recalculate isUserNearBottom when the scroll container resizes (e.g. keyboard open/close
+  // changes clientHeight on mobile without firing an onScroll event).
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    let prevClientHeight = el.clientHeight;
+    const ro = new ResizeObserver(() => {
+      const newH = el.clientHeight;
+      const wasNearBottom = isUserNearBottom.current;
+      isUserNearBottom.current = el.scrollHeight - el.scrollTop - newH < 100;
+      if (newH > prevClientHeight && wasNearBottom) {
+        isProgrammaticScroll.current = true;
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+        window.setTimeout(() => { isProgrammaticScroll.current = false; }, 50);
+      }
+      prevClientHeight = newH;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isUserNearBottom]);
 
   const hasMessages = messages.length > 0 || isStreaming || networkDisconnected;
 
