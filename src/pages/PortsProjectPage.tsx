@@ -16,7 +16,6 @@ import { getWikiSnapshot } from '../services/wiki/wikiService';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
 import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiMarkdownRenderer';
@@ -723,8 +722,7 @@ export default function PortsProjectPage() {
       </button>
 
 
-      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52" />
     </div>
   );
 }

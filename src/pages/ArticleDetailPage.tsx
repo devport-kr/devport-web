@@ -4,7 +4,6 @@ import Markdown from 'react-markdown';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import TrendingTicker from '../components/TrendingTicker';
 import CommentSection from '../components/CommentSection';
 import BookmarkButton from '../components/BookmarkButton';
@@ -275,8 +274,7 @@ export default function ArticleDetailPage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52" />
     </div>
   );
 }

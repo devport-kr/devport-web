@@ -13,7 +13,6 @@ import { useGlobalWikiChat } from '../services/wiki/useGlobalWikiChat';
 import WikiMarkdownRenderer from '../components/wiki/WikiMarkdownRenderer';
 import SessionHistoryDrawer from '../components/wiki/SessionHistoryDrawer';
 import Navbar from '../components/Navbar';
-import MobileBottomNav from '../components/MobileBottomNav';
 import { History, Plus, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -39,7 +38,7 @@ const GLOBAL_SUGGESTIONS = [
 /*  Project Chat                                                       */
 /* ------------------------------------------------------------------ */
 
-function ProjectChat({ projectExternalId, isKeyboardOpen }: { projectExternalId: string; isKeyboardOpen: boolean }) {
+function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
   const {
     messages,
     streamingContent,
@@ -314,7 +313,7 @@ function ProjectChat({ projectExternalId, isKeyboardOpen }: { projectExternalId:
 
       {/* Input */}
       <div className="px-4 pt-3 border-t border-surface-border/50 shrink-0 bg-surface/95 backdrop-blur-sm"
-        style={{ paddingBottom: isKeyboardOpen ? 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
@@ -349,7 +348,7 @@ function ProjectChat({ projectExternalId, isKeyboardOpen }: { projectExternalId:
 /*  Global Chat                                                        */
 /* ------------------------------------------------------------------ */
 
-function GlobalChat({ isKeyboardOpen }: { isKeyboardOpen: boolean }) {
+function GlobalChat() {
   const {
     messages,
     streamingContent,
@@ -610,7 +609,7 @@ function GlobalChat({ isKeyboardOpen }: { isKeyboardOpen: boolean }) {
 
       {/* Input */}
       <div className="px-4 pt-3 border-t border-surface-border/50 shrink-0 bg-surface/95 backdrop-blur-sm"
-        style={{ paddingBottom: isKeyboardOpen ? 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
         <div className="flex gap-2 items-end">
           <textarea
             ref={textareaRef}
@@ -657,34 +656,12 @@ export default function PortsChatPage() {
 
   const isGlobal = !decodedProjectId;
 
-  // Hide the bottom nav while the soft keyboard is open so it doesn't
-  // cover chat content in the reduced viewport.
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      setIsKeyboardOpen(window.innerHeight - vv.offsetTop - vv.height > 100);
-    };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, []);
-
   return (
-    <>
-      <div className="h-[100dvh] bg-glow flex flex-col overflow-hidden">
-        <Navbar />
-        <div className="flex-1 flex flex-col min-h-0">
-          {isGlobal
-            ? <GlobalChat isKeyboardOpen={isKeyboardOpen} />
-            : <ProjectChat projectExternalId={decodedProjectId!} isKeyboardOpen={isKeyboardOpen} />}
-        </div>
+    <div className="h-[100dvh] bg-glow flex flex-col overflow-hidden">
+      <Navbar />
+      <div className="flex-1 flex flex-col min-h-0">
+        {isGlobal ? <GlobalChat /> : <ProjectChat projectExternalId={decodedProjectId!} />}
       </div>
-      {!isKeyboardOpen && <MobileBottomNav />}
-    </>
+    </div>
   );
 }

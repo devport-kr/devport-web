@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import ArticleCard from '../components/ArticleCard';
 import { searchFulltext } from '../services/search/searchService';
 import type { Article } from '../types';
@@ -195,7 +194,6 @@ export default function SearchResultsPage() {
         )}
       </main>
       <Footer className="pb-16 lg:pb-0" />
-      <MobileBottomNav />
     </div>
   );
 }

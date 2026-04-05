@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import TrendingTicker from '../components/TrendingTicker';
 import type { BenchmarkCategoryGroup, BenchmarkType } from '../types';
 import { benchmarkCategoryConfig } from '../types';
@@ -143,7 +142,7 @@ export default function LLMRankingsPage() {
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        <main className="lg:ml-52 xl:mr-52 pt-8 pb-16 px-4 md:px-6 lg:px-10">
+        <main className="lg:ml-52 xl:mr-52 pt-8 px-4 md:px-6 lg:px-10">
           <div className="max-w-6xl mx-auto space-y-12 relative z-10">
             {/* Back link + Overview card */}
             <div>
@@ -294,8 +293,7 @@ export default function LLMRankingsPage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52 xl:mr-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52 xl:mr-52" />
     </div>
   );
 }
