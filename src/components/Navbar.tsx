@@ -1,11 +1,60 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { searchAutocomplete } from '../services/search/searchService';
 import type { ArticleAutocompleteResponse } from '../services/search/searchService';
 
+/* ------------------------------------------------------------------ */
+/*  Mobile nav items (replaces the removed MobileBottomNav)           */
+/* ------------------------------------------------------------------ */
+
+const mobileNavItems = [
+  {
+    id: 'home',
+    label: '홈',
+    path: '/',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
+    id: 'llm-rankings',
+    label: 'LLM 랭킹',
+    path: '/llm-rankings',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'ports',
+    label: 'Ports',
+    path: '/ports',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  {
+    id: 'mypage',
+    label: '마이페이지',
+    path: '/mypage',
+    authPath: '/login',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    ),
+  },
+];
+
 export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [suggestions, setSuggestions] = useState<ArticleAutocompleteResponse[]>([]);
@@ -14,19 +63,29 @@ export default function Navbar() {
 
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
   };
 
-  // Close autocomplete when clicking outside
+  // Close autocomplete and mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowAutocomplete(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setShowMobileMenu(false);
       }
     };
 
@@ -61,7 +120,7 @@ export default function Navbar() {
       } finally {
         setIsSearching(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       if (debounceTimerRef.current) {
@@ -108,178 +167,228 @@ export default function Navbar() {
   };
 
   return (
-    <nav
-      className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50"
-      style={{
-        WebkitTransform: 'translate3d(0,0,0)',
-        transform: 'translate3d(0,0,0)',
-      }}
-    >
-      <div className="px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Search */}
-          <div className="flex items-center gap-6">
-            <Link
-              to="/"
-              className="flex items-center gap-1 group"
-            >
-              <span className="text-xl font-semibold text-text-primary tracking-tight">
-                devport
-              </span>
-              <span className="text-accent text-xl font-semibold">.</span>
-            </Link>
+    <div ref={mobileMenuRef} className="relative">
+      <nav
+        className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50"
+        style={{
+          WebkitTransform: 'translate3d(0,0,0)',
+          transform: 'translate3d(0,0,0)',
+        }}
+      >
+        <div className="px-4 md:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo and Search */}
+            <div className="flex items-center gap-6">
+              <Link
+                to="/"
+                className="flex items-center gap-1 group"
+              >
+                <span className="text-xl font-semibold text-text-primary tracking-tight">
+                  devport
+                </span>
+                <span className="text-accent text-xl font-semibold">.</span>
+              </Link>
 
-            {/* Search Bar */}
-            <div className="hidden md:flex items-center">
-              <div ref={searchRef} className="relative">
-                <form onSubmit={handleSearchSubmit}>
-                  <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-                  />
-                </form>
+              {/* Search Bar – desktop only */}
+              <div className="hidden md:flex items-center">
+                <div ref={searchRef} className="relative">
+                  <form onSubmit={handleSearchSubmit}>
+                    <svg
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="검색..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                    />
+                  </form>
 
-                {/* Autocomplete Dropdown */}
-                {showAutocomplete && (
-                  <div className="absolute top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
-                    {isSearching ? (
-                      <div className="p-4 text-center">
-                        <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-accent"></div>
-                      </div>
-                    ) : suggestions.length > 0 ? (
-                      <>
-                        <div className="max-h-96 overflow-y-auto">
-                          {suggestions.map((suggestion) => (
-                            <button
-                              key={suggestion.externalId}
-                              onClick={() => handleSuggestionClick(suggestion.externalId)}
-                              className="w-full px-4 py-3 hover:bg-surface-hover transition-colors text-left border-b border-surface-border last:border-b-0"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-text-primary font-medium truncate">
-                                    {suggestion.summaryKoTitle}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span
-                                      className={`text-xs px-2 py-0.5 rounded border ${getCategoryBadgeColor(
-                                        suggestion.category
-                                      )}`}
-                                    >
-                                      {suggestion.category.replace(/_/g, ' ')}
-                                    </span>
-                                    <span className="text-xs text-text-muted">
-                                      {suggestion.source}
-                                    </span>
+                  {/* Autocomplete Dropdown */}
+                  {showAutocomplete && (
+                    <div className="absolute top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+                      {isSearching ? (
+                        <div className="p-4 text-center">
+                          <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-accent"></div>
+                        </div>
+                      ) : suggestions.length > 0 ? (
+                        <>
+                          <div className="max-h-96 overflow-y-auto">
+                            {suggestions.map((suggestion) => (
+                              <button
+                                key={suggestion.externalId}
+                                onClick={() => handleSuggestionClick(suggestion.externalId)}
+                                className="w-full px-4 py-3 hover:bg-surface-hover transition-colors text-left border-b border-surface-border last:border-b-0"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-text-primary font-medium truncate">
+                                      {suggestion.summaryKoTitle}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span
+                                        className={`text-xs px-2 py-0.5 rounded border ${getCategoryBadgeColor(
+                                          suggestion.category
+                                        )}`}
+                                      >
+                                        {suggestion.category.replace(/_/g, ' ')}
+                                      </span>
+                                      <span className="text-xs text-text-muted">
+                                        {suggestion.source}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              </button>
+                            ))}
+                          </div>
+                          {totalMatches > suggestions.length && (
+                            <button
+                              onClick={handleViewAllResults}
+                              className="w-full px-4 py-3 text-sm text-accent hover:text-accent-light bg-surface-hover hover:bg-surface-border transition-colors font-medium"
+                            >
+                              모든 결과 보기 ({totalMatches.toLocaleString()}개)
                             </button>
-                          ))}
+                          )}
+                        </>
+                      ) : (
+                        <div className="p-4 text-center text-sm text-text-muted">
+                          검색 결과가 없습니다
                         </div>
-                        {totalMatches > suggestions.length && (
-                          <button
-                            onClick={handleViewAllResults}
-                            className="w-full px-4 py-3 text-sm text-accent hover:text-accent-light bg-surface-hover hover:bg-surface-border transition-colors font-medium"
-                          >
-                            모든 결과 보기 ({totalMatches.toLocaleString()}개)
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <div className="p-4 text-center text-sm text-text-muted">
-                        검색 결과가 없습니다
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right side actions */}
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-                >
-                  <img
-                    src={user?.profileImageUrl || 'https://via.placeholder.com/40'}
-                    alt={user?.name || 'User'}
-                    className="w-8 h-8 rounded-full ring-1 ring-surface-border"
-                  />
-                  <span className="hidden md:block text-sm text-text-secondary">
-                    {user?.name}
-                  </span>
-                  <svg
-                    className={`w-4 h-4 text-text-muted transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            {/* Right side actions */}
+            <div className="flex items-center gap-2">
+              {isAuthenticated ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                    <img
+                      src={user?.profileImageUrl || 'https://via.placeholder.com/40'}
+                      alt={user?.name || 'User'}
+                      className="w-8 h-8 rounded-full ring-1 ring-surface-border"
+                    />
+                    <span className="hidden md:block text-sm text-text-secondary">
+                      {user?.name}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 text-text-muted transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                {/* User Dropdown Menu */}
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-surface-card rounded-xl shadow-soft border border-surface-border py-1 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-surface-border">
-                      <p className="text-sm font-medium text-text-primary truncate">{user?.name}</p>
-                      <p className="text-xs text-text-muted truncate mt-0.5">{user?.email}</p>
+                  {/* User Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-surface-card rounded-xl shadow-soft border border-surface-border py-1 animate-fade-in">
+                      <div className="px-4 py-3 border-b border-surface-border">
+                        <p className="text-sm font-medium text-text-primary truncate">{user?.name}</p>
+                        <p className="text-xs text-text-muted truncate mt-0.5">{user?.email}</p>
+                      </div>
+                      <Link
+                        to="/mypage"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        마이페이지
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-surface-hover transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        로그아웃
+                      </button>
                     </div>
-                    <Link
-                      to="/mypage"
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      마이페이지
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-surface-hover transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      로그아웃
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <button className="hidden md:block text-sm text-text-muted hover:text-text-secondary transition-colors">
-                  구독하기
-                </button>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="px-4 py-2 text-sm font-medium bg-accent hover:bg-accent-light text-white rounded-lg transition-colors"
-                >
-                  로그인
-                </button>
-              </>
-            )}
+                  )}
+                </div>
+              ) : (
+                <>
+                  <button className="hidden md:block text-sm text-text-muted hover:text-text-secondary transition-colors">
+                    구독하기
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="px-4 py-2 text-sm font-medium bg-accent hover:bg-accent-light text-white rounded-lg transition-colors"
+                  >
+                    로그인
+                  </button>
+                </>
+              )}
 
+              {/* Mobile menu toggle – visible only on mobile */}
+              <button
+                onClick={() => setShowMobileMenu(prev => !prev)}
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+                aria-label="메뉴"
+              >
+                {showMobileMenu ? (
+                  /* X icon when open */
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  /* Hamburger icon when closed */
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile slide-down menu */}
+      {showMobileMenu && (
+        <div className="lg:hidden absolute top-full left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 animate-fade-in"
+          style={{ WebkitTransform: 'translate3d(0,0,0)', transform: 'translate3d(0,0,0)' }}
+        >
+          <div className="px-4 py-3 space-y-1">
+            {mobileNavItems.map((item) => {
+              const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.id}
+                  to={linkPath}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-accent bg-accent/10'
+                      : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+                  }`}
+                >
+                  <span className={`transition-colors ${isActive ? 'text-accent' : ''}`}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import MobileBottomNav from '../components/MobileBottomNav';
 import TrendingTicker from '../components/TrendingTicker';
 import GitHubLeaderboard from '../components/GitHubLeaderboard';
 import LLMLeaderboard from '../components/LLMLeaderboard';
@@ -342,8 +341,7 @@ export default function HomePage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52 pb-16 lg:pb-0" />
-      <MobileBottomNav />
+      <Footer className="lg:ml-52" />
     </div>
   );
 }
