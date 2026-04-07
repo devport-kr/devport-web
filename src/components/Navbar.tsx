@@ -20,16 +20,6 @@ const mobileNavItems = [
     ),
   },
   {
-    id: 'llm-rankings',
-    label: 'LLM 랭킹',
-    path: '/llm-rankings',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
-  {
     id: 'ports',
     label: 'Ports',
     path: '/ports',
@@ -39,6 +29,17 @@ const mobileNavItems = [
       </svg>
     ),
   },
+  {
+    id: 'llm-rankings',
+    label: 'LLM 랭킹',
+    path: '/llm-rankings',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+
   {
     id: 'mypage',
     label: '마이페이지',
@@ -373,11 +374,10 @@ export default function Navbar() {
                 <Link
                   key={item.id}
                   to={linkPath}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-accent bg-accent/10'
-                      : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
-                  }`}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
+                    ? 'text-accent bg-accent/10'
+                    : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+                    }`}
                 >
                   <span className={`transition-colors ${isActive ? 'text-accent' : ''}`}>
                     {item.icon}
