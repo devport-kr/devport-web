@@ -1,9 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Article } from '../types';
 import { categoryConfig } from '../types';
-import StarIcon from './icons/StarIcon';
-import MessageIcon from './icons/MessageIcon';
-import ThumbsUpIcon from './icons/ThumbsUpIcon';
 import BookIcon from './icons/BookIcon';
 import FlameIcon from './icons/FlameIcon';
 import BookmarkButton from './BookmarkButton';
@@ -151,34 +148,11 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
         </div>
 
         {/* Stats */}
-        <div className="relative flex items-center gap-3 text-xs text-text-muted group/stats">
+        <div className="flex items-center gap-3 text-xs text-text-muted">
           <span className="flex items-center gap-1 text-accent">
             <FlameIcon className="w-3.5 h-3.5" />
             {article.score.toLocaleString()}
           </span>
-          {article.metadata?.stars && (
-            <span className="flex items-center gap-1">
-              <StarIcon className="w-3.5 h-3.5" />
-              {article.metadata.stars.toLocaleString()}
-            </span>
-          )}
-          {article.metadata?.comments && (
-            <span className="flex items-center gap-1">
-              <MessageIcon className="w-3.5 h-3.5" />
-              {article.metadata.comments}
-            </span>
-          )}
-          {article.metadata?.upvotes && (
-            <span className="flex items-center gap-1">
-              <ThumbsUpIcon className="w-3.5 h-3.5" />
-              {article.metadata.upvotes}
-            </span>
-          )}
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-surface-elevated border border-surface-border rounded-lg opacity-0 group-hover/stats:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-            <p className="text-xs text-text-secondary">점수는 조회수·반응·댓글·날짜 정보를 반영한 점수 입니다</p>
-            <p className="text-xs text-text-secondary">댓글과 좋아요 수는 해당 출처에서 집계된 값입니다</p>
-          </div>
         </div>
       </div>
       </Link>
