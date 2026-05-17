@@ -1,14 +1,12 @@
 import AIIcon from '../../../components/icons/AIIcon';
 
 type RankingsOverviewCardProps = {
-  isAuthenticated: boolean;
   llmModelCountLabel: string;
   llmProviderCountLabel: string;
   mediaTotalLabel: string;
 };
 
 export default function RankingsOverviewCard({
-  isAuthenticated,
   llmModelCountLabel,
   llmProviderCountLabel,
   mediaTotalLabel,
@@ -37,9 +35,7 @@ export default function RankingsOverviewCard({
           </div>
         </div>
 
-        <div
-          className={`grid grid-cols-1 ${isAuthenticated ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3 min-w-[240px]`}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-[240px]">
           <div className="rounded-2xl border border-surface-border bg-surface-elevated/60 p-4">
             <p className="text-xs text-text-muted">LLM 모델 수</p>
             <p className="text-2xl font-semibold text-text-primary mt-2">
@@ -47,15 +43,13 @@ export default function RankingsOverviewCard({
             </p>
             <p className="text-xs text-text-muted mt-1">전체 벤치마크 기준</p>
           </div>
-          {isAuthenticated && (
-            <div className="rounded-2xl border border-surface-border bg-surface-elevated/60 p-4">
-              <p className="text-xs text-text-muted">미디어 모델 수</p>
-              <p className="text-2xl font-semibold text-text-primary mt-2">
-                {mediaTotalLabel}
-              </p>
-              <p className="text-xs text-text-muted mt-1">전체 미디어 유형 합산</p>
-            </div>
-          )}
+          <div className="rounded-2xl border border-surface-border bg-surface-elevated/60 p-4">
+            <p className="text-xs text-text-muted">미디어 모델 수</p>
+            <p className="text-2xl font-semibold text-text-primary mt-2">
+              {mediaTotalLabel}
+            </p>
+            <p className="text-xs text-text-muted mt-1">전체 미디어 유형 합산</p>
+          </div>
           <div className="rounded-2xl border border-surface-border bg-surface-elevated/60 p-4">
             <p className="text-xs text-text-muted">제공사 수</p>
             <p className="text-2xl font-semibold text-text-primary mt-2">

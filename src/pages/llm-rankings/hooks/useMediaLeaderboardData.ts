@@ -4,7 +4,7 @@ import { getLLMMediaLeaderboard } from '../../../services/llm/llmService';
 import { createEmptyMediaLeaderboards, mediaTypeConfig } from '../types';
 import type { MediaLeaderboardState } from '../types';
 
-export function useMediaLeaderboardData(isAuthenticated: boolean) {
+export function useMediaLeaderboardData() {
   const mediaTypeKeys = useMemo(() => Object.keys(mediaTypeConfig) as LLMMediaType[], []);
   const fetchedMediaRef = useRef<Record<string, boolean>>({});
 
@@ -52,14 +52,12 @@ export function useMediaLeaderboardData(isAuthenticated: boolean) {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
     mediaTypeKeys.forEach((mediaType) => {
       if (fetchedMediaRef.current[mediaType]) return;
       fetchedMediaRef.current[mediaType] = true;
       fetchMediaLeaderboard(mediaType);
     });
-  }, [mediaTypeKeys, fetchMediaLeaderboard, isAuthenticated]);
+  }, [mediaTypeKeys, fetchMediaLeaderboard]);
 
   const mediaAggregate = useMemo(() => {
     let total = 0;

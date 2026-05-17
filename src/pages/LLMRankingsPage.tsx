@@ -7,7 +7,6 @@ import TrendingTicker from '../components/TrendingTicker';
 import type { BenchmarkCategoryGroup, BenchmarkType } from '../types';
 import { benchmarkCategoryConfig } from '../types';
 import { getTrendingTicker } from '../services/articles/articlesService';
-import { useAuth } from '../contexts/AuthContext';
 import { useBenchmarkData } from './llm-rankings/hooks/useBenchmarkData';
 import { useMediaLeaderboardData } from './llm-rankings/hooks/useMediaLeaderboardData';
 import { makeBenchmarkGroupId, useCountUp } from './llm-rankings/utils';
@@ -17,7 +16,6 @@ import MediaRankingCard from './llm-rankings/components/MediaRankingCard';
 import RankingsOverviewCard from './llm-rankings/components/RankingsOverviewCard';
 
 export default function LLMRankingsPage() {
-  const { isAuthenticated } = useAuth();
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('llm-benchmarks');
@@ -28,13 +26,13 @@ export default function LLMRankingsPage() {
     groupedBenchmarks,
     llmAggregate,
     benchmarkTocSections,
-  } = useBenchmarkData(isAuthenticated);
+  } = useBenchmarkData();
 
   const {
     mediaTypeKeys,
     mediaLeaderboards,
     mediaAggregate,
-  } = useMediaLeaderboardData(isAuthenticated);
+  } = useMediaLeaderboardData();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -58,16 +56,12 @@ export default function LLMRankingsPage() {
 
   // TOC sections
   const tocSections = useMemo(() => {
-    const sections: { id: string; label: string }[] = [
+    return [
       { id: 'llm-benchmarks', label: 'LLM 벤치마크' },
       ...benchmarkTocSections,
+      { id: 'media-rankings', label: '미디어' },
     ];
-
-    if (isAuthenticated) {
-      sections.push({ id: 'media-rankings', label: '미디어' });
-    }
-    return sections;
-  }, [benchmarkTocSections, isAuthenticated]);
+  }, [benchmarkTocSections]);
 
   // IntersectionObserver for active TOC section
   useEffect(() => {
@@ -95,7 +89,7 @@ export default function LLMRankingsPage() {
   // Animated aggregate counts
   const llmModelCount = benchmarkLoading ? null : llmAggregate.modelCount;
   const llmProviderCount = benchmarkLoading ? null : llmAggregate.providerCount;
-  const mediaModelCount = mediaAggregate.ready && isAuthenticated ? mediaAggregate.total : null;
+  const mediaModelCount = mediaAggregate.ready ? mediaAggregate.total : null;
   const llmModelCountAnimated = useCountUp(llmModelCount);
   const llmProviderCountAnimated = useCountUp(llmProviderCount);
   const mediaModelCountAnimated = useCountUp(mediaModelCount);
@@ -157,7 +151,6 @@ export default function LLMRankingsPage() {
               </Link>
 
               <RankingsOverviewCard
-                isAuthenticated={isAuthenticated}
                 llmModelCountLabel={llmModelCountLabel}
                 llmProviderCountLabel={llmProviderCountLabel}
                 mediaTotalLabel={mediaTotalLabel}
@@ -202,76 +195,30 @@ export default function LLMRankingsPage() {
                       </div>
                     );
                   })}
-
-                  {/* Unauthenticated lock overlay */}
-                  {!isAuthenticated && (
-                    <div className="relative py-10">
-                      <div className="grid gap-6 lg:grid-cols-3 opacity-30 blur-sm">
-                        {[1, 2, 3].map((i) => (
-                          <div
-                            key={`locked-benchmark-${i}`}
-                            className="bg-surface-card rounded-2xl p-6 border border-surface-border"
-                          >
-                            <div className="h-3 bg-surface-hover rounded w-1/3 mb-4" />
-                            <div className="h-4 bg-surface-hover rounded w-2/3 mb-2" />
-                            <div className="h-4 bg-surface-hover rounded w-1/2 mb-4" />
-                            <div className="h-24 bg-surface-hover rounded" />
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-surface-card/95 backdrop-blur-xl rounded-2xl p-10 border border-surface-border shadow-soft max-w-md w-full text-center">
-                          <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                          </div>
-
-                          <h3 className="text-xl font-medium text-text-primary mb-2">
-                            더 많은 벤치마크 확인하기
-                          </h3>
-
-                          <p className="text-sm text-text-muted mb-6">
-                            로그인하고 더 많은 벤치마크 랭킹을 확인하세요
-                          </p>
-
-                          <Link
-                            to="/login"
-                            className="block w-full py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl transition-colors"
-                          >
-                            로그인
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </section>
 
-                {/* Media rankings (authenticated only) */}
-                {isAuthenticated && (
-                  <section id="media-rankings" className="space-y-6 scroll-mt-24">
-                    <div>
-                      <h2 className="text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
-                      <p className="text-sm text-text-muted mt-1">
-                        미디어 모델은 벤치마크 점수가 아니라 ELO 기반 상대 평가입니다. 모델 간 비교에서
-                        우수한 결과를 낼수록 점수가 상승합니다.
-                      </p>
-                    </div>
+                {/* Media rankings */}
+                <section id="media-rankings" className="space-y-6 scroll-mt-24">
+                  <div>
+                    <h2 className="text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
+                    <p className="text-sm text-text-muted mt-1">
+                      미디어 모델은 벤치마크 점수가 아니라 ELO 기반 상대 평가입니다. 모델 간 비교에서
+                      우수한 결과를 낼수록 점수가 상승합니다.
+                    </p>
+                  </div>
 
-                    <div className="grid gap-6 lg:grid-cols-3">
-                      {mediaTypeKeys.map((mediaType) => (
-                        <MediaRankingCard
-                          key={mediaType}
-                          mediaType={mediaType}
-                          config={mediaTypeConfig[mediaType]}
-                          flow={mediaFlowConfig[mediaType]}
-                          state={mediaLeaderboards[mediaType]}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                )}
+                  <div className="grid gap-6 lg:grid-cols-3">
+                    {mediaTypeKeys.map((mediaType) => (
+                      <MediaRankingCard
+                        key={mediaType}
+                        mediaType={mediaType}
+                        config={mediaTypeConfig[mediaType]}
+                        flow={mediaFlowConfig[mediaType]}
+                        state={mediaLeaderboards[mediaType]}
+                      />
+                    ))}
+                  </div>
+                </section>
 
                 {/* Data attribution */}
                 <div id="data-source" className="flex justify-center scroll-mt-24">

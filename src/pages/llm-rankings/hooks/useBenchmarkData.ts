@@ -3,14 +3,13 @@ import type { BenchmarkType, BenchmarkCategoryGroup } from '../../../types';
 import { benchmarkCategoryConfig } from '../../../types';
 import {
   getAllLLMBenchmarks,
-  getLLMBenchmarksByGroup,
   getLLMLeaderboard,
   type LLMBenchmarkResponse,
 } from '../../../services/llm/llmService';
 import type { BenchmarkLeaderboardState } from '../types';
 import { makeBenchmarkGroupId } from '../utils';
 
-export function useBenchmarkData(isAuthenticated: boolean) {
+export function useBenchmarkData() {
   const [benchmarks, setBenchmarks] = useState<LLMBenchmarkResponse[]>([]);
   const [benchmarkLoading, setBenchmarkLoading] = useState(true);
   const [benchmarkLeaderboards, setBenchmarkLeaderboards] = useState<Record<BenchmarkType, BenchmarkLeaderboardState>>(
@@ -27,9 +26,7 @@ export function useBenchmarkData(isAuthenticated: boolean) {
         setBenchmarkLeaderboards({} as Record<BenchmarkType, BenchmarkLeaderboardState>);
         fetchedLeaderboardsRef.current = {};
 
-        const benchmarkData = isAuthenticated
-          ? await getAllLLMBenchmarks()
-          : await getLLMBenchmarksByGroup('Composite');
+        const benchmarkData = await getAllLLMBenchmarks();
         setBenchmarks(benchmarkData);
       } catch (error) {
         console.error('Failed to fetch benchmarks:', error);
@@ -39,7 +36,7 @@ export function useBenchmarkData(isAuthenticated: boolean) {
     };
 
     fetchBenchmarks();
-  }, [isAuthenticated]);
+  }, []);
 
   // Fetch per-benchmark leaderboards
   useEffect(() => {

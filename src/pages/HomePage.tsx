@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
@@ -9,11 +8,8 @@ import LLMLeaderboard from '../components/LLMLeaderboard';
 import ArticleCard from '../components/ArticleCard';
 import { getArticles, getTrendingGitReposPaginated, getTrendingTicker } from '../services/articles/articlesService';
 import type { Article, GitRepo, Category } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 export default function HomePage() {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<Category | 'ALL'>('ALL');
   const [articles, setArticles] = useState<Article[]>([]);
   const [githubRepos, setGithubRepos] = useState<GitRepo[]>([]);
@@ -27,9 +23,6 @@ export default function HomePage() {
   const [reposPage, setReposPage] = useState(0);
   const [reposHasMore, setReposHasMore] = useState(true);
   const [reposLoading, setReposLoading] = useState(false);
-
-  const [loadCount, setLoadCount] = useState(0);
-  const MAX_ANONYMOUS_LOADS = 3;
 
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
@@ -51,26 +44,6 @@ export default function HomePage() {
       setIsLoading(true);
       setReposLoading(true);
       try {
-        if (!isAuthenticated && selectedCategory !== 'ALL') {
-          setArticles([]);
-          setHasMore(true);
-          setCurrentPage(0);
-          setLoadCount(MAX_ANONYMOUS_LOADS);
-          setIsInitialLoading(false);
-          setIsLoading(false);
-          setReposLoading(false);
-
-          const [githubData, tickerData] = await Promise.all([
-            getTrendingGitReposPaginated(0, 10),
-            getTrendingTicker(),
-          ]);
-          setGithubRepos(githubData.content);
-          setReposHasMore(githubData.hasMore);
-          setReposPage(0);
-          setTickerArticles(tickerData);
-          return;
-        }
-
         const [articlesData, githubData, tickerData] = await Promise.all([
           getArticles(selectedCategory === 'ALL' ? undefined : selectedCategory, 0, 9),
           getTrendingGitReposPaginated(0, 10),
@@ -80,7 +53,6 @@ export default function HomePage() {
         setArticles(articlesData.content);
         setHasMore(articlesData.hasMore);
         setCurrentPage(0);
-        setLoadCount(0);
         setGithubRepos(githubData.content);
         setReposHasMore(githubData.hasMore);
         setReposPage(0);
@@ -95,34 +67,31 @@ export default function HomePage() {
     };
 
     fetchInitialData();
-  }, [selectedCategory, isAuthenticated]);
+  }, [selectedCategory]);
 
   const fetchMoreArticles = useCallback(async () => {
     if (isLoading || !hasMore) return;
-    if (!isAuthenticated && loadCount >= MAX_ANONYMOUS_LOADS) return;
 
     try {
       setIsLoading(true);
       const nextPage = currentPage + 1;
-      const pageSize = !isAuthenticated && loadCount > 0 ? 3 : 9;
 
       const data = await getArticles(
         selectedCategory === 'ALL' ? undefined : selectedCategory,
         nextPage,
-        pageSize
+        9
       );
 
       setArticles((prev) => [...prev, ...data.content]);
       setHasMore(data.hasMore);
       setCurrentPage(nextPage);
-      setLoadCount((prev) => prev + 1);
     } catch (error) {
       console.error('Failed to fetch more articles:', error);
     } finally {
       setIsLoading(false);
       setShowLoadingSpinner(false);
     }
-  }, [isLoading, hasMore, isAuthenticated, loadCount, currentPage, selectedCategory]);
+  }, [isLoading, hasMore, currentPage, selectedCategory]);
 
   const fetchMoreGitRepos = async () => {
     if (reposLoading || !reposHasMore) return;
@@ -241,8 +210,6 @@ export default function HomePage() {
           <div className="max-w-xl mx-auto">
             {/* Articles Section */}
             <section>
-
-
               {/* Category Tabs */}
               <div className="flex flex-wrap gap-2 mb-8">
                 {categories.map((category) => (
@@ -278,55 +245,6 @@ export default function HomePage() {
               {(isLoading || showLoadingSpinner) && (
                 <div className="flex justify-center items-center py-12">
                   <div className="w-6 h-6 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
-                </div>
-              )}
-
-              {/* Login Prompt for Anonymous Users */}
-              {!isAuthenticated && loadCount >= MAX_ANONYMOUS_LOADS && hasMore && (
-                <div className="relative py-12 mt-8">
-                  {/* Blurred Preview */}
-                  <div className="space-y-4 mb-8">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="bg-surface-card rounded-2xl p-6 border border-surface-border opacity-30 blur-sm h-32"
-                      >
-                        <div className="h-3 bg-surface-hover rounded w-1/4 mb-4" />
-                        <div className="h-4 bg-surface-hover rounded w-3/4 mb-2" />
-                        <div className="h-4 bg-surface-hover rounded w-1/2" />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Login CTA */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-surface-card/95 backdrop-blur-xl rounded-2xl p-10 border border-surface-border shadow-soft max-w-md w-full text-center">
-                      <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-
-                      <h3 className="text-xl font-medium text-text-primary mb-2">
-                        더 많은 트렌드 확인하기
-                      </h3>
-
-                      <p className="text-sm text-text-muted mb-6">
-                        로그인하고 무료로 개발 트렌드를 무제한으로 확인하세요
-                      </p>
-
-                      <button
-                        onClick={() => navigate('/login')}
-                        className="w-full py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl transition-colors"
-                      >
-                        로그인
-                      </button>
-
-                      <p className="text-xs text-text-muted mt-4">
-                        {articles.length}개의 글을 확인했습니다
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
 
