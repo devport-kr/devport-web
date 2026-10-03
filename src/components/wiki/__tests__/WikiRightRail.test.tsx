@@ -54,13 +54,13 @@ describe('WikiRightRail', () => {
       <WikiRightRail snapshot={createSnapshot()} projectExternalId="github:test/repo" />
     );
 
-    expect(screen.getByText('Current Repository Signals')).toBeTruthy();
+    expect(screen.getByText('리포지토리 현황')).toBeTruthy();
 
     const moduleHeadings = Array.from(container.querySelectorAll('.bg-surface-card h3')).map(node =>
       (node as HTMLElement).textContent ?? ''
     );
-    const activityIndex = moduleHeadings.findIndex(text => text.includes('Repository Activity'));
-    const releasesIndex = moduleHeadings.findIndex(text => text.includes('Recent Releases'));
+    const activityIndex = moduleHeadings.findIndex(text => text.includes('리포지토리 활동'));
+    const releasesIndex = moduleHeadings.findIndex(text => text.includes('최근 릴리스'));
 
     expect(activityIndex).toBeGreaterThanOrEqual(0);
     expect(releasesIndex).toBeGreaterThan(activityIndex);
@@ -71,8 +71,8 @@ describe('WikiRightRail', () => {
       <WikiRightRail snapshot={createSnapshot(['activity', 'releases'])} projectExternalId="github:test/repo" />
     );
 
-    expect(screen.getByText('Current Repository Signals')).toBeTruthy();
-    expect(screen.queryByText(/repository activity/i)).toBeNull();
-    expect(screen.queryByText(/recent releases/i)).toBeNull();
+    expect(screen.getByText('리포지토리 현황')).toBeTruthy();
+    expect(screen.queryByText('리포지토리 활동')).toBeNull();
+    expect(screen.queryByText('최근 릴리스')).toBeNull();
   });
 });

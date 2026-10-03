@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Article } from '../types';
-import { getCategoryInfo } from '../types';
+import { getCategoryInfo, formatReadTime } from '../types';
 import BookIcon from './icons/BookIcon';
 import FlameIcon from './icons/FlameIcon';
 import BookmarkButton from './BookmarkButton';
@@ -46,7 +46,7 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
   const summaryText = article.summaryKoBody
     ? stripMarkdown(article.summaryKoBody)
     : article.titleEn;
-  const readTime = article.metadata?.readTime?.replace(' read', '');
+  const readTime = article.metadata?.readTime ? formatReadTime(article.metadata.readTime) : undefined;
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -89,7 +89,7 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
               {readTime}
             </span>
           )}
-          <span>{formatTimeAgo(article.createdAtSource)}</span>
+          <span className="font-sans tracking-normal">{formatTimeAgo(article.createdAtSource)}</span>
         </div>
       </Link>
     );
@@ -104,7 +104,7 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
           <span className="text-surface-border-strong">/</span>
           <span className="truncate max-w-[10rem]">{sourceLabel}</span>
           <span className="text-surface-border-strong">/</span>
-          <time dateTime={article.createdAtSource}>{formatTimeAgo(article.createdAtSource)}</time>
+          <time dateTime={article.createdAtSource} className="font-sans tracking-normal">{formatTimeAgo(article.createdAtSource)}</time>
           {readTime && (
             <>
               <span className="text-surface-border-strong">/</span>

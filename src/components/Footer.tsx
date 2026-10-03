@@ -21,7 +21,7 @@ const columns: { title: string; links: FooterLink[] }[] = [
   {
     title: '서비스',
     links: [
-      { label: '홈 피드', to: '/' },
+      { label: '트렌딩 블로그', to: '/' },
       { label: 'Ports', to: '/ports' },
       { label: 'LLM 랭킹', to: '/llm-rankings' },
     ],
@@ -63,7 +63,7 @@ export default function Footer({ className = '' }: FooterProps) {
           {/* Link columns */}
           {columns.map((column) => (
             <div key={column.title}>
-              <p className="label-mono mb-3">{column.title}</p>
+              <p className="caption mb-3">{column.title}</p>
               <ul className="space-y-2">
                 {column.links.map((link) => (
                   <li key={link.label}>

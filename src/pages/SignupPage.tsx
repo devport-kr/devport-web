@@ -99,7 +99,6 @@ export default function SignupPage() {
   return (
     <>
       <AuthLayout
-        kicker="Sign up"
         title="회원가입"
         subtitle="약관에 동의하고 보안 확인을 마치면 소셜 계정으로 바로 시작할 수 있습니다."
         footer={
@@ -142,7 +141,7 @@ export default function SignupPage() {
                     <button
                       type="button"
                       onClick={() => setOpenDocument(item.document!)}
-                      className="shrink-0 font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted hover:text-accent transition-colors"
+                      className="shrink-0 text-xs text-text-muted hover:text-accent transition-colors"
                     >
                       보기
                     </button>
@@ -180,8 +179,8 @@ export default function SignupPage() {
               disabled={isSignupActionDisabled}
             />
             {isSignupActionDisabled && (
-              <p className="mt-3 font-mono text-[11px] text-text-muted">
-                {!hasRequiredAgreements ? '01 약관 동의' : '02 보안 확인'}을 마치면 선택할 수 있습니다.
+              <p className="mt-3 text-xs text-text-muted">
+                {!hasRequiredAgreements ? '약관 동의를' : '보안 확인을'} 마치면 선택할 수 있습니다.
               </p>
             )}
           </SignupStep>
@@ -214,9 +213,9 @@ function SignupStep({ index, title, done, children }: SignupStepProps) {
           >
             {done ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" /> : String(index).padStart(2, '0')}
           </span>
-          <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-text-secondary">{title}</h3>
+          <h3 className="text-[13px] font-semibold text-text-secondary">{title}</h3>
         </div>
-        {done && <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-success">완료</span>}
+        {done && <span className="text-xs font-medium text-success">완료</span>}
       </div>
       {children}
     </li>

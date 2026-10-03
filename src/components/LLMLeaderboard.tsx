@@ -73,7 +73,7 @@ export default function LLMLeaderboard() {
   return (
     <section>
       <RailHeader
-        kicker={<><AIIcon className="w-3.5 h-3.5" /> Benchmarks</>}
+        icon={<AIIcon className="w-4 h-4 text-text-secondary" />}
         title="LLM 리더보드"
         moreTo="/llm-rankings"
       />
@@ -132,8 +132,8 @@ export default function LLMLeaderboard() {
       <div className="panel overflow-hidden h-[340px] flex flex-col">
         <div className="table-head grid-cols-[1.5rem_minmax(0,1fr)_auto]">
           <span>#</span>
-          <span>Model</span>
-          <span className="text-right">Score</span>
+          <span>모델</span>
+          <span className="text-right">점수</span>
         </div>
 
         {/* Leaderboard List */}

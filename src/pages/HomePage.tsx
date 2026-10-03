@@ -222,8 +222,7 @@ export default function HomePage() {
             {/* Articles Section */}
             <section>
               <header className="mb-5">
-                <p className="label-mono">Feed</p>
-                <h1 className="mt-1 text-xl font-semibold text-text-primary tracking-[-0.01em]">기술 트렌드</h1>
+                <h1 className="text-xl font-semibold text-text-primary tracking-[-0.01em]">트렌딩 블로그</h1>
               </header>
 
               {/* Category filter */}
@@ -265,7 +264,7 @@ export default function HomePage() {
               {!hasMore && articles.length > 0 && (
                 <div className="flex items-center gap-3 py-12">
                   <span className="flex-1 border-t border-dashed border-surface-border-strong" />
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">모든 트렌드를 확인했습니다</p>
+                  <p className="text-xs text-text-muted">모든 트렌드를 확인했습니다</p>
                   <span className="flex-1 border-t border-dashed border-surface-border-strong" />
                 </div>
               )}

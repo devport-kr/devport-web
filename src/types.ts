@@ -60,6 +60,13 @@ export const categoryConfig: Record<Category, { label: string; dot: string; text
 export const getCategoryInfo = (category: string) =>
   categoryConfig[category as Category] ?? categoryConfig.OTHER;
 
+// "6 min read" → "6분"; anything unexpected is shown as-is without the "read" suffix
+export const formatReadTime = (readTime: string) => {
+  const trimmed = readTime.replace(/\s*read$/i, '').trim();
+  const minutes = trimmed.match(/^(\d+)\s*min(?:ute)?s?$/i);
+  return minutes ? `${minutes[1]}분` : trimmed;
+};
+
 export type BenchmarkType =
   | 'TERMINAL_BENCH_HARD'
   | 'TAU_BENCH_TELECOM'

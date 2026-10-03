@@ -9,7 +9,7 @@ import TrendingTicker from '../components/TrendingTicker';
 import CommentSection from '../components/CommentSection';
 import BookmarkButton from '../components/BookmarkButton';
 import { getArticleByExternalId, getTrendingTicker, trackArticleView, type ArticleDetailResponse } from '../services/articles/articlesService';
-import { getCategoryInfo } from '../types';
+import { getCategoryInfo, formatReadTime } from '../types';
 import StarIcon from '../components/icons/StarIcon';
 import MessageIcon from '../components/icons/MessageIcon';
 import ThumbsUpIcon from '../components/icons/ThumbsUpIcon';
@@ -59,13 +59,11 @@ export default function ArticleDetailPage() {
     fetchData();
   }, [externalId]);
 
+  // Compact numeric date (2026.10.03) to fit the mono metadata grid
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -117,8 +115,7 @@ export default function ArticleDetailPage() {
           <main className="lg:ml-52 pt-8 pb-8 px-8">
             <div className="max-w-2xl mx-auto">
               <div className="text-center py-16">
-                <p className="label-mono">Error 404</p>
-                <h1 className="mt-2 text-2xl font-semibold text-text-primary mb-3">아티클을 찾을 수 없습니다</h1>
+                <h1 className="text-2xl font-semibold text-text-primary mb-3">아티클을 찾을 수 없습니다</h1>
                 <p className="text-text-secondary mb-8">{error || '삭제되었거나 주소가 잘못되었을 수 있습니다.'}</p>
                 <Link to="/" className="btn btn-primary">
                   ← 홈으로 돌아가기
@@ -135,21 +132,21 @@ export default function ArticleDetailPage() {
   const sourceLabel = (article.source || '').trim() || 'Unknown';
 
   const metaItems: { label: string; value: string; icon?: ReactNode; highlight?: boolean }[] = [
-    { label: 'Score', value: article.score.toLocaleString(), icon: <FlameIcon className="w-3.5 h-3.5" />, highlight: true },
+    { label: '점수', value: article.score.toLocaleString(), icon: <FlameIcon className="w-3.5 h-3.5" />, highlight: true },
   ];
   if (article.metadata?.stars) {
-    metaItems.push({ label: 'Stars', value: article.metadata.stars.toLocaleString(), icon: <StarIcon className="w-3.5 h-3.5" /> });
+    metaItems.push({ label: '스타', value: article.metadata.stars.toLocaleString(), icon: <StarIcon className="w-3.5 h-3.5" /> });
   }
   if (article.metadata?.comments) {
-    metaItems.push({ label: 'Comments', value: article.metadata.comments.toLocaleString(), icon: <MessageIcon className="w-3.5 h-3.5" /> });
+    metaItems.push({ label: '댓글', value: article.metadata.comments.toLocaleString(), icon: <MessageIcon className="w-3.5 h-3.5" /> });
   }
   if (article.metadata?.upvotes) {
-    metaItems.push({ label: 'Upvotes', value: article.metadata.upvotes.toLocaleString(), icon: <ThumbsUpIcon className="w-3.5 h-3.5" /> });
+    metaItems.push({ label: '추천', value: article.metadata.upvotes.toLocaleString(), icon: <ThumbsUpIcon className="w-3.5 h-3.5" /> });
   }
   if (article.metadata?.readTime) {
-    metaItems.push({ label: 'Read', value: article.metadata.readTime.replace(' read', ''), icon: <BookIcon className="w-3.5 h-3.5" /> });
+    metaItems.push({ label: '읽는 시간', value: formatReadTime(article.metadata.readTime), icon: <BookIcon className="w-3.5 h-3.5" /> });
   }
-  metaItems.push({ label: 'Published', value: formatDate(article.createdAtSource) });
+  metaItems.push({ label: '게시일', value: formatDate(article.createdAtSource) });
 
   return (
     <div className="min-h-screen bg-glow">
@@ -172,7 +169,7 @@ export default function ArticleDetailPage() {
             {/* Back button */}
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted hover:text-text-primary transition-colors mb-8"
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors mb-8"
             >
               ← 목록으로
             </Link>
@@ -189,7 +186,7 @@ export default function ArticleDetailPage() {
                   <span className="text-surface-border-strong">/</span>
                   <span className="truncate">{sourceLabel}</span>
                   <span className="text-surface-border-strong">/</span>
-                  <time dateTime={article.createdAtSource}>{formatTimeAgo(article.createdAtSource)}</time>
+                  <time dateTime={article.createdAtSource} className="font-sans tracking-normal">{formatTimeAgo(article.createdAtSource)}</time>
                 </div>
                 <BookmarkButton articleId={article.externalId} size="lg" showLabel />
               </div>
@@ -221,7 +218,7 @@ export default function ArticleDetailPage() {
                 {metaItems
                   .map((item) => (
                     <div key={item.label} className="px-4 py-3 border-r border-b border-surface-border">
-                      <dt className="label-mono">{item.label}</dt>
+                      <dt className="caption">{item.label}</dt>
                       <dd className={`mt-1 flex items-center gap-1.5 font-mono text-sm tabular-nums ${item.highlight ? 'text-signal font-semibold' : 'text-text-primary'}`}>
                         {item.icon}
                         {item.value}
@@ -239,7 +236,7 @@ export default function ArticleDetailPage() {
             {/* Original link */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 border-y border-dashed border-surface-border-strong">
               <div className="min-w-0">
-                <p className="label-mono">Source</p>
+                <p className="caption">출처</p>
                 <p className="mt-1 text-sm text-text-secondary truncate">{sourceLabel}</p>
               </div>
               <a

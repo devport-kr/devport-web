@@ -72,7 +72,7 @@ export default function PortsDirectoryPage() {
               titleLine1: '바이브 코더들을 위한 허브',
               titleLine2Gradient: 'Ports',
               subtitle: <>매일 쏟아지는 AI 프로젝트들, <span className="font-mono font-medium text-accent">portki</span>가 대신 확인하고 정리해드립니다.</>,
-              subtitleBottom: <>가장 중요한 정보만 확인하고 <span className="font-mono font-medium text-accent">챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
+              subtitleBottom: <>가장 중요한 정보만 확인하고 <span className="font-medium text-accent">챗봇</span>을 통해 궁금한 것을 물어보세요.</>,
             }}
             showAnimatedBackground={true}
           />
@@ -82,12 +82,11 @@ export default function PortsDirectoryPage() {
             <div className="flex flex-col max-w-3xl mx-auto mb-12 gap-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="label-mono">Directory</p>
-                  <h2 className="mt-1 text-2xl font-semibold tracking-[-0.01em] text-text-primary">프로젝트 둘러보기</h2>
+                  <h2 className="text-2xl font-semibold tracking-[-0.01em] text-text-primary">프로젝트 둘러보기</h2>
                 </div>
                 {!projectsLoading && (
-                  <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted tabular-nums">
-                    {searchQuery ? `${filteredProjects.length} / ${wikiProjects.length}` : wikiProjects.length} projects
+                  <p className="text-xs text-text-muted tabular-nums">
+                    프로젝트 {searchQuery ? `${filteredProjects.length} / ${wikiProjects.length}` : wikiProjects.length}개
                   </p>
                 )}
               </div>
@@ -136,7 +135,7 @@ export default function PortsDirectoryPage() {
             </div>
 
             {projectsLoading ? (
-              <div className="flex items-center justify-center py-24 font-mono text-xs uppercase tracking-[0.08em] text-text-muted">
+              <div className="flex items-center justify-center py-24 text-sm text-text-muted">
                 <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin mr-2.5" />
                 프로젝트 불러오는 중
               </div>
@@ -203,8 +202,7 @@ export default function PortsDirectoryPage() {
         >
           <div className="flex justify-between items-center mb-5 px-1">
             <div>
-              <p className="label-mono">Ports · AI</p>
-              <h3 className="mt-0.5 font-semibold text-text-primary text-lg flex items-center gap-2">
+              <h3 className="font-semibold text-text-primary text-lg flex items-center gap-2">
                 <MessageSquareText className="w-[18px] h-[18px] text-accent" strokeWidth={1.75} aria-hidden="true" />
                 portki 챗봇
               </h3>

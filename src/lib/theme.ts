@@ -14,7 +14,8 @@ export const themeColors = {
   signal: '#f0b44c',
 } as const;
 
-export const monoFont = '"IBM Plex Mono", ui-monospace, monospace';
+// Plex Sans KR covers Hangul, which Plex Mono lacks
+export const monoFont = '"IBM Plex Mono", "IBM Plex Sans KR", ui-monospace, monospace';
 
 // Shared Recharts styling
 export const chartTooltipStyle = {

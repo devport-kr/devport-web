@@ -66,7 +66,7 @@ export default function GitHubLeaderboard({ repos, onLoadMore, hasMore, isLoadin
   return (
     <section>
       <RailHeader
-        kicker={<><GitHubIcon className="w-3.5 h-3.5" /> GitHub</>}
+        icon={<GitHubIcon className="w-4 h-4 text-text-secondary" />}
         title="트렌딩 리포지토리"
         description="GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트입니다"
       />
@@ -75,8 +75,8 @@ export default function GitHubLeaderboard({ repos, onLoadMore, hasMore, isLoadin
       <div className="panel overflow-hidden h-[340px] flex flex-col">
         <div className="table-head grid-cols-[1.5rem_minmax(0,1fr)_auto]">
           <span>#</span>
-          <span>Repository</span>
-          <span className="text-right">Stars</span>
+          <span>리포지토리</span>
+          <span className="text-right">스타</span>
         </div>
 
         <div

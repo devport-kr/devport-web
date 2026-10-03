@@ -178,7 +178,7 @@ export default function Navbar() {
                   {showAutocomplete && (
                     <div className="absolute top-full mt-2 w-[26rem] panel shadow-overlay overflow-hidden z-50 animate-fade-in">
                       <div className="flex items-center justify-between px-4 py-2 border-b border-surface-border">
-                        <span className="label-mono">검색 결과</span>
+                        <span className="caption">검색 결과</span>
                         {!isSearching && (
                           <span className="font-mono text-[11px] text-text-muted tabular-nums">
                             {totalMatches.toLocaleString()}건
@@ -219,10 +219,10 @@ export default function Navbar() {
                           {totalMatches > suggestions.length && (
                             <button
                               onClick={handleViewAllResults}
-                              className="w-full flex items-center justify-between px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-accent hover:bg-surface-hover transition-colors"
+                              className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-accent hover:bg-surface-hover transition-colors"
                             >
                               <span>모든 결과 보기</span>
-                              <span className="tabular-nums">{totalMatches.toLocaleString()} →</span>
+                              <span className="font-mono tabular-nums">{totalMatches.toLocaleString()} →</span>
                             </button>
                           )}
                         </>
@@ -344,7 +344,7 @@ export default function Navbar() {
             </form>
 
             <div>
-              <p className="label-mono px-3 mb-2">메뉴</p>
+              <p className="caption px-3 mb-2">메뉴</p>
               <nav className="space-y-0.5" aria-label="모바일 메뉴">
                 {navItems.map((item) => {
                   const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
@@ -363,7 +363,6 @@ export default function Navbar() {
                       {isActive && <span className="absolute left-0 top-2 bottom-2 w-0.5 bg-accent" aria-hidden="true" />}
                       <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-accent' : ''}`} strokeWidth={1.75} aria-hidden="true" />
                       <span className="flex-1">{item.label}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-muted">{item.hint}</span>
                     </Link>
                   );
                 })}

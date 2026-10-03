@@ -119,7 +119,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
     <div className="panel p-4 sm:p-5 min-w-0 overflow-hidden">
       <div>
         <div>
-          <p className="label-mono">{groupLabel}</p>
+          <p className="caption">{groupLabel}</p>
           <h3 className="text-base font-semibold text-text-primary mt-1">{benchmark.displayName}</h3>
           <p className="text-xs text-text-muted mt-1 line-clamp-2">{benchmarkExplanation}</p>
         </div>
@@ -127,13 +127,13 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
 
       <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mt-4">
         <div className="rounded border border-surface-border bg-surface-elevated/60 px-3 py-2">
-          <p className="label-mono text-[10px]">최고 스코어</p>
+          <p className="caption text-[10px]">최고 스코어</p>
           <p className="font-mono text-sm font-semibold text-text-primary tabular-nums mt-1">
             {loading ? '-' : `${formatScore(topScore)}%`}
           </p>
         </div>
         <div className="rounded border border-surface-border bg-surface-elevated/60 px-3 py-2">
-          <p className="label-mono text-[10px]">평균 스코어</p>
+          <p className="caption text-[10px]">평균 스코어</p>
           <p className="font-mono text-sm font-semibold text-text-primary tabular-nums mt-1">
             {loading ? '-' : `${formatScore(avgScore)}%`}
           </p>
@@ -185,7 +185,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
                     : String(value);
                   return [`${formattedValue}%`, label];
                 }}
-                labelFormatter={() => 'Score'}
+                labelFormatter={() => '점수'}
               />
               <Bar dataKey="score" radius={[2, 2, 0, 0]} barSize={20}>
                 {chartData.map((entry) => (

@@ -525,11 +525,11 @@ function WikiPreBlock({ children }: PreComponentProps) {
           <button
             onClick={() => handleCopy(codeText)}
             className="flex items-center gap-1.5 font-mono text-[11px] text-text-muted hover:text-text-primary transition-colors"
-            title="Copy code"
+            title="코드 복사"
             type="button"
           >
             {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
+            <span>{copied ? '복사됨' : '복사'}</span>
           </button>
         </div>
         <div className="text-[13px] overflow-x-auto scrollbar-minimal">

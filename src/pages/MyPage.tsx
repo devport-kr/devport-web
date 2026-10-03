@@ -316,8 +316,7 @@ export default function MyPage() {
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-              <p className="label-mono">Account</p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-[-0.01em] text-text-primary mb-2">마이페이지</h1>
+              <h1 className="text-2xl font-semibold tracking-[-0.01em] text-text-primary mb-2">마이페이지</h1>
               <p className="text-sm text-text-muted">
                 {user?.name}님의 저장한 아티클과 읽은 기록을 확인하세요
               </p>
@@ -369,7 +368,7 @@ export default function MyPage() {
                 {/* Profile Information */}
                 <div className="panel p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="label-mono text-text-secondary">계정 정보</h3>
+                    <h3 className="caption text-text-secondary">계정 정보</h3>
                     {!isEditingProfile && (
                       <button
                         onClick={() => setIsEditingProfile(true)}
@@ -419,7 +418,7 @@ export default function MyPage() {
                   <div className="space-y-4 mt-6">
                     {/* Username (readonly) */}
                     <div>
-                      <label className="label-mono block mb-1.5">
+                      <label className="caption block mb-1.5">
                         아이디
                       </label>
                       <input
@@ -432,7 +431,7 @@ export default function MyPage() {
 
                     {/* Auth Provider (readonly) */}
                     <div>
-                      <label className="label-mono block mb-1.5">
+                      <label className="caption block mb-1.5">
                         로그인 방식
                       </label>
                       <input
@@ -453,7 +452,7 @@ export default function MyPage() {
 
                     {/* Name */}
                     <div>
-                      <label className="label-mono block mb-1.5">
+                      <label className="caption block mb-1.5">
                         이름
                       </label>
                       <input
@@ -469,7 +468,7 @@ export default function MyPage() {
 
                     {/* Email (Read-only) */}
                     <div>
-                      <label className="label-mono block mb-1.5">
+                      <label className="caption block mb-1.5">
                         이메일
                       </label>
                       <input
@@ -484,7 +483,7 @@ export default function MyPage() {
                     {/* Profile Image URL (only show when editing) */}
                     {isEditingProfile && (
                       <div>
-                        <label className="label-mono block mb-1.5">
+                        <label className="caption block mb-1.5">
                           프로필 이미지 URL
                         </label>
                         <input
@@ -533,11 +532,11 @@ export default function MyPage() {
                 {/* Password Change (Only for LOCAL users) */}
                 {user?.authProvider === 'local' && (
                   <div className="panel p-6">
-                    <h3 className="label-mono text-text-secondary mb-6">비밀번호 변경</h3>
+                    <h3 className="caption text-text-secondary mb-6">비밀번호 변경</h3>
 
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div>
-                        <label className="label-mono block mb-1.5">
+                        <label className="caption block mb-1.5">
                           현재 비밀번호
                         </label>
                         <input
@@ -556,7 +555,7 @@ export default function MyPage() {
                       </div>
 
                       <div>
-                        <label className="label-mono block mb-1.5">
+                        <label className="caption block mb-1.5">
                           새 비밀번호
                         </label>
                         <input
@@ -612,7 +611,7 @@ export default function MyPage() {
                       </div>
 
                       <div>
-                        <label className="label-mono block mb-1.5">
+                        <label className="caption block mb-1.5">
                           새 비밀번호 확인
                         </label>
                         <div className="relative">
@@ -699,7 +698,7 @@ export default function MyPage() {
                             {item.source}
                           </span>
                           <span className="text-surface-border-strong">/</span>
-                          <span className="font-mono text-[11px] text-text-muted">
+                          <span className="text-xs text-text-muted">
                             {formatTimeAgo('savedAt' in item ? item.savedAt : item.readAt)}
                           </span>
                         </div>
@@ -748,7 +747,7 @@ export default function MyPage() {
                 {/* End Message */}
                 {!hasMore && currentData.length > 0 && (
                   <div className="text-center py-8">
-                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">모든 항목을 확인했습니다</p>
+                    <p className="text-xs text-text-muted">모든 항목을 확인했습니다</p>
                   </div>
                 )}
               </div>

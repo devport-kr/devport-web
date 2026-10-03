@@ -139,7 +139,6 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      kicker="Log in"
       title="로그인"
       subtitle="다시 오신 것을 환영합니다."
       footer={
@@ -212,7 +211,7 @@ export default function LoginPage() {
       {loginMode === 'local' && (
         <form onSubmit={handleLocalLogin} className="space-y-4">
           <div>
-            <label htmlFor="username" className="label-mono block mb-1.5">
+            <label htmlFor="username" className="caption block mb-1.5">
               아이디
             </label>
             <input
@@ -228,7 +227,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="label-mono block mb-1.5">
+            <label htmlFor="password" className="caption block mb-1.5">
               비밀번호
             </label>
             <div className="relative">
@@ -265,7 +264,7 @@ export default function LoginPage() {
 
       {/* Turnstile */}
       <div className="mt-6">
-        <p className="label-mono mb-2">보안 확인</p>
+        <p className="caption mb-2">보안 확인</p>
         <div className="flex justify-center min-h-[65px]">
           <Turnstile
             siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}

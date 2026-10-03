@@ -77,11 +77,10 @@ export default {
       },
       fontFamily: {
         sans: ['"IBM Plex Sans KR"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        mono: ['"IBM Plex Mono"', '"IBM Plex Sans KR"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
-        label: ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.06em' }],
       },
       boxShadow: {
         'soft': '0 12px 32px -16px rgba(0, 0, 0, 0.7)',

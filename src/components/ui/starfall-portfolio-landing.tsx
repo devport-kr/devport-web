@@ -134,10 +134,6 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({
                 <main id="about" className="w-full flex flex-col items-center justify-center px-6 py-24 lg:py-40">
                     <div className="max-w-6xl mx-auto text-center">
                         <div className="mb-24">
-                            <p className="inline-flex items-center gap-2 mb-8 px-3 py-1.5 border border-surface-border-strong rounded bg-surface/70 backdrop-blur font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
-                                <span className="live-dot" aria-hidden="true" />
-                                Ports · Open-source hub
-                            </p>
                             <h1 className="text-[2.75rem] sm:text-6xl lg:text-7xl leading-[1.1] font-semibold text-text-primary tracking-[-0.03em] mb-8">
                                 {hero.titleLine1}
                                 <span className="block font-mono text-accent tracking-[-0.04em]">
@@ -158,7 +154,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({
                         <div className="flex justify-center w-full pb-8">
                             <DatabaseWithRestApi
                                 className="w-full max-w-[650px]"
-                                title="Port AI agent"
+                                title="Ports AI 에이전트"
                                 circleText="portki"
                                 buttonTexts={{
                                     first: "챗봇",
@@ -167,10 +163,10 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({
                                     fourth: "랭킹"
                                 }}
                                 badgeTexts={{
-                                    first: "Codes",
-                                    second: "Docs",
-                                    third: "Issues",
-                                    fourth: "Releases"
+                                    first: "코드",
+                                    second: "문서",
+                                    third: "이슈",
+                                    fourth: "릴리스"
                                 }}
                             />
                         </div>

@@ -89,7 +89,7 @@ export default function OAuth2RedirectPage() {
         <Wordmark size="lg" />
         <div className="flex items-center gap-2.5">
           <div className="w-4 h-4 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
-          <p className="font-mono text-xs uppercase tracking-[0.08em] text-text-muted">로그인 처리 중</p>
+          <p className="text-sm text-text-muted">로그인 처리 중</p>
         </div>
       </div>
     </div>

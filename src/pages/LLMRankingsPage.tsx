@@ -113,7 +113,7 @@ export default function LLMRankingsPage() {
         >
           <div className="w-full px-4">
             <div className="panel p-4">
-              <p className="label-mono">목차</p>
+              <p className="caption">목차</p>
               <nav className="mt-3 space-y-0.5 border-l border-surface-border" aria-label="목차">
                 {tocSections.map((section) => (
                   <a
@@ -144,7 +144,7 @@ export default function LLMRankingsPage() {
             <div>
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted hover:text-text-primary mb-6 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary mb-6 transition-colors"
               >
                 ← 홈으로
               </Link>
@@ -173,10 +173,9 @@ export default function LLMRankingsPage() {
                       <div key={group} id={makeBenchmarkGroupId(group)} className="space-y-4 scroll-mt-24">
                         <div className="flex items-end justify-between pb-3 border-b border-dashed border-surface-border-strong">
                           <div>
-                            <p className="label-mono">{groupMeta.label}</p>
-                            <h3 className="mt-0.5 text-lg font-semibold text-text-primary">{groupMeta.labelKo}</h3>
+                            <h3 className="text-lg font-semibold text-text-primary">{groupMeta.labelKo}</h3>
                           </div>
-                          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted tabular-nums">{groupBenchmarks.length} benchmarks</span>
+                          <span className="text-xs text-text-muted tabular-nums">벤치마크 {groupBenchmarks.length}개</span>
                         </div>
                         <div className="grid gap-4 lg:grid-cols-3">
                           {groupBenchmarks.map((benchmark) => {
@@ -199,8 +198,7 @@ export default function LLMRankingsPage() {
                 {/* Media rankings */}
                 <section id="media-rankings" className="space-y-6 scroll-mt-24">
                   <div className="pb-3 border-b border-dashed border-surface-border-strong">
-                    <p className="label-mono">Media · ELO</p>
-                    <h2 className="mt-0.5 text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
+                    <h2 className="text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
                     <p className="text-sm text-text-muted mt-1">
                       미디어 모델은 벤치마크 점수가 아니라 ELO 기반 상대 평가입니다. 모델 간 비교에서
                       우수한 결과를 낼수록 점수가 상승합니다.
@@ -222,8 +220,8 @@ export default function LLMRankingsPage() {
 
                 {/* Data attribution */}
                 <div id="data-source" className="flex justify-center scroll-mt-24">
-                  <p className="font-mono text-[11px] text-text-muted">
-                    Data provided by{' '}
+                  <p className="text-xs text-text-muted">
+                    데이터 제공:{' '}
                     <a
                       href="https://artificialanalysis.ai/"
                       target="_blank"

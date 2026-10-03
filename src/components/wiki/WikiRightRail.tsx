@@ -31,10 +31,10 @@ export default function WikiRightRail({ snapshot, projectExternalId }: WikiRight
     : null;
 
   const counterCards = [
-    { label: 'Stars', value: snapshot.currentCounters?.stars ?? null },
-    { label: 'Forks', value: snapshot.currentCounters?.forks ?? null },
-    { label: 'Watchers', value: snapshot.currentCounters?.watchers ?? null },
-    { label: 'Open Issues', value: snapshot.currentCounters?.openIssues ?? null },
+    { label: '스타', value: snapshot.currentCounters?.stars ?? null },
+    { label: '포크', value: snapshot.currentCounters?.forks ?? null },
+    { label: '워처', value: snapshot.currentCounters?.watchers ?? null },
+    { label: '열린 이슈', value: snapshot.currentCounters?.openIssues ?? null },
   ];
 
   const defaultIndex: Record<'activity' | 'releases' | 'chat', number> = {
@@ -52,7 +52,7 @@ export default function WikiRightRail({ snapshot, projectExternalId }: WikiRight
         <div className="bg-surface-card rounded-xl border border-surface-border p-4">
           <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
             <span>📊</span>
-            <span>Repository Activity</span>
+            <span>리포지토리 활동</span>
           </h3>
           <div className="space-y-3">
             <p className="text-xs text-text-muted leading-relaxed">{activitySection?.summary}</p>
@@ -73,7 +73,7 @@ export default function WikiRightRail({ snapshot, projectExternalId }: WikiRight
         <div className="bg-surface-card rounded-xl border border-surface-border p-4">
           <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
             <span>🚀</span>
-            <span>Recent Releases</span>
+            <span>최근 릴리스</span>
           </h3>
           <div className="space-y-3">
             <p className="text-xs text-text-muted leading-relaxed">{releasesSection?.summary}</p>
@@ -107,7 +107,7 @@ export default function WikiRightRail({ snapshot, projectExternalId }: WikiRight
       <div className="bg-surface-card rounded-xl border border-surface-border p-4">
         <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
           <span>⭐</span>
-          <span>Current Repository Signals</span>
+          <span>리포지토리 현황</span>
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {counterCards.map(counter => (

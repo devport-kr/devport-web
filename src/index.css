@@ -95,17 +95,19 @@
 @layer components {
   /* ---------------- Manifest primitives ---------------- */
 
-  /* Mono uppercase label: section heads, column heads, metadata */
-  .label-mono {
-    @apply font-mono text-label uppercase text-text-muted;
+  /* Small muted label: form labels, section captions, stat names.
+     Sans, because nearly all labels are Korean: Plex Mono's wide space breaks Korean phrases apart.
+     Mono is reserved for numbers, codes and Latin metadata. */
+  .caption {
+    @apply text-xs font-medium text-text-muted;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded font-mono text-xs font-semibold uppercase tracking-[0.06em] whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded text-sm font-semibold whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-sm {
-    @apply h-8 px-3 text-[11px];
+    @apply h-8 px-3 text-[13px];
   }
 
   .btn-lg {
@@ -142,7 +144,7 @@
   }
 
   .tabbar-item {
-    @apply px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.04em] text-text-muted transition-colors hover:text-text-primary hover:bg-surface-hover border-r border-surface-border-strong last:border-r-0;
+    @apply px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary hover:bg-surface-hover border-r border-surface-border-strong last:border-r-0;
   }
 
   .tabbar-item[aria-pressed="true"],
@@ -162,7 +164,7 @@
 
   /* Rail widget table: column header row */
   .table-head {
-    @apply grid items-center gap-3 px-4 py-2 bg-surface-elevated border-b border-surface-border font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted;
+    @apply grid items-center gap-3 px-4 py-2 bg-surface-elevated border-b border-surface-border text-[11px] font-medium text-text-muted;
   }
 
   /* Live indicator: small square in signal amber */

@@ -13,7 +13,6 @@ export default function CheckEmailPage() {
 
   return (
     <AuthLayout
-      kicker="Verify email"
       title="이메일을 확인해 주세요"
       subtitle="계정이 생성되었습니다. 이메일 인증을 완료해야 로그인할 수 있습니다."
     >
@@ -23,7 +22,7 @@ export default function CheckEmailPage() {
             <Mail className="w-5 h-5" strokeWidth={1.75} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="label-mono">인증 메일 발송 주소</p>
+            <p className="caption">인증 메일 발송 주소</p>
             <p className="mt-0.5 text-sm font-medium text-text-primary truncate">
               {email ?? '가입한 이메일 주소'}
             </p>

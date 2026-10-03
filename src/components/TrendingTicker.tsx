@@ -49,9 +49,9 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
   return (
     <div className="flex items-stretch bg-surface-elevated/50">
       {/* Departures-board label */}
-      <div className="shrink-0 flex items-center gap-2 px-4 sm:px-6 border-r border-surface-border font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-signal">
+      <div className="shrink-0 flex items-center gap-2 px-4 sm:px-6 border-r border-surface-border font-mono text-[11px] font-semibold text-signal whitespace-nowrap">
         <span className="live-dot" aria-hidden="true" />
-        Live
+        실시간
       </div>
 
       <div
@@ -69,7 +69,7 @@ export default function TrendingTicker({ articles }: TrendingTickerProps) {
               tabIndex={index >= articles.length ? -1 : undefined}
             >
               <div className="flex items-center gap-3 min-w-[75vw] sm:min-w-[380px]">
-                <time className="font-mono text-[11px] text-text-muted whitespace-nowrap tabular-nums">
+                <time className="text-xs text-text-muted whitespace-nowrap tabular-nums">
                   {formatTimeAgo(article.createdAtSource)}
                 </time>
                 <p className="text-sm text-text-secondary group-hover:text-text-primary transition-colors line-clamp-1">

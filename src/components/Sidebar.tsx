@@ -24,7 +24,7 @@ export default function Sidebar({ compact = false }: SidebarProps) {
     <aside
       className={`${sidebarClasses} h-full py-5 flex flex-col border-r border-surface-border bg-surface transition-[width] duration-200 ease-in-out`}
     >
-      <p className={`label-mono px-3 mb-2 whitespace-nowrap ${revealBlock}`}>메뉴</p>
+      <p className={`caption px-3 mb-2 whitespace-nowrap ${revealBlock}`}>메뉴</p>
 
       <nav className="flex flex-col gap-0.5" aria-label="주 메뉴">
         {navItems.map((item) => {
@@ -60,7 +60,7 @@ export default function Sidebar({ compact = false }: SidebarProps) {
 
       {/* Footer links live here too: the home feed scrolls forever, so the page footer is rarely reached */}
       <div className={`mt-auto px-3 pt-4 border-t border-surface-border whitespace-nowrap ${revealBlock}`}>
-        <div className="flex flex-wrap gap-x-3 gap-y-1.5 font-mono text-[11px] text-text-muted">
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-text-muted">
           <a href={GITHUB_ISSUES_URL} target="_blank" rel="noreferrer" className="hover:text-text-primary transition-colors">
             피드백
           </a>
