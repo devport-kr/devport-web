@@ -722,7 +722,8 @@ export default function PortsProjectPage() {
       </button>
 
 
-      <Footer className="lg:ml-52" />
+      {/* Matches the content area: compact sidebar (ml-14), TOC (ml-56) and chat rail at xl */}
+      <Footer className="lg:ml-14 xl:ml-[17.5rem] xl:mr-[320px] 2xl:mr-[520px]" />
     </div>
   );
 }

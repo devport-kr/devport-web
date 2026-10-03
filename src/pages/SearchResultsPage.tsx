@@ -193,7 +193,7 @@ export default function SearchResultsPage() {
           </>
         )}
       </main>
-      <Footer className="pb-16 lg:pb-0" />
+      <Footer />
     </div>
   );
 }

@@ -168,9 +168,10 @@ export default function Navbar() {
   };
 
   return (
-    <div ref={mobileMenuRef} className="relative">
+    // Sticky lives on the wrapper: a sticky child inside an equally tall parent never sticks
+    <div ref={mobileMenuRef} className="sticky top-0 z-50">
       <nav
-        className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50"
+        className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50"
         style={{
           WebkitTransform: 'translate3d(0,0,0)',
           transform: 'translate3d(0,0,0)',
