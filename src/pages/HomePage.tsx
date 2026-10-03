@@ -27,17 +27,27 @@ export default function HomePage() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
-  const [tickerHidden, setTickerHidden] = useState(false);
+  // Right rail starts right under the ticker and follows it up as it scrolls away,
+  // stopping under the navbar (64px = 4rem)
+  const [railTop, setRailTop] = useState(64);
 
   useEffect(() => {
-    const handleScroll = () => {
+    const updateRailTop = () => {
       if (!tickerRef.current) return;
       const rect = tickerRef.current.getBoundingClientRect();
-      setTickerHidden(rect.bottom <= 64); // 64px = navbar height (4rem)
+      setRailTop(Math.max(64, Math.round(rect.bottom)));
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    updateRailTop();
+    window.addEventListener('scroll', updateRailTop, { passive: true });
+    window.addEventListener('resize', updateRailTop);
+    const observer = new ResizeObserver(updateRailTop);
+    if (tickerRef.current) observer.observe(tickerRef.current);
+    return () => {
+      window.removeEventListener('scroll', updateRailTop);
+      window.removeEventListener('resize', updateRailTop);
+      observer.disconnect();
+    };
+  }, [isInitialLoading]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -188,10 +198,10 @@ export default function HomePage() {
 
         {/* Right Sidebar - Fixed, slides up when ticker scrolls away */}
         <aside
-          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide transition-all duration-300 ease-out"
+          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide"
           style={{
-            top: tickerHidden ? '4rem' : '8.5rem',
-            height: tickerHidden ? 'calc(100vh - 4rem)' : 'calc(100vh - 8.5rem)',
+            top: `${railTop}px`,
+            height: `calc(100vh - ${railTop}px)`,
           }}
         >
           <div className="space-y-6">
@@ -259,7 +269,8 @@ export default function HomePage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52" />
+      {/* Right margin matches the fixed right rail (w-[28%], min 380px, max 500px) so it never covers the footer */}
+      <Footer className="lg:ml-52 xl:mr-[clamp(380px,28%,500px)]" />
     </div>
   );
 }
