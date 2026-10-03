@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { exchangeOAuthCode } from '../services/auth/authService';
+import Wordmark from '../components/Wordmark';
 
 type ApiErrorPayload = {
   message?: string;
@@ -83,10 +84,13 @@ export default function OAuth2RedirectPage() {
   }, [searchParams, navigate, authenticate]);
 
   return (
-    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
-        <p className="text-white text-lg">로그인 처리 중...</p>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="flex flex-col items-center gap-4" role="status">
+        <Wordmark size="lg" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-4 h-4 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
+          <p className="font-mono text-xs uppercase tracking-[0.08em] text-text-muted">로그인 처리 중</p>
+        </div>
       </div>
     </div>
   );

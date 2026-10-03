@@ -150,7 +150,7 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
               <div
                 className="absolute inset-0 opacity-[0.04] pointer-events-none"
                 style={{
-                  background: 'radial-gradient(ellipse at 50% 40%, #2f81f7 0%, transparent 70%)',
+                  background: 'radial-gradient(ellipse at 50% 40%, rgb(var(--c-accent)) 0%, transparent 70%)',
                 }}
               />
               <div className="mb-5 opacity-25">
@@ -214,13 +214,13 @@ export default function WikiChatPanel({ projectExternalId, isExpanded, onToggleE
                           </p>
                           <Link
                             to="/login"
-                            className="text-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
+                            className="text-center px-4 py-2 bg-action text-white rounded-lg hover:bg-action-hover transition-colors font-medium"
                           >
                             로그인
                           </Link>
                         </div>
                       ) : (
-                        <div className="max-w-[85%] bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
+                        <div className="max-w-[85%] bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 text-xs text-danger flex items-start gap-2">
                           <span>⚠</span>
                           <span>{msg.content}</span>
                         </div>

@@ -94,7 +94,7 @@ export default function CommentForm({
               <button
                 type="submit"
                 disabled={!content.trim() || isSubmitting}
-                className="text-xs font-medium bg-accent text-white px-4 py-1.5 rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-xs font-medium bg-action text-white px-4 py-1.5 rounded-lg hover:bg-action-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? '...' : submitLabel}
               </button>

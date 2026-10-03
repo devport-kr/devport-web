@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import type { BenchmarkType, BenchmarkCategoryGroup } from '../types';
 import { benchmarkCategoryConfig } from '../types';
 import {
@@ -10,6 +9,7 @@ import {
 } from '../services/llm/llmService';
 import AIIcon from './icons/AIIcon';
 import { getProviderInfo } from '../config/providerLogos';
+import RailHeader from './RailHeader';
 
 const formatScore = (score?: number | string | null, digits: number = 1) => {
   if (score === null || score === undefined) return '-';
@@ -72,28 +72,22 @@ export default function LLMLeaderboard() {
 
   return (
     <section>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <AIIcon className="w-4 h-4 text-text-secondary" />
-          <h2 className="text-base font-semibold text-text-primary">LLM 리더보드</h2>
-        </div>
-        <Link
-          to="/llm-rankings"
-          className="text-xs text-text-muted hover:text-accent transition-colors"
-        >
-          전체보기
-        </Link>
-      </div>
+      <RailHeader
+        kicker={<><AIIcon className="w-3.5 h-3.5" /> Benchmarks</>}
+        title="LLM 리더보드"
+        moreTo="/llm-rankings"
+      />
 
       {/* Category Tabs */}
-      <div className="mb-3">
-        <div className="flex flex-wrap gap-1.5 mb-2">
+      <div className="mb-3 space-y-2">
+        <div className="tabbar" role="group" aria-label="벤치마크 분류">
           {(Object.keys(benchmarkCategoryConfig) as BenchmarkCategoryGroup[]).map((group) => {
             const config = benchmarkCategoryConfig[group];
             return (
               <button
                 key={group}
+                type="button"
+                aria-pressed={selectedGroup === group}
                 onClick={() => {
                   setSelectedGroup(group);
                   const firstBenchmark = groupedBenchmarks[group]?.[0];
@@ -101,11 +95,7 @@ export default function LLMLeaderboard() {
                     setSelectedBenchmark(firstBenchmark.benchmarkType as BenchmarkType);
                   }
                 }}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  selectedGroup === group
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover'
-                }`}
+                className="tabbar-item"
               >
                 {config.labelKo}
               </button>
@@ -115,22 +105,23 @@ export default function LLMLeaderboard() {
 
         {/* Benchmark Sub-tabs */}
         {shouldShowBenchmarkTabs && (
-          <div className="flex flex-wrap gap-1 relative">
+          <div className="flex flex-wrap gap-x-3 gap-y-1" role="group" aria-label="벤치마크">
             {displayBenchmarks.map((benchmark) => {
               const isSelected = selectedBenchmark === benchmark.benchmarkType;
               return (
-                <div key={benchmark.benchmarkType} className="relative">
-                  <button
-                    onClick={() => setSelectedBenchmark(benchmark.benchmarkType as BenchmarkType)}
-                    className={`px-2 py-0.5 rounded text-xs transition-all ${
-                      isSelected
-                        ? 'bg-surface-hover text-text-primary'
-                        : 'text-text-muted hover:text-text-secondary'
-                    }`}
-                  >
-                    {benchmark.displayName}
-                  </button>
-                </div>
+                <button
+                  key={benchmark.benchmarkType}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedBenchmark(benchmark.benchmarkType as BenchmarkType)}
+                  className={`py-0.5 font-mono text-[11px] border-b transition-colors ${
+                    isSelected
+                      ? 'text-text-primary border-accent'
+                      : 'text-text-muted border-transparent hover:text-text-secondary'
+                  }`}
+                >
+                  {benchmark.displayName}
+                </button>
               );
             })}
           </div>
@@ -138,7 +129,13 @@ export default function LLMLeaderboard() {
       </div>
 
       {/* Leaderboard Box */}
-      <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-[340px] flex flex-col">
+      <div className="panel overflow-hidden h-[340px] flex flex-col">
+        <div className="table-head grid-cols-[1.5rem_minmax(0,1fr)_auto]">
+          <span>#</span>
+          <span>Model</span>
+          <span className="text-right">Score</span>
+        </div>
+
         {/* Leaderboard List */}
         <div className="divide-y divide-surface-border flex-1 overflow-y-auto scrollbar-minimal">
           {isLoading ? (
@@ -150,58 +147,58 @@ export default function LLMLeaderboard() {
               <p className="text-sm text-text-muted">데이터가 없습니다</p>
             </div>
           ) : (
-            leaderboardEntries.map((entry) => (
-              <div
-                key={entry.modelId}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-hover transition-colors"
-              >
-                {/* Rank */}
-                <div className="w-6 flex-shrink-0">
-                  <span className={`text-xs font-mono ${entry.rank <= 3 ? 'text-accent font-medium' : 'text-text-muted'}`}>
+            leaderboardEntries.map((entry) => {
+              const providerInfo = getProviderInfo(entry.provider);
+              const numericScore = Number(entry.score);
+              const barWidth = Number.isFinite(numericScore) ? Math.max(0, Math.min(100, numericScore)) : 0;
+              return (
+                <div
+                  key={entry.modelId}
+                  className="relative grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 hover:bg-surface-hover transition-colors"
+                >
+                  {/* Rank */}
+                  <span className={`text-xs font-mono tabular-nums ${entry.rank <= 3 ? 'text-signal font-semibold' : 'text-text-muted'}`}>
                     {String(entry.rank).padStart(2, '0')}
                   </span>
-                </div>
 
-                {/* Model Info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-text-primary truncate">
-                    {entry.modelName}
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {(() => {
-                      const providerInfo = getProviderInfo(entry.provider);
-                      return (
-                        <>
-                          {providerInfo.logo && (
-                            <img
-                              src={providerInfo.logo}
-                              alt={providerInfo.name}
-                              className="w-3 h-3 rounded object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <p className="text-xs text-text-muted">
-                            {entry.modelCreatorName || entry.provider}
-                          </p>
-                        </>
-                      );
-                    })()}
+                  {/* Model Info */}
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-text-primary truncate">
+                      {entry.modelName}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {providerInfo.logo && (
+                        <img
+                          src={providerInfo.logo}
+                          alt=""
+                          className="w-3 h-3 rounded-sm object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <p className="font-mono text-[11px] text-text-muted truncate">
+                        {entry.modelCreatorName || entry.provider}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Score */}
-                <div className="text-right flex-shrink-0">
-                  <span className="text-sm font-medium text-text-primary">
+                  {/* Score */}
+                  <span className="text-sm font-mono font-medium text-text-primary tabular-nums text-right">
                     {formatScore(entry.score, 1)}%
                   </span>
+
+                  {/* Score bar */}
+                  <span
+                    className="absolute left-0 bottom-0 h-0.5 bg-accent/50"
+                    style={{ width: `${barWidth}%` }}
+                    aria-hidden="true"
+                  />
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
-
       </div>
     </section>
   );

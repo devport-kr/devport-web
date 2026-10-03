@@ -2,6 +2,10 @@ import { useRef, useEffect } from 'react';
 import type { GitRepo } from '../types';
 import GitHubIcon from './icons/GitHubIcon';
 import StarIcon from './icons/StarIcon';
+import RailHeader from './RailHeader';
+
+const formatCount = (value: number) =>
+  value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toLocaleString();
 
 interface GitHubLeaderboardProps {
   repos: GitRepo[];
@@ -61,22 +65,19 @@ export default function GitHubLeaderboard({ repos, onLoadMore, hasMore, isLoadin
 
   return (
     <section>
-      {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <GitHubIcon className="w-4 h-4 text-text-secondary" />
-            <h2 className="text-base font-semibold text-text-primary">트렌딩 리포지토리</h2>
-          </div>
-          <span className="text-xs text-text-muted">GitHub</span>
-        </div>
-        <p className="text-xs text-text-muted">
-          GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트입니다
-        </p>
-      </div>
+      <RailHeader
+        kicker={<><GitHubIcon className="w-3.5 h-3.5" /> GitHub</>}
+        title="트렌딩 리포지토리"
+        description="GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트입니다"
+      />
 
       {/* List */}
-      <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden h-[340px] flex flex-col">
+      <div className="panel overflow-hidden h-[340px] flex flex-col">
+        <div className="table-head grid-cols-[1.5rem_minmax(0,1fr)_auto]">
+          <span>#</span>
+          <span>Repository</span>
+          <span className="text-right">Stars</span>
+        </div>
 
         <div
           ref={scrollContainerRef}
@@ -88,39 +89,43 @@ export default function GitHubLeaderboard({ repos, onLoadMore, hasMore, isLoadin
               href={repo.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors group"
+              className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors group"
             >
               {/* Rank */}
-              <div className="w-6 flex-shrink-0">
-                <span className={`text-xs font-mono ${index < 3 ? 'text-accent font-medium' : 'text-text-muted'}`}>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-              </div>
+              <span className={`text-xs font-mono tabular-nums ${index < 3 ? 'text-signal font-semibold' : 'text-text-muted'}`}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
 
               {/* Content */}
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0">
                 <h3 className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors truncate">
                   {repo.summaryKoTitle}
                 </h3>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-0.5 min-w-0">
+                  <span className="font-mono text-[11px] text-text-muted truncate">{repo.fullName}</span>
                   {repo.language && (
-                    <div className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 shrink-0">
                       <span
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: languageColors[repo.language] || languageColors.default }}
                       />
-                      <span className="text-xs text-text-muted">
-                        {repo.language}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <StarIcon className="w-3 h-3 text-text-muted" />
-                    <span className="text-xs text-text-muted">
-                      {repo.stars >= 1000 ? `${(repo.stars / 1000).toFixed(1)}k` : repo.stars.toLocaleString()}
+                      <span className="font-mono text-[11px] text-text-muted">{repo.language}</span>
                     </span>
-                  </div>
+                  )}
                 </div>
+              </div>
+
+              {/* Stars */}
+              <div className="text-right font-mono tabular-nums">
+                <span className="flex items-center justify-end gap-1 text-xs text-text-secondary">
+                  <StarIcon className="w-3 h-3 text-text-muted" />
+                  {formatCount(repo.stars)}
+                </span>
+                {repo.starsThisWeek > 0 && (
+                  <span className="block text-[11px] text-signal" title="이번 주 증가">
+                    +{formatCount(repo.starsThisWeek)}
+                  </span>
+                )}
               </div>
             </a>
           ))}

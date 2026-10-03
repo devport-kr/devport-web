@@ -141,9 +141,9 @@ export default function CommentItem({
                   <span
                     className="text-2xs px-1.5 py-px rounded font-medium"
                     style={{
-                      color: comment.author.flairColor || '#8b949e',
-                      background: `${comment.author.flairColor || '#8b949e'}15`,
-                      border: `1px solid ${comment.author.flairColor || '#8b949e'}30`,
+                      color: comment.author.flairColor || '#7a8aa0',
+                      background: `${comment.author.flairColor || '#7a8aa0'}15`,
+                      border: `1px solid ${comment.author.flairColor || '#7a8aa0'}30`,
                     }}
                   >
                     {comment.author.flair}
@@ -205,7 +205,7 @@ export default function CommentItem({
                           </button>
                           <button
                             onClick={handleDelete}
-                            className="text-2xs text-text-muted hover:text-red-400 hover:bg-surface-hover px-1.5 py-1 rounded transition-colors font-medium"
+                            className="text-2xs text-text-muted hover:text-danger hover:bg-surface-hover px-1.5 py-1 rounded transition-colors font-medium"
                           >
                             삭제
                           </button>

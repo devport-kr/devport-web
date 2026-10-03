@@ -431,7 +431,7 @@ const AdminPage = () => {
 
   const inputClass = "w-full px-3 py-2 bg-surface-elevated border border-surface-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/20 transition-all placeholder:text-text-muted/50";
   const labelClass = "block text-[10px] font-semibold text-text-muted mb-1 uppercase tracking-widest";
-  const btnPrimary = "py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all active:scale-[0.98]";
+  const btnPrimary = "py-2.5 bg-action hover:bg-action-hover text-white text-sm font-medium rounded-lg transition-all active:scale-[0.98]";
   const btnSecondary = "py-2 px-4 border border-surface-border text-text-secondary hover:text-text-primary hover:border-accent/40 hover:bg-surface-elevated rounded-lg text-sm transition-all";
 
   const truncate = (text: string, max: number) => text.length > max ? text.substring(0, max) + '...' : text;
@@ -664,8 +664,8 @@ const AdminPage = () => {
           </div>
           {message && (
             <div className={`px-3 py-1.5 rounded-lg text-xs font-medium animate-fade-in ${message.type === 'success'
-              ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-              : 'bg-red-500/10 border border-red-500/20 text-red-400'
+              ? 'bg-success/10 border border-success/20 text-success'
+              : 'bg-danger/10 border border-danger/20 text-danger'
               }`}>
               {message.text}
             </div>
@@ -790,7 +790,7 @@ const AdminPage = () => {
                                     <td className="py-2.5 pl-2 text-right" onClick={e => e.stopPropagation()}>
                                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEditModal(article)} className="text-[10px] px-2 py-1 text-accent hover:bg-accent/10 rounded transition-colors font-medium">Edit</button>
-                                        <button onClick={() => setDeleteConfirm({ id: String(article.id), title: article.summaryKoTitle || article.titleEn })} className="text-[10px] px-2 py-1 text-red-400 hover:bg-red-400/10 rounded transition-colors font-medium">Del</button>
+                                        <button onClick={() => setDeleteConfirm({ id: String(article.id), title: article.summaryKoTitle || article.titleEn })} className="text-[10px] px-2 py-1 text-danger hover:bg-red-400/10 rounded transition-colors font-medium">Del</button>
                                       </div>
                                     </td>
                                   </tr>
@@ -922,7 +922,7 @@ const AdminPage = () => {
                           <div className="border border-surface-border rounded-lg p-4 space-y-3">
                             <div className="flex items-center gap-2">
                               <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wide">Preview</h3>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${llmPreview.isTechnical ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${llmPreview.isTechnical ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                                 {llmPreview.isTechnical ? 'Technical' : 'Non-technical'}
                               </span>
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">{llmPreview.category}</span>
@@ -1292,7 +1292,7 @@ const AdminPage = () => {
                               <div>
                                 <div className="flex items-center gap-2 px-3 py-2 bg-green-500/8 border-b border-surface-border/50">
                                   <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
-                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400">Created ({bulkResult.created.length})</span>
+                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-success">Created ({bulkResult.created.length})</span>
                                 </div>
                                 <div className="divide-y divide-surface-border/30">
                                   {bulkResult.created.map((r, i) => (
@@ -1308,15 +1308,15 @@ const AdminPage = () => {
                             {/* Failed */}
                             {bulkResult.failed.length > 0 && (
                               <div className={bulkResult.created.length > 0 ? 'border-t border-surface-border' : ''}>
-                                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/8 border-b border-surface-border/50">
+                                <div className="flex items-center gap-2 px-3 py-2 bg-danger/10 border-b border-surface-border/50">
                                   <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-red-400">Failed ({bulkResult.failed.length})</span>
+                                  <span className="text-[10px] font-semibold uppercase tracking-widest text-danger">Failed ({bulkResult.failed.length})</span>
                                 </div>
                                 <div className="divide-y divide-surface-border/30">
                                   {bulkResult.failed.map((r, i) => (
                                     <div key={i} className="flex items-start justify-between px-3 py-2 gap-4">
                                       <span className="font-mono text-xs text-text-primary shrink-0">{r.fullName}</span>
-                                      <span className="text-[10px] text-red-400/80 text-right leading-relaxed">{r.error}</span>
+                                      <span className="text-[10px] text-danger/80 text-right leading-relaxed">{r.error}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -1454,7 +1454,7 @@ const AdminPage = () => {
             </p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteConfirm(null)} className={`flex-1 ${btnSecondary}`}>Cancel</button>
-              <button onClick={handleDeleteArticle} className="flex-1 py-2 px-4 bg-red-500/90 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors">Delete</button>
+              <button onClick={handleDeleteArticle} className="flex-1 py-2 px-4 bg-danger/90 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors">Delete</button>
             </div>
           </div>
         </div>

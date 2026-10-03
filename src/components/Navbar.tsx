@@ -1,57 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, LogOut, Menu, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { searchAutocomplete } from '../services/search/searchService';
 import type { ArticleAutocompleteResponse } from '../services/search/searchService';
-
-/* ------------------------------------------------------------------ */
-/*  Mobile nav items (replaces the removed MobileBottomNav)           */
-/* ------------------------------------------------------------------ */
-
-const mobileNavItems = [
-  {
-    id: 'home',
-    label: '홈',
-    path: '/',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
-  },
-  {
-    id: 'ports',
-    label: 'Ports',
-    path: '/ports',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
-  },
-  {
-    id: 'llm-rankings',
-    label: 'LLM 랭킹',
-    path: '/llm-rankings',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
-
-  {
-    id: 'mypage',
-    label: '마이페이지',
-    path: '/mypage',
-    authPath: '/login',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-  },
-];
+import { getCategoryInfo } from '../types';
+import Wordmark from './Wordmark';
+import { navItems, isNavItemActive } from './navItems';
 
 export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -66,12 +21,15 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Close mobile menu on route change
+  // Close menus on route change
   useEffect(() => {
     setShowMobileMenu(false);
+    setShowUserMenu(false);
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -79,19 +37,43 @@ export default function Navbar() {
     setShowUserMenu(false);
   };
 
-  // Close autocomplete and mobile menu when clicking outside
+  // Close autocomplete and menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (searchRef.current && !searchRef.current.contains(target)) {
         setShowAutocomplete(false);
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setShowUserMenu(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(target)) {
         setShowMobileMenu(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // "/" focuses search, Escape closes open menus
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowAutocomplete(false);
+        setShowUserMenu(false);
+        setShowMobileMenu(false);
+        return;
+      }
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+      if (!searchInputRef.current || searchInputRef.current.offsetParent === null) return;
+      event.preventDefault();
+      searchInputRef.current.focus();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Debounced autocomplete search
@@ -134,6 +116,7 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim().length >= 2) {
       setShowAutocomplete(false);
+      setShowMobileMenu(false);
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -149,112 +132,97 @@ export default function Navbar() {
     navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
-  const getCategoryBadgeColor = (category: string) => {
-    const colors: Record<string, string> = {
-      AI_LLM: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-      DEVOPS_SRE: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      BACKEND: 'bg-green-500/10 text-green-400 border-green-500/20',
-      FRONTEND: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-      DATABASE: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-      INFRA_CLOUD: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-      MOBILE: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-      SECURITY: 'bg-red-500/10 text-red-400 border-red-500/20',
-      BLOCKCHAIN: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-      DATA_SCIENCE: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-      ARCHITECTURE: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-      OTHER: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    };
-    return colors[category] || colors.OTHER;
-  };
+  const userInitial = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
   return (
-    <div ref={mobileMenuRef} className="relative">
+    // Sticky lives on the wrapper: a sticky child of an equally tall parent never sticks
+    <div ref={mobileMenuRef} className="sticky top-0 z-50">
       <nav
-        className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 sticky top-0 z-50"
+        className="relative bg-surface/85 backdrop-blur-xl border-b border-surface-border"
         style={{
           WebkitTransform: 'translate3d(0,0,0)',
           transform: 'translate3d(0,0,0)',
         }}
       >
-        <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="px-4 md:px-6">
+          <div className="flex items-center justify-between h-16 gap-4">
             {/* Logo and Search */}
-            <div className="flex items-center gap-6">
-              <Link
-                to="/"
-                className="flex items-center gap-1 group"
-              >
-                <span className="text-xl font-semibold text-text-primary tracking-tight">
-                  devport
-                </span>
-                <span className="text-accent text-xl font-semibold">.</span>
+            <div className="flex items-center gap-6 min-w-0">
+              <Link to="/" className="flex items-center rounded" aria-label="devport 홈">
+                <Wordmark />
               </Link>
 
               {/* Search Bar – desktop only */}
               <div className="hidden md:flex items-center">
                 <div ref={searchRef} className="relative">
-                  <form onSubmit={handleSearchSubmit}>
-                    <svg
+                  <form onSubmit={handleSearchSubmit} role="search">
+                    <Search
                       className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
                     <input
+                      ref={searchInputRef}
                       type="text"
-                      placeholder="검색..."
+                      placeholder="아티클 검색"
+                      aria-label="아티클 검색"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                      onFocus={() => suggestions.length > 0 && setShowAutocomplete(true)}
+                      className="w-72 h-9 pl-9 pr-10 bg-surface-sunken border border-surface-border rounded text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-colors"
                     />
+                    <kbd className="kbd absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">/</kbd>
                   </form>
 
                   {/* Autocomplete Dropdown */}
                   {showAutocomplete && (
-                    <div className="absolute top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+                    <div className="absolute top-full mt-2 w-[26rem] panel shadow-overlay overflow-hidden z-50 animate-fade-in">
+                      <div className="flex items-center justify-between px-4 py-2 border-b border-surface-border">
+                        <span className="label-mono">검색 결과</span>
+                        {!isSearching && (
+                          <span className="font-mono text-[11px] text-text-muted tabular-nums">
+                            {totalMatches.toLocaleString()}건
+                          </span>
+                        )}
+                      </div>
                       {isSearching ? (
-                        <div className="p-4 text-center">
-                          <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-accent"></div>
+                        <div className="p-4 flex justify-center">
+                          <div className="w-5 h-5 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
                         </div>
                       ) : suggestions.length > 0 ? (
                         <>
-                          <div className="max-h-96 overflow-y-auto">
-                            {suggestions.map((suggestion) => (
-                              <button
-                                key={suggestion.externalId}
-                                onClick={() => handleSuggestionClick(suggestion.externalId)}
-                                className="w-full px-4 py-3 hover:bg-surface-hover transition-colors text-left border-b border-surface-border last:border-b-0"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="flex-1 min-w-0">
+                          <ul className="max-h-96 overflow-y-auto scrollbar-minimal">
+                            {suggestions.map((suggestion) => {
+                              const category = getCategoryInfo(suggestion.category);
+                              return (
+                                <li key={suggestion.externalId}>
+                                  <button
+                                    onClick={() => handleSuggestionClick(suggestion.externalId)}
+                                    className="w-full px-4 py-3 hover:bg-surface-hover transition-colors text-left border-b border-surface-border/60"
+                                  >
                                     <p className="text-sm text-text-primary font-medium truncate">
                                       {suggestion.summaryKoTitle}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span
-                                        className={`text-xs px-2 py-0.5 rounded border ${getCategoryBadgeColor(
-                                          suggestion.category
-                                        )}`}
-                                      >
-                                        {suggestion.category.replace(/_/g, ' ')}
+                                    <div className="flex items-center gap-2 mt-1 font-mono text-[11px] uppercase tracking-[0.04em] text-text-muted min-w-0">
+                                      <span className={`inline-flex items-center gap-1.5 shrink-0 ${category.text}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${category.dot}`} />
+                                        {category.label}
                                       </span>
-                                      <span className="text-xs text-text-muted">
-                                        {suggestion.source}
-                                      </span>
+                                      <span className="text-surface-border-strong">/</span>
+                                      <span className="truncate">{suggestion.source}</span>
                                     </div>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
                           {totalMatches > suggestions.length && (
                             <button
                               onClick={handleViewAllResults}
-                              className="w-full px-4 py-3 text-sm text-accent hover:text-accent-light bg-surface-hover hover:bg-surface-border transition-colors font-medium"
+                              className="w-full flex items-center justify-between px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-accent hover:bg-surface-hover transition-colors"
                             >
-                              모든 결과 보기 ({totalMatches.toLocaleString()}개)
+                              <span>모든 결과 보기</span>
+                              <span className="tabular-nums">{totalMatches.toLocaleString()} →</span>
                             </button>
                           )}
                         </>
@@ -272,88 +240,78 @@ export default function Navbar() {
             {/* Right side actions */}
             <div className="flex items-center gap-2">
               {isAuthenticated ? (
-                <div className="relative">
+                <div ref={userMenuRef} className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                    aria-expanded={showUserMenu}
+                    aria-haspopup="menu"
+                    className="flex items-center gap-2 h-9 pl-1 pr-2 rounded hover:bg-surface-hover transition-colors"
                   >
-                    <img
-                      src={user?.profileImageUrl || 'https://via.placeholder.com/40'}
-                      alt={user?.name || 'User'}
-                      className="w-8 h-8 rounded-full ring-1 ring-surface-border"
-                    />
-                    <span className="hidden md:block text-sm text-text-secondary">
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt=""
+                        className="w-7 h-7 rounded-full ring-1 ring-surface-border-strong object-cover"
+                      />
+                    ) : (
+                      <span className="w-7 h-7 rounded-full bg-surface-hover ring-1 ring-surface-border-strong flex items-center justify-center font-mono text-xs text-text-secondary">
+                        {userInitial}
+                      </span>
+                    )}
+                    <span className="hidden md:block text-sm text-text-secondary max-w-[10rem] truncate">
                       {user?.name}
                     </span>
-                    <svg
+                    <ChevronDown
                       className={`w-4 h-4 text-text-muted transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                    </svg>
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
                   </button>
 
                   {/* User Dropdown Menu */}
                   {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-surface-card rounded-xl shadow-soft border border-surface-border py-1 animate-fade-in">
+                    <div role="menu" className="absolute right-0 mt-2 w-60 panel shadow-overlay py-1 animate-fade-in">
                       <div className="px-4 py-3 border-b border-surface-border">
                         <p className="text-sm font-medium text-text-primary truncate">{user?.name}</p>
-                        <p className="text-xs text-text-muted truncate mt-0.5">{user?.email}</p>
+                        <p className="font-mono text-[11px] text-text-muted truncate mt-0.5">{user?.email}</p>
                       </div>
                       <Link
                         to="/mypage"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                        role="menuitem"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                        <UserRound className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
                         마이페이지
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-surface-hover transition-colors"
+                        role="menuitem"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <LogOut className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />
                         로그아웃
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <>
-                  <button className="hidden md:block text-sm text-text-muted hover:text-text-secondary transition-colors">
-                    구독하기
-                  </button>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="px-4 py-2 text-sm font-medium bg-accent hover:bg-accent-light text-white rounded-lg transition-colors"
-                  >
-                    로그인
-                  </button>
-                </>
+                <button onClick={() => navigate('/login')} className="btn btn-primary btn-sm">
+                  로그인
+                </button>
               )}
 
-              {/* Mobile menu toggle – visible only on mobile */}
+              {/* Mobile menu toggle – visible only below lg */}
               <button
                 onClick={() => setShowMobileMenu(prev => !prev)}
-                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
-                aria-label="메뉴"
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                aria-label={showMobileMenu ? '메뉴 닫기' : '메뉴 열기'}
+                aria-expanded={showMobileMenu}
               >
                 {showMobileMenu ? (
-                  /* X icon when open */
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5" strokeWidth={1.75} aria-hidden="true" />
                 ) : (
-                  /* Hamburger icon when closed */
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                  <Menu className="w-5 h-5" strokeWidth={1.75} aria-hidden="true" />
                 )}
               </button>
             </div>
@@ -363,29 +321,54 @@ export default function Navbar() {
 
       {/* Mobile slide-down menu */}
       {showMobileMenu && (
-        <div className="lg:hidden absolute top-full left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 animate-fade-in"
+        <div className="lg:hidden absolute top-full left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-border shadow-overlay animate-fade-in"
           style={{ WebkitTransform: 'translate3d(0,0,0)', transform: 'translate3d(0,0,0)' }}
         >
-          <div className="px-4 py-3 space-y-1">
-            {mobileNavItems.map((item) => {
-              const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.id}
-                  to={linkPath}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
-                    ? 'text-accent bg-accent/10'
-                    : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
-                    }`}
-                >
-                  <span className={`transition-colors ${isActive ? 'text-accent' : ''}`}>
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="px-4 py-4 space-y-4">
+            {/* Search – mobile only (desktop has it in the bar) */}
+            <form onSubmit={handleSearchSubmit} role="search" className="relative md:hidden">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                enterKeyHint="search"
+                placeholder="아티클 검색"
+                aria-label="아티클 검색"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input pl-9"
+              />
+            </form>
+
+            <div>
+              <p className="label-mono px-3 mb-2">메뉴</p>
+              <nav className="space-y-0.5" aria-label="모바일 메뉴">
+                {navItems.map((item) => {
+                  const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
+                  const isActive = isNavItemActive(item, location.pathname);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.id}
+                      to={linkPath}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`relative flex items-center gap-3 px-3 py-3 rounded text-sm font-medium transition-colors ${isActive
+                        ? 'text-text-primary bg-surface-hover'
+                        : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+                        }`}
+                    >
+                      {isActive && <span className="absolute left-0 top-2 bottom-2 w-0.5 bg-accent" aria-hidden="true" />}
+                      <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-accent' : ''}`} strokeWidth={1.75} aria-hidden="true" />
+                      <span className="flex-1">{item.label}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-muted">{item.hint}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
           </div>
         </div>
       )}

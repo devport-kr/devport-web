@@ -5,6 +5,7 @@ import mermaid from 'mermaid';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy } from 'lucide-react';
+import { monoFont } from '../../lib/theme';
 
 interface WikiMarkdownRendererProps {
   content: string;
@@ -63,35 +64,35 @@ mermaid.initialize({
   securityLevel: 'antiscript',
   suppressErrorRendering: true,
   theme: 'dark',
-  fontFamily: 'General Sans, sans-serif',
+  fontFamily: '"IBM Plex Sans KR", sans-serif',
   flowchart: {
     useMaxWidth: false,
     htmlLabels: true,
   },
   themeVariables: {
     darkMode: true,
-    background: '#080f1c',
-    primaryColor: '#101c33',
-    primaryTextColor: '#ffffff',
-    primaryBorderColor: '#5a759f',
+    background: '#060c14',
+    primaryColor: '#101b29',
+    primaryTextColor: '#e6edf5',
+    primaryBorderColor: '#587496',
     secondaryColor: '#14243d',
-    secondaryTextColor: '#ffffff',
+    secondaryTextColor: '#e6edf5',
     secondaryBorderColor: '#4d709d',
     tertiaryColor: '#0f1d31',
-    tertiaryTextColor: '#ffffff',
+    tertiaryTextColor: '#e6edf5',
     tertiaryBorderColor: '#43608a',
-    lineColor: '#5c7698',
+    lineColor: '#587496',
     clusterBkg: '#0d1624',
     clusterBorder: '#405c88',
     edgeLabelBackground: '#0a1220',
     noteBkgColor: '#101f38',
-    noteTextColor: '#ffffff',
+    noteTextColor: '#e6edf5',
     noteBorderColor: '#4d6b96',
     actorBkg: '#101f38',
     actorBorder: '#4d6b96',
-    actorTextColor: '#ffffff',
-    sequenceTextColor: '#ffffff',
-    sequenceNumberColor: '#ffffff',
+    actorTextColor: '#e6edf5',
+    sequenceTextColor: '#e6edf5',
+    sequenceNumberColor: '#e6edf5',
     fontSize: '16px',
   },
 });
@@ -176,19 +177,19 @@ function sanitizeMermaidSvgColors(rawSvg: string): string {
     const doc = parser.parseFromString(rawSvg, 'image/svg+xml');
     if (doc.querySelector('parsererror')) {
       return rawSvg
-        .replace(/(fill=")(?!none|url\()#?[0-9a-fA-F]{3,8}(")/g, '$1#101c33$2')
-        .replace(/(stroke=")(?!none|url\()#?[0-9a-fA-F]{3,8}(")/g, '$1#5c7698$2')
-        .replace(/(fill:\s*)#?[0-9a-fA-F]{3,8}/g, '$1#101c33')
-        .replace(/(stroke:\s*)#?[0-9a-fA-F]{3,8}/g, '$1#5c7698');
+        .replace(/(fill=")(?!none|url\()#?[0-9a-fA-F]{3,8}(")/g, '$1#101b29$2')
+        .replace(/(stroke=")(?!none|url\()#?[0-9a-fA-F]{3,8}(")/g, '$1#587496$2')
+        .replace(/(fill:\s*)#?[0-9a-fA-F]{3,8}/g, '$1#101b29')
+        .replace(/(stroke:\s*)#?[0-9a-fA-F]{3,8}/g, '$1#587496');
     }
 
     const svg = doc.querySelector('svg');
     if (!svg) return rawSvg;
 
-    const bg = '#080f1c';
-    const nodeFill = '#101c33';
-    const nodeStroke = '#5c7698';
-    const textColor = '#ffffff';
+    const bg = '#060c14';
+    const nodeFill = '#101b29';
+    const nodeStroke = '#587496';
+    const textColor = '#e6edf5';
 
     svg.querySelectorAll('*').forEach((el) => {
       const tag = el.tagName.toLowerCase();
@@ -384,7 +385,7 @@ function MermaidModal({ svg, onClose }: { svg: string; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative max-w-[92vw] max-h-[88vh] overflow-auto rounded-xl border border-surface-border bg-[#080f1c] p-6 shadow-2xl"
+        className="relative max-w-[92vw] max-h-[88vh] overflow-auto rounded-3xl border border-surface-border bg-surface-sunken p-6 shadow-overlay"
         onClick={e => e.stopPropagation()}
       >
         <button
@@ -518,16 +519,16 @@ function WikiPreBlock({ children }: PreComponentProps) {
     }
 
     return (
-      <div className="my-4 rounded-lg border border-surface-border bg-[#1E1E1E] overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-surface-border/50 select-none">
-          <span className="text-xs font-mono text-gray-400">{language || 'text'}</span>
+      <div className="my-4 rounded border border-surface-border bg-surface-sunken overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 bg-surface-elevated border-b border-surface-border select-none">
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted">{language || 'text'}</span>
           <button
             onClick={() => handleCopy(codeText)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            className="flex items-center gap-1.5 font-mono text-[11px] text-text-muted hover:text-text-primary transition-colors"
             title="Copy code"
             type="button"
           >
-            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
             <span>{copied ? 'Copied!' : 'Copy'}</span>
           </button>
         </div>
@@ -539,7 +540,7 @@ function WikiPreBlock({ children }: PreComponentProps) {
               margin: 0,
               padding: '1rem',
               background: 'transparent',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              fontFamily: monoFont,
             }}
           >
             {codeText}

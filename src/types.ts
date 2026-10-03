@@ -41,20 +41,24 @@ export interface Article {
   };
 }
 
-export const categoryConfig: Record<Category, { label: string; color: string }> = {
-  AI_LLM: { label: 'AI/LLM', color: 'bg-purple-600' },
-  DEVOPS_SRE: { label: 'DevOps/SRE', color: 'bg-cyan-600' },
-  INFRA_CLOUD: { label: 'Infra/Cloud', color: 'bg-amber-600' },
-  DATABASE: { label: 'Database', color: 'bg-emerald-600' },
-  BLOCKCHAIN: { label: 'Blockchain', color: 'bg-yellow-600' },
-  SECURITY: { label: 'Security', color: 'bg-red-600' },
-  DATA_SCIENCE: { label: 'Data Science', color: 'bg-blue-600' },
-  ARCHITECTURE: { label: 'Architecture', color: 'bg-indigo-600' },
-  MOBILE: { label: 'Mobile', color: 'bg-pink-600' },
-  FRONTEND: { label: 'Frontend', color: 'bg-teal-600' },
-  BACKEND: { label: 'Backend', color: 'bg-green-600' },
-  OTHER: { label: '기타', color: 'bg-gray-600' },
+// Single source of truth for category styling. `dot` is a small marker, `text` is the label color.
+export const categoryConfig: Record<Category, { label: string; dot: string; text: string }> = {
+  AI_LLM: { label: 'AI/LLM', dot: 'bg-cat-ai', text: 'text-cat-ai' },
+  DEVOPS_SRE: { label: 'DevOps/SRE', dot: 'bg-cat-devops', text: 'text-cat-devops' },
+  INFRA_CLOUD: { label: 'Infra/Cloud', dot: 'bg-cat-cloud', text: 'text-cat-cloud' },
+  DATABASE: { label: 'Database', dot: 'bg-cat-db', text: 'text-cat-db' },
+  BLOCKCHAIN: { label: 'Blockchain', dot: 'bg-cat-chain', text: 'text-cat-chain' },
+  SECURITY: { label: 'Security', dot: 'bg-cat-security', text: 'text-cat-security' },
+  DATA_SCIENCE: { label: 'Data Science', dot: 'bg-cat-data', text: 'text-cat-data' },
+  ARCHITECTURE: { label: 'Architecture', dot: 'bg-cat-arch', text: 'text-cat-arch' },
+  MOBILE: { label: 'Mobile', dot: 'bg-cat-mobile', text: 'text-cat-mobile' },
+  FRONTEND: { label: 'Frontend', dot: 'bg-cat-frontend', text: 'text-cat-frontend' },
+  BACKEND: { label: 'Backend', dot: 'bg-cat-backend', text: 'text-cat-backend' },
+  OTHER: { label: '기타', dot: 'bg-cat-other', text: 'text-cat-other' },
 };
+
+export const getCategoryInfo = (category: string) =>
+  categoryConfig[category as Category] ?? categoryConfig.OTHER;
 
 export type BenchmarkType =
   | 'TERMINAL_BENCH_HARD'

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Article } from '../types';
-import { categoryConfig } from '../types';
+import { getCategoryInfo } from '../types';
 import BookIcon from './icons/BookIcon';
 import FlameIcon from './icons/FlameIcon';
 import BookmarkButton from './BookmarkButton';
@@ -41,11 +41,12 @@ const stripMarkdown = (markdown: string) => {
 };
 
 export default function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
-  const categoryInfo = categoryConfig[article.category];
+  const categoryInfo = getCategoryInfo(article.category);
   const sourceLabel = (article.source || '').trim() || 'Unknown';
   const summaryText = article.summaryKoBody
     ? stripMarkdown(article.summaryKoBody)
     : article.titleEn;
+  const readTime = article.metadata?.readTime?.replace(' read', '');
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -58,29 +59,34 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
     return `${days}일 전`;
   };
 
+  const categoryLabel = (
+    <span className={`inline-flex items-center gap-1.5 font-semibold ${categoryInfo.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${categoryInfo.dot}`} aria-hidden="true" />
+      {categoryInfo.label}
+    </span>
+  );
+
   if (variant === 'compact') {
     return (
       <Link
         to={`/articles/${article.externalId}`}
-        className="block bg-surface-card rounded-xl p-5 border border-surface-border hover:border-surface-border/80 hover:bg-surface-hover transition-all group"
+        className="block panel p-5 hover:border-surface-border-strong hover:bg-surface-hover transition-colors group"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xs font-medium uppercase tracking-wider text-text-muted">
-            {categoryInfo.label}
-          </span>
-          <span className="text-text-muted">·</span>
-          <span className="text-2xs text-text-muted">{sourceLabel}</span>
+        <div className="flex items-center gap-2 mb-3 font-mono text-[11px] uppercase tracking-[0.04em] text-text-muted min-w-0">
+          {categoryLabel}
+          <span className="text-surface-border-strong">/</span>
+          <span className="truncate">{sourceLabel}</span>
         </div>
 
         <h3 className="text-base font-medium text-text-primary mb-3 line-clamp-2 group-hover:text-accent transition-colors">
           {article.summaryKoTitle}
         </h3>
 
-        <div className="flex items-center gap-3 text-xs text-text-muted">
-          {article.metadata?.readTime && (
+        <div className="flex items-center gap-3 font-mono text-[11px] text-text-muted">
+          {readTime && (
             <span className="flex items-center gap-1">
               <BookIcon className="w-3.5 h-3.5" />
-              {article.metadata.readTime.replace(' read', '')}
+              {readTime}
             </span>
           )}
           <span>{formatTimeAgo(article.createdAtSource)}</span>
@@ -90,25 +96,21 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
   }
 
   return (
-    <div className="block py-6 border-b border-surface-border hover:bg-surface-card/30 transition-all group -mx-4 px-4">
-      {/* Header */}
+    <article className="py-6 border-b border-dashed border-surface-border-strong group -mx-4 px-4 hover:bg-surface-card/40 transition-colors">
+      {/* Header: manifest line */}
       <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-accent">
-            {categoryInfo.label}
-          </span>
-          <span className="text-text-muted">·</span>
-          <span className="text-xs text-text-muted">
-            {sourceLabel}
-          </span>
-          <span className="text-text-muted">·</span>
-          <span className="text-xs text-text-muted">{formatTimeAgo(article.createdAtSource)}</span>
-          {article.metadata?.readTime && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.04em] text-text-muted min-w-0">
+          {categoryLabel}
+          <span className="text-surface-border-strong">/</span>
+          <span className="truncate max-w-[10rem]">{sourceLabel}</span>
+          <span className="text-surface-border-strong">/</span>
+          <time dateTime={article.createdAtSource}>{formatTimeAgo(article.createdAtSource)}</time>
+          {readTime && (
             <>
-              <span className="text-text-muted">·</span>
-              <span className="text-xs text-text-muted flex items-center gap-1">
+              <span className="text-surface-border-strong">/</span>
+              <span className="flex items-center gap-1">
                 <BookIcon className="w-3 h-3" />
-                {article.metadata.readTime.replace(' read', '')}
+                {readTime}
               </span>
             </>
           )}
@@ -116,46 +118,37 @@ export default function ArticleCard({ article, variant = 'default' }: ArticleCar
         <BookmarkButton articleId={article.externalId} size="sm" />
       </div>
 
-      <Link to={`/articles/${article.externalId}`}>
+      <Link to={`/articles/${article.externalId}`} className="block">
+        {/* Title */}
+        <h2 className="text-[17px] font-semibold text-text-primary mb-2 leading-snug tracking-[-0.01em] group-hover:text-accent transition-colors">
+          {article.summaryKoTitle}
+        </h2>
 
-      {/* Title */}
-      <h2 className="text-lg font-semibold text-text-primary mb-2 leading-snug group-hover:text-accent transition-colors">
-        {article.summaryKoTitle}
-      </h2>
+        {/* Summary or English title */}
+        <p className="text-sm text-text-secondary leading-relaxed mb-4 line-clamp-2">
+          {summaryText}
+        </p>
 
-      {/* Summary or English title */}
-      <p className="text-sm text-text-secondary mb-4 line-clamp-2">
-        {summaryText}
-      </p>
+        {/* Tags & Score */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-text-muted min-w-0">
+            {article.tags.slice(0, 3).map((tag) => (
+              <span key={tag} className="truncate">
+                <span className="text-surface-border-strong">#</span>
+                {tag}
+              </span>
+            ))}
+            {article.tags.length > 3 && (
+              <span>+{article.tags.length - 3}</span>
+            )}
+          </div>
 
-      {/* Tags & Stats */}
-      <div className="flex items-center justify-between">
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {article.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="text-xs text-text-muted px-2 py-0.5 rounded bg-surface-hover"
-            >
-              {tag}
-            </span>
-          ))}
-          {article.tags.length > 3 && (
-            <span className="text-xs text-text-muted px-2 py-0.5">
-              +{article.tags.length - 3}
-            </span>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-text-muted">
-          <span className="flex items-center gap-1 text-accent">
+          <span className="shrink-0 flex items-center gap-1 font-mono text-xs font-semibold text-signal tabular-nums" title="트렌드 점수">
             <FlameIcon className="w-3.5 h-3.5" />
             {article.score.toLocaleString()}
           </span>
         </div>
-      </div>
       </Link>
-    </div>
+    </article>
   );
 }

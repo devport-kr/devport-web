@@ -191,7 +191,7 @@ export default function WikiDraftEditor({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-1.5 bg-accent hover:bg-accent-light text-white text-xs font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50 transition-all active:scale-[0.97]"
+            className="px-4 py-1.5 bg-action hover:bg-action-hover text-white text-xs font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50 transition-all active:scale-[0.97]"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>
@@ -223,8 +223,8 @@ export default function WikiDraftEditor({
 
       {/* Error bar */}
       {error && (
-        <div className="px-4 py-2 bg-red-500/8 border-b border-red-500/20 shrink-0">
-          <p className="text-xs text-red-400 font-mono">{error}</p>
+        <div className="px-4 py-2 bg-danger/10 border-b border-danger/20 shrink-0">
+          <p className="text-xs text-danger font-mono">{error}</p>
         </div>
       )}
 

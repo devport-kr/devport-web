@@ -312,57 +312,41 @@ export default function MyPage() {
         </div>
 
         {/* Main Content */}
-        <main className="lg:ml-52 pt-8 pb-8 px-8">
+        <main className="lg:ml-52 pt-8 pb-8 px-4 sm:px-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-text-primary mb-2">마이페이지</h1>
-              <p className="text-text-muted">
+              <p className="label-mono">Account</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-[-0.01em] text-text-primary mb-2">마이페이지</h1>
+              <p className="text-sm text-text-muted">
                 {user?.name}님의 저장한 아티클과 읽은 기록을 확인하세요
               </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-8 border-b border-surface-border">
-              <button
-                onClick={() => setActiveTab('saved')}
-                className={`px-6 py-3 font-medium transition-colors relative ${
-                  activeTab === 'saved'
-                    ? 'text-accent'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                저장한 아티클
-                {activeTab === 'saved' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`px-6 py-3 font-medium transition-colors relative ${
-                  activeTab === 'history'
-                    ? 'text-accent'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                읽은 기록
-                {activeTab === 'history' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`px-6 py-3 font-medium transition-colors relative ${
-                  activeTab === 'profile'
-                    ? 'text-accent'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                프로필 관리
-                {activeTab === 'profile' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
-                )}
-              </button>
+            <div className="flex gap-1 mb-8 border-b border-surface-border overflow-x-auto scrollbar-hide" role="group" aria-label="마이페이지 메뉴">
+              {([
+                { id: 'saved', label: '저장한 아티클' },
+                { id: 'history', label: '읽은 기록' },
+                { id: 'profile', label: '프로필 관리' },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  aria-pressed={activeTab === tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'text-text-primary'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <span className="absolute -bottom-px left-4 right-4 h-0.5 bg-accent" aria-hidden="true" />
+                  )}
+                </button>
+              ))}
             </div>
 
             {/* Content */}
@@ -370,26 +354,26 @@ export default function MyPage() {
               <div className="space-y-6">
                 {/* Success Message */}
                 {profileSuccess && (
-                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                    <p className="text-sm text-green-400">{profileSuccess}</p>
+                  <div className="p-3.5 bg-success/10 border border-success/30 rounded">
+                    <p className="text-sm text-success">{profileSuccess}</p>
                   </div>
                 )}
 
                 {/* Error Message */}
                 {profileErrors.general && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-sm text-red-400">{profileErrors.general}</p>
+                  <div className="p-3.5 bg-danger/10 border border-danger/30 rounded">
+                    <p className="text-sm text-danger">{profileErrors.general}</p>
                   </div>
                 )}
 
                 {/* Profile Information */}
-                <div className="bg-surface-card border border-surface-border rounded-xl p-6">
+                <div className="panel p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-medium text-text-primary">계정 정보</h3>
+                    <h3 className="label-mono text-text-secondary">계정 정보</h3>
                     {!isEditingProfile && (
                       <button
                         onClick={() => setIsEditingProfile(true)}
-                        className="px-4 py-2 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg transition-colors"
+                        className="btn btn-secondary btn-sm"
                       >
                         수정
                       </button>
@@ -407,7 +391,7 @@ export default function MyPage() {
                             className="w-24 h-24 rounded-full object-cover border-2 border-surface-border"
                             onError={(e) => {
                               // Fallback to default avatar if image fails to load
-                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236366f1"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/%3E%3C/svg%3E';
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234a94ff"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/%3E%3C/svg%3E';
                             }}
                           />
                         ) : (
@@ -418,7 +402,7 @@ export default function MyPage() {
                           </div>
                         )}
                         {isEditingProfile && (
-                          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent rounded-full flex items-center justify-center border-2 border-surface-card">
+                          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-action rounded-full flex items-center justify-center border-2 border-surface-card">
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
@@ -435,20 +419,20 @@ export default function MyPage() {
                   <div className="space-y-4 mt-6">
                     {/* Username (readonly) */}
                     <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                      <label className="label-mono block mb-1.5">
                         아이디
                       </label>
                       <input
                         type="text"
                         value={user?.username || '소셜 로그인'}
                         disabled
-                        className="w-full px-4 py-2.5 bg-surface-elevated border border-surface-border rounded-xl text-text-muted cursor-not-allowed"
+                        className="input text-text-muted cursor-not-allowed"
                       />
                     </div>
 
                     {/* Auth Provider (readonly) */}
                     <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                      <label className="label-mono block mb-1.5">
                         로그인 방식
                       </label>
                       <input
@@ -463,13 +447,13 @@ export default function MyPage() {
                             : 'Naver'
                         }
                         disabled
-                        className="w-full px-4 py-2.5 bg-surface-elevated border border-surface-border rounded-xl text-text-muted cursor-not-allowed"
+                        className="input text-text-muted cursor-not-allowed"
                       />
                     </div>
 
                     {/* Name */}
                     <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                      <label className="label-mono block mb-1.5">
                         이름
                       </label>
                       <input
@@ -478,25 +462,21 @@ export default function MyPage() {
                         value={profileData.name}
                         onChange={handleProfileChange}
                         disabled={!isEditingProfile}
-                        className={`w-full px-4 py-2.5 ${
-                          isEditingProfile ? 'bg-surface-elevated' : 'bg-surface-elevated/50'
-                        } border border-surface-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors ${
-                          !isEditingProfile && 'cursor-not-allowed'
-                        }`}
+                        className={`input ${!isEditingProfile ? 'text-text-muted cursor-not-allowed' : ''}`}
                         placeholder="이름을 입력하세요"
                       />
                     </div>
 
                     {/* Email (Read-only) */}
                     <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-2">
+                      <label className="label-mono block mb-1.5">
                         이메일
                       </label>
                       <input
                         type="email"
                         value={user?.email || '미등록'}
                         disabled
-                        className="w-full px-4 py-2.5 bg-surface-elevated/50 border border-surface-border rounded-xl text-text-muted cursor-not-allowed"
+                        className="input text-text-muted cursor-not-allowed"
                       />
                       <p className="mt-1.5 text-xs text-text-muted">이메일은 변경할 수 없습니다.</p>
                     </div>
@@ -504,7 +484,7 @@ export default function MyPage() {
                     {/* Profile Image URL (only show when editing) */}
                     {isEditingProfile && (
                       <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                        <label className="label-mono block mb-1.5">
                           프로필 이미지 URL
                         </label>
                         <input
@@ -512,7 +492,7 @@ export default function MyPage() {
                           name="profileImageUrl"
                           value={profileData.profileImageUrl}
                           onChange={handleProfileChange}
-                          className="w-full px-4 py-2.5 bg-surface-elevated border border-surface-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+                          className="input"
                           placeholder="https://example.com/avatar.jpg"
                         />
                         <p className="mt-1.5 text-xs text-text-muted">
@@ -527,7 +507,7 @@ export default function MyPage() {
                         <button
                           onClick={handleSaveProfile}
                           disabled={isSavingProfile}
-                          className="flex-1 px-5 py-2.5 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="btn btn-primary flex-1"
                         >
                           {isSavingProfile ? '저장 중...' : '저장'}
                         </button>
@@ -541,7 +521,7 @@ export default function MyPage() {
                             setProfileErrors({});
                           }}
                           disabled={isSavingProfile}
-                          className="px-5 py-2.5 bg-surface-elevated hover:bg-surface-elevated/80 text-text-secondary text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="btn btn-secondary"
                         >
                           취소
                         </button>
@@ -552,12 +532,12 @@ export default function MyPage() {
 
                 {/* Password Change (Only for LOCAL users) */}
                 {user?.authProvider === 'local' && (
-                  <div className="bg-surface-card border border-surface-border rounded-xl p-6">
-                    <h3 className="text-lg font-medium text-text-primary mb-6">비밀번호 변경</h3>
+                  <div className="panel p-6">
+                    <h3 className="label-mono text-text-secondary mb-6">비밀번호 변경</h3>
 
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                        <label className="label-mono block mb-1.5">
                           현재 비밀번호
                         </label>
                         <input
@@ -565,18 +545,18 @@ export default function MyPage() {
                           name="currentPassword"
                           value={passwordData.currentPassword}
                           onChange={handlePasswordChange}
-                          className={`w-full px-4 py-2.5 bg-surface-elevated border ${
-                            profileErrors.currentPassword ? 'border-red-500' : 'border-surface-border'
-                          } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`}
+                          className={`input ${
+                            profileErrors.currentPassword ? 'border-danger' : 'border-surface-border'
+                          }`}
                           placeholder="현재 비밀번호를 입력하세요"
                         />
                         {profileErrors.currentPassword && (
-                          <p className="mt-1.5 text-sm text-red-400">{profileErrors.currentPassword}</p>
+                          <p className="mt-1.5 text-sm text-danger">{profileErrors.currentPassword}</p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                        <label className="label-mono block mb-1.5">
                           새 비밀번호
                         </label>
                         <input
@@ -584,24 +564,24 @@ export default function MyPage() {
                           name="newPassword"
                           value={passwordData.newPassword}
                           onChange={handlePasswordChange}
-                          className={`w-full px-4 py-2.5 bg-surface-elevated border ${
+                          className={`input ${
                             profileErrors.newPassword
-                              ? 'border-red-500'
+                              ? 'border-danger'
                               : passwordData.newPassword && passwordValidation.minLength && passwordValidation.hasSpecialChar
-                              ? 'border-green-500'
+                              ? 'border-success'
                               : 'border-surface-border'
-                          } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`}
+                          }`}
                           placeholder="최소 8자, 특수문자 1개 이상"
                         />
                         {profileErrors.newPassword && (
-                          <p className="mt-1.5 text-sm text-red-400">{profileErrors.newPassword}</p>
+                          <p className="mt-1.5 text-sm text-danger">{profileErrors.newPassword}</p>
                         )}
                         {/* Password Requirements */}
                         {passwordData.newPassword && !profileErrors.newPassword && (
                           <div className="mt-2 space-y-1">
                             <div className="flex items-center gap-2 text-xs">
                               {passwordValidation.minLength ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               ) : (
@@ -609,13 +589,13 @@ export default function MyPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               )}
-                              <span className={passwordValidation.minLength ? 'text-green-400' : 'text-text-muted'}>
+                              <span className={passwordValidation.minLength ? 'text-success' : 'text-text-muted'}>
                                 최소 8자 이상
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs">
                               {passwordValidation.hasSpecialChar ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               ) : (
@@ -623,7 +603,7 @@ export default function MyPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               )}
-                              <span className={passwordValidation.hasSpecialChar ? 'text-green-400' : 'text-text-muted'}>
+                              <span className={passwordValidation.hasSpecialChar ? 'text-success' : 'text-text-muted'}>
                                 특수문자 1개 이상 (!@#$%^&* 등)
                               </span>
                             </div>
@@ -632,7 +612,7 @@ export default function MyPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                        <label className="label-mono block mb-1.5">
                           새 비밀번호 확인
                         </label>
                         <div className="relative">
@@ -641,24 +621,24 @@ export default function MyPage() {
                             name="confirmPassword"
                             value={passwordData.confirmPassword}
                             onChange={handlePasswordChange}
-                            className={`w-full px-4 py-2.5 pr-12 bg-surface-elevated border ${
+                            className={`input pr-12 ${
                               profileErrors.confirmPassword
-                                ? 'border-red-500'
+                                ? 'border-danger'
                                 : passwordValidation.passwordsMatch && passwordData.confirmPassword
-                                ? 'border-green-500'
+                                ? 'border-success'
                                 : 'border-surface-border'
-                            } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`}
+                            }`}
                             placeholder="새 비밀번호를 다시 입력하세요"
                           />
                           {/* Password Match Icon */}
                           {passwordData.confirmPassword && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
                               {passwordValidation.passwordsMatch ? (
-                                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               ) : (
-                                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               )}
@@ -666,20 +646,20 @@ export default function MyPage() {
                           )}
                         </div>
                         {profileErrors.confirmPassword && (
-                          <p className="mt-1.5 text-sm text-red-400">{profileErrors.confirmPassword}</p>
+                          <p className="mt-1.5 text-sm text-danger">{profileErrors.confirmPassword}</p>
                         )}
                         {!profileErrors.confirmPassword && passwordData.confirmPassword && passwordValidation.passwordsMatch && (
-                          <p className="mt-1.5 text-sm text-green-400">비밀번호가 일치합니다.</p>
+                          <p className="mt-1.5 text-sm text-success">비밀번호가 일치합니다.</p>
                         )}
                         {!profileErrors.confirmPassword && passwordData.confirmPassword && !passwordValidation.passwordsMatch && (
-                          <p className="mt-1.5 text-sm text-red-400">비밀번호가 일치하지 않습니다.</p>
+                          <p className="mt-1.5 text-sm text-danger">비밀번호가 일치하지 않습니다.</p>
                         )}
                       </div>
 
                       <button
                         type="submit"
                         disabled={isSavingProfile}
-                        className="w-full px-5 py-2.5 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                        className="btn btn-primary w-full mt-2"
                       >
                         {isSavingProfile ? '변경 중...' : '비밀번호 변경'}
                       </button>
@@ -693,7 +673,7 @@ export default function MyPage() {
               </div>
             ) : currentData.length === 0 ? (
               <div className="text-center py-20">
-                <div className="w-16 h-16 rounded-full bg-surface-elevated flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 rounded border border-dashed border-surface-border-strong flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {activeTab === 'saved' ? (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -705,21 +685,21 @@ export default function MyPage() {
                 <p className="text-text-muted">{emptyMessage}</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {currentData.map((item) => (
                   <div
                     key={item.articleId}
-                    className="bg-surface-card border border-surface-border rounded-xl p-6 hover:border-accent/30 transition-colors group"
+                    className="panel p-5 hover:border-surface-border-strong hover:bg-surface-hover/50 transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         {/* Source badge */}
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs font-medium text-accent capitalize">
+                          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.04em] text-accent">
                             {item.source}
                           </span>
-                          <span className="text-text-muted">·</span>
-                          <span className="text-xs text-text-muted">
+                          <span className="text-surface-border-strong">/</span>
+                          <span className="font-mono text-[11px] text-text-muted">
                             {formatTimeAgo('savedAt' in item ? item.savedAt : item.readAt)}
                           </span>
                         </div>
@@ -733,7 +713,7 @@ export default function MyPage() {
                             navigate(`/article/${item.articleId}`);
                           }}
                         >
-                          <h3 className="text-lg font-medium text-text-primary group-hover:text-accent transition-colors line-clamp-2">
+                          <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors line-clamp-2">
                             {item.summaryKoTitle}
                           </h3>
                         </a>
@@ -743,7 +723,7 @@ export default function MyPage() {
                       {activeTab === 'saved' && (
                         <button
                           onClick={() => handleUnsave(item.articleId)}
-                          className="flex-shrink-0 p-2 text-text-muted hover:text-red-500 transition-colors"
+                          className="flex-shrink-0 p-2 text-text-muted hover:text-danger transition-colors"
                           title="저장 취소"
                         >
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -768,7 +748,7 @@ export default function MyPage() {
                 {/* End Message */}
                 {!hasMore && currentData.length > 0 && (
                   <div className="text-center py-8">
-                    <p className="text-sm text-text-muted">모든 항목을 확인했습니다</p>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">모든 항목을 확인했습니다</p>
                   </div>
                 )}
               </div>

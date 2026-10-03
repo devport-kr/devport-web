@@ -108,7 +108,7 @@ const DatabaseWithRestApi = ({
         <g stroke="currentColor" fill="none" strokeWidth="0.4">
           {/* First Button - Codes */}
           <g>
-            <rect fill="#18181B" x="14" y="5" width="34" height="10" rx="5"></rect>
+            <rect className="fill-surface-card" x="14" y="5" width="34" height="10" rx="5"></rect>
             <CodeIcon x="18" y="7.5"></CodeIcon>
             <text x="28" y="12" fill="white" stroke="none" fontSize="5" fontWeight="500">
               {badgeTexts?.first || "Codes"}
@@ -116,7 +116,7 @@ const DatabaseWithRestApi = ({
           </g>
           {/* Second Button - Docs */}
           <g>
-            <rect fill="#18181B" x="60" y="5" width="34" height="10" rx="5"></rect>
+            <rect className="fill-surface-card" x="60" y="5" width="34" height="10" rx="5"></rect>
             <DocIcon x="64" y="7.5"></DocIcon>
             <text x="74" y="12" fill="white" stroke="none" fontSize="5" fontWeight="500">
               {badgeTexts?.second || "Docs"}
@@ -124,7 +124,7 @@ const DatabaseWithRestApi = ({
           </g>
           {/* Third Button - Issues */}
           <g>
-            <rect fill="#18181B" x="108" y="5" width="34" height="10" rx="5"></rect>
+            <rect className="fill-surface-card" x="108" y="5" width="34" height="10" rx="5"></rect>
             <IssueIcon x="112" y="7.5"></IssueIcon>
             <text x="122" y="12" fill="white" stroke="none" fontSize="5" fontWeight="500">
               {badgeTexts?.third || "Issues"}
@@ -132,7 +132,7 @@ const DatabaseWithRestApi = ({
           </g>
           {/* Fourth Button - Releases */}
           <g>
-            <rect fill="#18181B" x="150" y="5" width="40" height="10" rx="5"></rect>
+            <rect className="fill-surface-card" x="150" y="5" width="40" height="10" rx="5"></rect>
             <ReleaseIcon x="154" y="7.5"></ReleaseIcon>
             <text x="165" y="12" fill="white" stroke="none" fontSize="5" fontWeight="500">
               {badgeTexts?.fourth || "Releases"}
@@ -174,7 +174,7 @@ const DatabaseWithRestApi = ({
           </mask>
           {/* Blue Grad */}
           <radialGradient id="db-blue-grad" fx="1">
-            <stop offset="0%" stopColor={lightColor || "#00A6F5"} />
+            <stop offset="0%" stopColor={lightColor || "#4a94ff"} />
             <stop offset="100%" stopColor="transparent" />
           </radialGradient>
         </defs>
@@ -182,32 +182,32 @@ const DatabaseWithRestApi = ({
       {/* Main Box */}
       <div className="absolute bottom-14 flex w-full flex-col items-center">
         {/* box title */}
-        <div className="absolute -top-3 z-20 flex items-center justify-center rounded-lg border border-surface-border bg-[#101112] px-2 py-1 sm:-top-4 sm:py-1.5">
+        <div className="absolute -top-3 z-20 flex items-center justify-center rounded-lg border border-surface-border bg-surface-sunken px-2 py-1 sm:-top-4 sm:py-1.5">
           <SparklesIcon className="size-4 text-text-secondary" />
           <span className="ml-2 text-sm text-text-secondary">
             {title ? title : "Data exchange using a customized REST API"}
           </span>
         </div>
         {/* box outter circle */}
-        <div className="absolute -bottom-8 z-30 grid h-[60px] w-[60px] place-items-center rounded-full border border-surface-border bg-[#141516] font-semibold text-xs text-text-primary">
+        <div className="absolute -bottom-8 z-30 grid h-[60px] w-[60px] place-items-center rounded-full border border-surface-border bg-surface-card font-semibold text-xs text-text-primary">
           {circleText ? circleText : "SVG"}
         </div>
         {/* box content */}
         <div className="relative z-10 flex h-[200px] w-full items-center justify-center overflow-hidden rounded-lg border border-surface-border bg-transparent">
           {/* Badges */}
-          <div className="absolute bottom-8 left-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm border border-surface-border text-text-secondary flex items-center gap-2">
+          <div className="absolute bottom-8 left-10 z-10 h-8 rounded-full bg-surface-sunken px-4 text-sm border border-surface-border text-text-secondary flex items-center gap-2">
             <BotMessageSquare className="size-4" />
             <span>AI</span>
           </div>
-          <div className="absolute top-8 right-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
+          <div className="absolute top-8 right-10 z-10 h-8 rounded-full bg-surface-sunken px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <BookOpen className="size-4" />
             <span>분석</span>
           </div>
-          <div className="absolute top-8 left-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
+          <div className="absolute top-8 left-10 z-10 h-8 rounded-full bg-surface-sunken px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <TrendingUp className="size-4" />
             <span>탐색</span>
           </div>
-          <div className="absolute bottom-8 right-10 z-10 h-8 rounded-full bg-[#101112] px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
+          <div className="absolute bottom-8 right-10 z-10 h-8 rounded-full bg-surface-sunken px-4 text-sm flex border border-surface-border text-text-secondary items-center gap-2">
             <Trophy className="size-4" />
             <span>비교</span>
           </div>

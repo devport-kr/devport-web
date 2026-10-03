@@ -40,7 +40,7 @@ export default function LegalDocumentModal({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-surface-border bg-[#0f1419] shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface shadow-overlay"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-surface-border px-6 py-5">

@@ -230,12 +230,12 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
                         <p className="text-text-primary">
                           사용 가능한 대화를 모두 사용했습니다.<br />로그인을 해주세요.
                         </p>
-                        <Link to="/login" className="text-center px-4 py-2.5 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors font-medium">
+                        <Link to="/login" className="text-center px-4 py-2.5 bg-action text-white rounded-xl hover:bg-action-hover transition-colors font-medium">
                           로그인
                         </Link>
                       </div>
                     ) : (
-                      <div className="max-w-[90%] bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-start gap-2">
+                      <div className="max-w-[90%] bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-sm text-danger flex items-start gap-2">
                         <span>⚠</span><span>{msg.content}</span>
                       </div>
                     )}
@@ -332,7 +332,7 @@ function ProjectChat({ projectExternalId }: { projectExternalId: string }) {
             </button>
           ) : (
             <button type="button" onClick={() => handleSend()} disabled={!input.trim()}
-              className="p-3 rounded-xl bg-accent text-white hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0">
+              className="p-3 rounded-xl bg-action text-white hover:bg-action-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
               </svg>
@@ -533,10 +533,10 @@ function GlobalChat() {
                   {msg.content.includes('로그인') || msg.content.includes('1번만') || msg.content.includes('무료 질문') ? (
                     <div className="max-w-[90%] bg-surface-elevated border border-accent/20 rounded-xl px-4 py-3 text-sm flex flex-col gap-3">
                       <p className="text-text-primary">오늘 무료 질문을 모두 사용했습니다. 로그인하면 더 이용할 수 있어요.</p>
-                      <Link to="/login" className="text-center px-4 py-2.5 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors font-medium">로그인하기</Link>
+                      <Link to="/login" className="text-center px-4 py-2.5 bg-action text-white rounded-xl hover:bg-action-hover transition-colors font-medium">로그인하기</Link>
                     </div>
                   ) : (
-                    <div className="max-w-[90%] bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 flex items-start gap-2">
+                    <div className="max-w-[90%] bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-sm text-danger flex items-start gap-2">
                       <span>⚠</span><span>{msg.content}</span>
                     </div>
                   )}
@@ -628,7 +628,7 @@ function GlobalChat() {
             </button>
           ) : (
             <button type="button" onClick={() => handleSend()} disabled={!input.trim()}
-              className="p-3 rounded-xl bg-accent text-white hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0">
+              className="p-3 rounded-xl bg-action text-white hover:bg-action-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
               </svg>

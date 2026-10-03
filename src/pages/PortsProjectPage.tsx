@@ -25,7 +25,7 @@ import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiM
 const EVENT_BADGE: Record<string, { label: string; cls: string }> = {
   FEATURE: { label: 'feat', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   FIX: { label: 'fix', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  SECURITY: { label: 'sec', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  SECURITY: { label: 'sec', cls: 'bg-danger/10 text-danger border-danger/20' },
   BREAKING: { label: 'break', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
   PERF: { label: 'perf', cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   MISC: { label: 'misc', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
@@ -708,7 +708,7 @@ export default function PortsProjectPage() {
       {/* ─── Mobile Chat FAB ────────────────────────────────────── */}
       <button
         onClick={() => navigate(`/ports/chat/${encodeURIComponent(decodedProjectExternalId || '')}`)}
-        className="xl:hidden fixed right-4 z-[9990] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-white font-semibold text-sm shadow-lg animate-fab-pulse active:scale-95 transition-transform"
+        className="xl:hidden fixed right-4 z-[9990] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-action text-white font-semibold text-sm shadow-lg animate-fab-pulse active:scale-95 transition-transform"
         style={{
           bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
         }}

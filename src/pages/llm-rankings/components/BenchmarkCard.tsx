@@ -12,6 +12,7 @@ import type { LLMBenchmarkResponse } from '../../../services/llm/llmService';
 import type { BenchmarkLeaderboardState, ProviderTickProps } from '../types';
 import { toNumber, formatScore } from '../utils';
 import { getProviderInfo } from '../../../config/providerLogos';
+import { themeColors, monoFont, chartTooltipStyle, chartAxisTick } from '../../../lib/theme';
 
 type BenchmarkCardProps = {
   benchmark: LLMBenchmarkResponse;
@@ -40,7 +41,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
         modelName: entry.modelName,
         providerLogo: providerInfo.logo,
         providerName: providerInfo.name,
-        providerColor: providerInfo.color ?? '#58a6ff',
+        providerColor: providerInfo.color ?? themeColors.accent,
       };
     })
     .filter(
@@ -94,14 +95,14 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
           />
         ) : (
           <>
-            <circle cx={0} cy={0} r={size / 2} fill="#262c36" stroke="#30363d" />
+            <circle cx={0} cy={0} r={size / 2} fill={themeColors.hover} stroke={themeColors.border} />
             <text
               x={0}
               y={4}
               textAnchor="middle"
               fontSize={9}
-              fill="#8b949e"
-              fontFamily="JetBrains Mono, monospace"
+              fill={themeColors.textMuted}
+              fontFamily={monoFont}
             >
               {initials || '?'}
             </text>
@@ -115,25 +116,25 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
   const gradientId = `benchmark-${benchmark.benchmarkType}-gradient`;
 
   return (
-    <div className="rounded-2xl border border-surface-border bg-surface-card p-4 sm:p-5 shadow-soft min-w-0 overflow-hidden">
+    <div className="panel p-4 sm:p-5 min-w-0 overflow-hidden">
       <div>
         <div>
-          <p className="text-[11px] uppercase tracking-widest text-text-muted">{groupLabel}</p>
+          <p className="label-mono">{groupLabel}</p>
           <h3 className="text-base font-semibold text-text-primary mt-1">{benchmark.displayName}</h3>
           <p className="text-xs text-text-muted mt-1 line-clamp-2">{benchmarkExplanation}</p>
         </div>
       </div>
 
       <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mt-4">
-        <div className="rounded-lg border border-surface-border bg-surface-elevated/60 p-2">
-          <p className="text-[10px] text-text-muted">최고 스코어</p>
-          <p className="text-sm font-semibold text-text-primary mt-1">
+        <div className="rounded border border-surface-border bg-surface-elevated/60 px-3 py-2">
+          <p className="label-mono text-[10px]">최고 스코어</p>
+          <p className="font-mono text-sm font-semibold text-text-primary tabular-nums mt-1">
             {loading ? '-' : `${formatScore(topScore)}%`}
           </p>
         </div>
-        <div className="rounded-lg border border-surface-border bg-surface-elevated/60 p-2">
-          <p className="text-[10px] text-text-muted">평균 스코어</p>
-          <p className="text-sm font-semibold text-text-primary mt-1">
+        <div className="rounded border border-surface-border bg-surface-elevated/60 px-3 py-2">
+          <p className="label-mono text-[10px]">평균 스코어</p>
+          <p className="font-mono text-sm font-semibold text-text-primary tabular-nums mt-1">
             {loading ? '-' : `${formatScore(avgScore)}%`}
           </p>
         </div>
@@ -155,11 +156,11 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
             <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 24 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#58a6ff" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#58a6ff" stopOpacity={0.3} />
+                  <stop offset="0%" stopColor={themeColors.accent} stopOpacity={0.9} />
+                  <stop offset="100%" stopColor={themeColors.accent} stopOpacity={0.3} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#30363d" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke={themeColors.border} strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="rank"
                 tick={(props: any) => renderProviderTick({ ...props, dataMap: providerMap })}
@@ -169,21 +170,13 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
                 height={30}
               />
               <YAxis
-                tick={{ fill: '#8b949e', fontSize: 10 }}
+                tick={chartAxisTick}
                 axisLine={false}
                 tickLine={false}
                 width={30}
               />
               <Tooltip
-                contentStyle={{
-                  background: '#161b22',
-                  border: '1px solid #30363d',
-                  borderRadius: 12,
-                  color: '#f0f6fc',
-                  fontSize: 12,
-                }}
-                labelStyle={{ color: '#f0f6fc' }}
-                itemStyle={{ color: '#f0f6fc' }}
+                {...chartTooltipStyle}
                 formatter={(value: number | string, _name: string, props: any) => {
                   const label = props?.payload?.modelName ?? '';
                   const numericValue = typeof value === 'number' ? value : Number(value);
@@ -194,7 +187,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
                 }}
                 labelFormatter={() => 'Score'}
               />
-              <Bar dataKey="score" radius={[6, 6, 0, 0]} barSize={20}>
+              <Bar dataKey="score" radius={[2, 2, 0, 0]} barSize={20}>
                 {chartData.map((entry) => (
                   <Cell key={entry.rank} fill={entry.providerColor} />
                 ))}
@@ -217,7 +210,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
           <div className="divide-y divide-surface-border">
             {visibleEntries.map((entry) => (
               <div key={entry.modelId} className="flex items-center gap-3 py-2">
-                <span className="w-7 text-xs font-mono text-text-muted">
+                <span className={`w-7 text-xs font-mono tabular-nums ${entry.rank <= 3 ? 'text-signal font-semibold' : 'text-text-muted'}`}>
                   {String(entry.rank).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -226,7 +219,7 @@ export default function BenchmarkCard({ benchmark, groupLabel, state }: Benchmar
                     {entry.modelCreatorName || entry.provider}
                   </p>
                 </div>
-                <span className="text-xs font-semibold text-text-secondary">
+                <span className="font-mono text-xs font-semibold text-text-secondary tabular-nums">
                   {formatScore(entry.score)}%
                 </span>
               </div>

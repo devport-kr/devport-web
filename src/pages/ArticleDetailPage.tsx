@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
 import Navbar from '../components/Navbar';
@@ -8,8 +9,7 @@ import TrendingTicker from '../components/TrendingTicker';
 import CommentSection from '../components/CommentSection';
 import BookmarkButton from '../components/BookmarkButton';
 import { getArticleByExternalId, getTrendingTicker, trackArticleView, type ArticleDetailResponse } from '../services/articles/articlesService';
-import type { Category } from '../types';
-import { categoryConfig } from '../types';
+import { getCategoryInfo } from '../types';
 import StarIcon from '../components/icons/StarIcon';
 import MessageIcon from '../components/icons/MessageIcon';
 import ThumbsUpIcon from '../components/icons/ThumbsUpIcon';
@@ -109,7 +109,7 @@ export default function ArticleDetailPage() {
           </div>
 
           {/* Trending Ticker */}
-          <div className="lg:ml-52 border-b border-surface-border/50">
+          <div className="lg:ml-52 border-b border-surface-border">
             <TrendingTicker articles={tickerArticles} />
           </div>
 
@@ -117,16 +117,11 @@ export default function ArticleDetailPage() {
           <main className="lg:ml-52 pt-8 pb-8 px-8">
             <div className="max-w-2xl mx-auto">
               <div className="text-center py-16">
-                <h1 className="text-2xl font-bold text-text-primary mb-4">404</h1>
-                <p className="text-text-secondary mb-8">{error || '아티클을 찾을 수 없습니다.'}</p>
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  홈으로 돌아가기
+                <p className="label-mono">Error 404</p>
+                <h1 className="mt-2 text-2xl font-semibold text-text-primary mb-3">아티클을 찾을 수 없습니다</h1>
+                <p className="text-text-secondary mb-8">{error || '삭제되었거나 주소가 잘못되었을 수 있습니다.'}</p>
+                <Link to="/" className="btn btn-primary">
+                  ← 홈으로 돌아가기
                 </Link>
               </div>
             </div>
@@ -136,8 +131,25 @@ export default function ArticleDetailPage() {
     );
   }
 
-  const categoryInfo = categoryConfig[article.category as Category];
+  const categoryInfo = getCategoryInfo(article.category);
   const sourceLabel = (article.source || '').trim() || 'Unknown';
+
+  const metaItems: { label: string; value: string; icon?: ReactNode; highlight?: boolean }[] = [
+    { label: 'Score', value: article.score.toLocaleString(), icon: <FlameIcon className="w-3.5 h-3.5" />, highlight: true },
+  ];
+  if (article.metadata?.stars) {
+    metaItems.push({ label: 'Stars', value: article.metadata.stars.toLocaleString(), icon: <StarIcon className="w-3.5 h-3.5" /> });
+  }
+  if (article.metadata?.comments) {
+    metaItems.push({ label: 'Comments', value: article.metadata.comments.toLocaleString(), icon: <MessageIcon className="w-3.5 h-3.5" /> });
+  }
+  if (article.metadata?.upvotes) {
+    metaItems.push({ label: 'Upvotes', value: article.metadata.upvotes.toLocaleString(), icon: <ThumbsUpIcon className="w-3.5 h-3.5" /> });
+  }
+  if (article.metadata?.readTime) {
+    metaItems.push({ label: 'Read', value: article.metadata.readTime.replace(' read', ''), icon: <BookIcon className="w-3.5 h-3.5" /> });
+  }
+  metaItems.push({ label: 'Published', value: formatDate(article.createdAtSource) });
 
   return (
     <div className="min-h-screen bg-glow">
@@ -150,7 +162,7 @@ export default function ArticleDetailPage() {
         </div>
 
         {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div className="lg:ml-52 border-b border-surface-border/50">
+        <div className="lg:ml-52 border-b border-surface-border">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
@@ -160,109 +172,84 @@ export default function ArticleDetailPage() {
             {/* Back button */}
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors mb-6"
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted hover:text-text-primary transition-colors mb-8"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              목록으로
+              ← 목록으로
             </Link>
 
             {/* Article header */}
-            <header className="mb-8">
-              {/* Category & Source & Bookmark */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full text-white ${categoryInfo?.color || 'bg-gray-600'}`}>
-                    {categoryInfo?.label || article.category}
+            <header className="mb-10">
+              {/* Manifest line: category / source / time + bookmark */}
+              <div className="flex items-center justify-between gap-3 mb-5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.04em] text-text-muted min-w-0">
+                  <span className={`inline-flex items-center gap-1.5 font-semibold ${categoryInfo.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${categoryInfo.dot}`} aria-hidden="true" />
+                    {categoryInfo.label}
                   </span>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-sm text-text-muted capitalize">{sourceLabel}</span>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-sm text-text-muted">{formatTimeAgo(article.createdAtSource)}</span>
+                  <span className="text-surface-border-strong">/</span>
+                  <span className="truncate">{sourceLabel}</span>
+                  <span className="text-surface-border-strong">/</span>
+                  <time dateTime={article.createdAtSource}>{formatTimeAgo(article.createdAtSource)}</time>
                 </div>
                 <BookmarkButton articleId={article.externalId} size="lg" showLabel />
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-4 leading-tight">
+              <h1 className="text-[1.625rem] md:text-[2rem] font-semibold text-text-primary leading-snug tracking-[-0.02em] mb-3">
                 {article.summaryKoTitle}
               </h1>
 
               {/* English title */}
-              <p className="text-lg text-text-secondary mb-6">
+              <p className="text-[15px] text-text-muted leading-relaxed mb-6">
                 {article.titleEn}
               </p>
 
               {/* Tags */}
               {article.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6 font-mono text-xs text-text-muted">
                   {article.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-sm text-text-muted px-3 py-1 rounded-full bg-surface-hover"
-                    >
+                    <span key={tag}>
+                      <span className="text-surface-border-strong">#</span>
                       {tag}
                     </span>
                   ))}
                 </div>
               )}
 
-              {/* Metadata */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted pb-6 border-b border-surface-border">
-                <span className="flex items-center gap-1.5 text-accent">
-                  <FlameIcon className="w-4 h-4" />
-                  {article.score.toLocaleString()} 점수
-                </span>
-                {article.metadata?.stars && (
-                  <span className="flex items-center gap-1.5">
-                    <StarIcon className="w-4 h-4" />
-                    {article.metadata.stars.toLocaleString()} stars
-                  </span>
-                )}
-                {article.metadata?.comments && (
-                  <span className="flex items-center gap-1.5">
-                    <MessageIcon className="w-4 h-4" />
-                    {article.metadata.comments} comments
-                  </span>
-                )}
-                {article.metadata?.upvotes && (
-                  <span className="flex items-center gap-1.5">
-                    <ThumbsUpIcon className="w-4 h-4" />
-                    {article.metadata.upvotes} upvotes
-                  </span>
-                )}
-                {article.metadata?.readTime && (
-                  <span className="flex items-center gap-1.5">
-                    <BookIcon className="w-4 h-4" />
-                    {article.metadata.readTime}
-                  </span>
-                )}
-                <span className="text-text-muted">
-                  {formatDate(article.createdAtSource)}
-                </span>
-              </div>
+              {/* Metadata manifest */}
+              <dl className="grid grid-cols-2 sm:grid-cols-3 border-t border-l border-surface-border">
+                {metaItems
+                  .map((item) => (
+                    <div key={item.label} className="px-4 py-3 border-r border-b border-surface-border">
+                      <dt className="label-mono">{item.label}</dt>
+                      <dd className={`mt-1 flex items-center gap-1.5 font-mono text-sm tabular-nums ${item.highlight ? 'text-signal font-semibold' : 'text-text-primary'}`}>
+                        {item.icon}
+                        {item.value}
+                      </dd>
+                    </div>
+                  ))}
+              </dl>
             </header>
 
             {/* Article body */}
-            <article className="prose prose-invert prose-lg max-w-none mb-8">
-              <div className="text-text-primary leading-relaxed [&>p]:mb-4 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mt-8 [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-4 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>li]:mb-2 [&>blockquote]:border-l-4 [&>blockquote]:border-accent [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-text-secondary [&>code]:bg-surface-hover [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>pre]:bg-surface-elevated [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>a]:text-accent [&>a]:hover:underline">
-                <Markdown>{article.summaryKoBody}</Markdown>
-              </div>
+            <article className="article-body mb-10">
+              <Markdown>{article.summaryKoBody}</Markdown>
             </article>
 
             {/* Original link */}
-            <div className="flex justify-center pt-6 border-t border-surface-border">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 border-y border-dashed border-surface-border-strong">
+              <div className="min-w-0">
+                <p className="label-mono">Source</p>
+                <p className="mt-1 text-sm text-text-secondary truncate">{sourceLabel}</p>
+              </div>
               <a
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors font-medium"
+                className="btn btn-primary btn-lg shrink-0"
               >
                 원문 보기
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                <ArrowUpRight className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
               </a>
             </div>
 

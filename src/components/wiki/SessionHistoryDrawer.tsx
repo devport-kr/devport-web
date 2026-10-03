@@ -120,7 +120,7 @@ export default function SessionHistoryDrawer({
                             </div>
                             <button
                                 onClick={(e) => handleDelete(e, session.sessionId)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded transition-all"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 text-text-muted hover:text-danger hover:bg-red-400/10 rounded transition-all"
                                 title="삭제"
                             >
                                 <Trash2 size={12} />

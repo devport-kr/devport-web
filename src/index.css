@@ -1,10 +1,44 @@
-/* Custom Fonts - Must be first */
-@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts - must be first. IBM Plex Sans KR covers Hangul + Latin; IBM Plex Mono matches its metrics. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/*  Manifest tokens. RGB channels so Tailwind opacity modifiers work.  */
+/*  Use these through Tailwind classes; reach for var() only in CSS    */
+/*  or in src/lib/theme.ts for libraries that need raw colors.         */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  --c-page: 8 16 26;            /* #08101a */
+  --c-sunken: 6 12 20;          /* #060c14 */
+  --c-surface: 10 19 30;        /* #0a131e */
+  --c-elevated: 14 24 37;       /* #0e1825 */
+  --c-card: 16 27 41;           /* #101b29 */
+  --c-hover: 22 34 51;          /* #162233 */
+  --c-border: 33 48 69;         /* #213045 */
+  --c-border-strong: 46 64 89;  /* #2e4059 */
+
+  --c-text: 230 237 245;        /* #e6edf5 */
+  --c-text-2: 174 188 204;      /* #aebccc */
+  --c-text-3: 122 138 160;      /* #7a8aa0 */
+
+  --c-accent: 74 148 255;       /* #4a94ff  text, links, markers */
+  --c-accent-light: 122 179 255;/* #7ab3ff */
+  --c-accent-dark: 31 111 235;  /* #1f6feb */
+  --c-action: 31 111 235;       /* #1f6feb  filled buttons, white text 4.6:1 */
+  --c-action-hover: 26 95 208;  /* #1a5fd0 */
+  --c-signal: 240 180 76;       /* #f0b44c  trending / live / top ranks */
+  --c-danger: 255 123 114;      /* #ff7b72 */
+  --c-success: 76 195 138;      /* #4cc38a */
+
+  --c-diagram-stroke: 88 116 150; /* #587496  mermaid edges */
+
+  --grid-line: rgba(110, 150, 200, 0.045);
+}
 
 @layer base {
   html {
@@ -12,7 +46,7 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100%;
     min-height: 100dvh;
-    background-color: #0d1117;
+    background-color: rgb(var(--c-page));
     overscroll-behavior-y: none;
     /* Ensure smooth momentum scrolling on iOS */
     -webkit-overflow-scrolling: touch;
@@ -23,16 +57,17 @@
     margin: 0;
     min-height: 100vh;
     min-height: 100dvh;
-    background-color: #0d1117;
     overscroll-behavior-y: none;
-    /* Subtle gradient background - softer than pitch black */
-    background: linear-gradient(180deg,
-        #0d1117 0%,
-        #0f1419 20%,
-        #111820 50%,
-        #0f1419 80%,
-        #0d1117 100%);
+    /* Chart-paper grid: the Manifest page background */
+    background-color: rgb(var(--c-page));
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 24px 24px;
     background-attachment: fixed;
+    /* Korean line breaking: keep words whole */
+    word-break: keep-all;
+    overflow-wrap: break-word;
     /* Prevent double-tap zoom on iOS which can interfere with fixed elements */
     touch-action: manipulation;
   }
@@ -46,9 +81,95 @@
   ::selection {
     @apply bg-accent/30 text-text-primary;
   }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 2px;
+  }
+
+  code, kbd, pre, samp {
+    font-variant-ligatures: none;
+  }
 }
 
 @layer components {
+  /* ---------------- Manifest primitives ---------------- */
+
+  /* Mono uppercase label: section heads, column heads, metadata */
+  .label-mono {
+    @apply font-mono text-label uppercase text-text-muted;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded font-mono text-xs font-semibold uppercase tracking-[0.06em] whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-[11px];
+  }
+
+  .btn-lg {
+    @apply h-12 px-5;
+  }
+
+  .btn-primary {
+    @apply bg-action text-white hover:bg-action-hover;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-card border border-surface-border-strong text-text-secondary hover:text-text-primary hover:border-text-muted;
+  }
+
+  .btn-ghost {
+    @apply text-text-muted hover:text-text-primary hover:bg-surface-hover;
+  }
+
+  .input {
+    @apply w-full h-11 px-3.5 bg-surface-sunken border border-surface-border rounded text-sm text-text-primary placeholder:text-text-muted transition-colors focus:outline-none focus:border-accent/70 focus:ring-1 focus:ring-accent/30 disabled:opacity-60;
+  }
+
+  .panel {
+    @apply bg-surface-card border border-surface-border rounded;
+  }
+
+  .kbd {
+    @apply inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-sm border border-surface-border-strong font-mono text-[10px] text-text-muted;
+  }
+
+  /* Segmented mono tabs */
+  .tabbar {
+    @apply inline-flex flex-wrap max-w-full border border-surface-border-strong rounded overflow-hidden;
+  }
+
+  .tabbar-item {
+    @apply px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.04em] text-text-muted transition-colors hover:text-text-primary hover:bg-surface-hover border-r border-surface-border-strong last:border-r-0;
+  }
+
+  .tabbar-item[aria-pressed="true"],
+  .tabbar-item[aria-selected="true"],
+  .tabbar-item.is-active {
+    @apply bg-accent/15 text-accent hover:bg-accent/20 hover:text-accent;
+  }
+
+  /* Filter chips: for longer option sets that need to wrap */
+  .chip {
+    @apply inline-flex items-center gap-1.5 h-7 px-2.5 rounded border border-surface-border font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-text-muted transition-colors hover:text-text-primary hover:border-surface-border-strong;
+  }
+
+  .chip[aria-pressed="true"] {
+    @apply border-accent/50 bg-accent/15 text-accent;
+  }
+
+  /* Rail widget table: column header row */
+  .table-head {
+    @apply grid items-center gap-3 px-4 py-2 bg-surface-elevated border-b border-surface-border font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-muted;
+  }
+
+  /* Live indicator: small square in signal amber */
+  .live-dot {
+    @apply inline-block w-1.5 h-1.5 rounded-[1px] bg-signal;
+  }
+
   .scrollbar-minimal::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -69,7 +190,7 @@
 
   .scrollbar-minimal {
     scrollbar-width: thin;
-    scrollbar-color: #30363d transparent;
+    scrollbar-color: rgb(var(--c-border)) transparent;
   }
 
   .scrollbar-hide::-webkit-scrollbar {
@@ -87,7 +208,6 @@
 
   .card-hover:hover {
     @apply bg-surface-hover;
-    transform: translateY(-2px);
   }
 
   .focus-glow:focus {
@@ -98,7 +218,7 @@
     position: relative;
     height: 2px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(88, 166, 255, 0.2), rgba(88, 166, 255, 0.6), rgba(88, 166, 255, 0.2));
+    background: linear-gradient(90deg, rgb(var(--c-accent) / 0.2), rgb(var(--c-accent) / 0.6), rgb(var(--c-accent) / 0.2));
   }
 
   .flow-dot {
@@ -108,13 +228,66 @@
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: #58a6ff;
-    box-shadow: 0 0 8px rgba(88, 166, 255, 0.6);
+    background: rgb(var(--c-accent));
+    box-shadow: 0 0 8px rgb(var(--c-accent) / 0.6);
     animation: flowDot 2.8s ease-in-out infinite;
   }
 
   .flow-dot-slow {
     animation-duration: 3.4s;
+  }
+
+  /* Long-form article summary (ArticleDetailPage) */
+  .article-body {
+    @apply text-base text-text-secondary leading-[1.85];
+  }
+
+  .article-body > * + * {
+    @apply mt-5;
+  }
+
+  .article-body :where(h1, h2, h3, h4) {
+    @apply text-text-primary font-semibold leading-snug tracking-[-0.01em] mt-10 mb-3;
+  }
+
+  .article-body h1 { @apply text-2xl; }
+  .article-body h2 { @apply text-xl pb-2 border-b border-surface-border; }
+  .article-body h3 { @apply text-lg; }
+  .article-body h4 { @apply text-base; }
+
+  .article-body strong {
+    @apply text-text-primary font-semibold;
+  }
+
+  .article-body a {
+    @apply text-accent underline underline-offset-4 decoration-accent/40 hover:decoration-accent;
+  }
+
+  .article-body :where(ul, ol) {
+    @apply pl-6 space-y-2;
+  }
+
+  .article-body ul { @apply list-disc; }
+  .article-body ol { @apply list-decimal; }
+
+  .article-body li::marker {
+    @apply text-text-muted;
+  }
+
+  .article-body blockquote {
+    @apply border-l-2 border-accent/60 pl-4 text-text-muted;
+  }
+
+  .article-body :not(pre) > code {
+    @apply font-mono text-[0.875em] px-1.5 py-0.5 rounded bg-surface-hover text-text-primary;
+  }
+
+  .article-body pre {
+    @apply overflow-x-auto scrollbar-minimal p-4 rounded border border-surface-border bg-surface-sunken font-mono text-sm leading-relaxed;
+  }
+
+  .article-body hr {
+    @apply border-dashed border-surface-border-strong;
   }
 
   .wiki-markdown {
@@ -140,7 +313,7 @@
   }
 
   .wiki-markdown li::marker {
-    color: rgba(148, 163, 184, 0.75);
+    color: rgb(var(--c-text-3));
   }
 
   .wiki-markdown ul {
@@ -272,8 +445,8 @@
   .wiki-mermaid-diagram .classGroup rect,
   .wiki-mermaid-diagram .cluster rect,
   .wiki-mermaid-diagram .actor {
-    fill: #101c33 !important;
-    stroke: #5a7298 !important;
+    fill: rgb(var(--c-card)) !important;
+    stroke: rgb(var(--c-diagram-stroke)) !important;
   }
 
   .wiki-mermaid-diagram .label,
@@ -288,8 +461,8 @@
   .wiki-mermaid-diagram .noteText,
   .wiki-mermaid-diagram .noteText tspan,
   .wiki-mermaid-diagram .classText {
-    fill: #ffffff !important;
-    color: #ffffff !important;
+    fill: rgb(var(--c-text)) !important;
+    color: rgb(var(--c-text)) !important;
   }
 
   .wiki-mermaid-diagram .edgePath .path,
@@ -299,19 +472,19 @@
   .wiki-mermaid-diagram .messageLine1,
   .wiki-mermaid-diagram .actor-line,
   .wiki-mermaid-diagram .actor-line0 {
-    stroke: #5c7698 !important;
+    stroke: rgb(var(--c-diagram-stroke)) !important;
   }
 
   .wiki-mermaid-diagram marker path {
-    fill: #5c7698 !important;
-    stroke: #5c7698 !important;
+    fill: rgb(var(--c-diagram-stroke)) !important;
+    stroke: rgb(var(--c-diagram-stroke)) !important;
   }
 
   .wiki-mermaid-diagram .actor line,
   .wiki-mermaid-diagram .actor polyline,
   .wiki-mermaid-diagram .actor path,
   .wiki-mermaid-diagram .classGroup {
-    stroke: #5c7698 !important;
+    stroke: rgb(var(--c-diagram-stroke)) !important;
   }
 
   .wiki-mermaid-diagram svg rect,
@@ -329,8 +502,8 @@
   .wiki-mermaid-diagram svg .section1,
   .wiki-mermaid-diagram svg .section2,
   .wiki-mermaid-diagram svg .section3 {
-    fill: #101c33 !important;
-    stroke: #5c7698 !important;
+    fill: rgb(var(--c-card)) !important;
+    stroke: rgb(var(--c-diagram-stroke)) !important;
   }
 
   .wiki-mermaid-diagram svg tspan,
@@ -341,14 +514,14 @@
   .wiki-mermaid-diagram svg .edgeLabel text,
   .wiki-mermaid-diagram svg .nodeLabel,
   .wiki-mermaid-diagram svg .messageText {
-    fill: #ffffff !important;
-    color: #ffffff !important;
+    fill: rgb(var(--c-text)) !important;
+    color: rgb(var(--c-text)) !important;
   }
 
   .wiki-mermaid-diagram svg foreignObject div,
   .wiki-mermaid-diagram svg foreignObject span,
   .wiki-mermaid-diagram svg foreignObject p {
-    color: #ffffff !important;
+    color: rgb(var(--c-text)) !important;
   }
 }
 
@@ -375,7 +548,7 @@
     width: 100%;
     max-width: 1200px;
     height: 600px;
-    background: radial-gradient(ellipse at center top, rgba(47, 129, 247, 0.08) 0%, transparent 60%);
+    background: radial-gradient(ellipse at center top, rgb(var(--c-accent) / 0.07) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
   }
@@ -442,10 +615,10 @@
 
   @keyframes fabPulse {
     0%, 100% {
-      box-shadow: 0 4px 20px -4px rgba(47, 129, 247, 0.4);
+      box-shadow: 0 4px 20px -4px rgb(var(--c-action) / 0.4);
     }
     50% {
-      box-shadow: 0 4px 30px -2px rgba(47, 129, 247, 0.6);
+      box-shadow: 0 4px 30px -2px rgb(var(--c-action) / 0.6);
     }
   }
 

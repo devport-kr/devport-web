@@ -112,16 +112,18 @@ export default function LLMRankingsPage() {
           style={{ right: 'max(1.5rem, calc((100vw - 98rem) / 4))' }}
         >
           <div className="w-full px-4">
-            <div className="rounded-2xl border border-surface-border bg-surface-card/80 p-4 shadow-soft">
-              <nav className="mt-4 space-y-2">
+            <div className="panel p-4">
+              <p className="label-mono">목차</p>
+              <nav className="mt-3 space-y-0.5 border-l border-surface-border" aria-label="목차">
                 {tocSections.map((section) => (
                   <a
                     key={section.id}
                     href={`#${section.id}`}
-                    className={`block text-sm transition-colors ${
+                    aria-current={activeSection === section.id ? 'location' : undefined}
+                    className={`block -ml-px pl-3 py-1 text-sm border-l transition-colors ${
                       activeSection === section.id
-                        ? 'text-accent font-semibold'
-                        : 'text-text-muted hover:text-text-secondary'
+                        ? 'text-text-primary font-medium border-accent'
+                        : 'text-text-muted border-transparent hover:text-text-secondary'
                     }`}
                   >
                     {section.label}
@@ -132,7 +134,7 @@ export default function LLMRankingsPage() {
           </div>
         </div>
 
-        <div className="lg:ml-52 xl:mr-52 border-b border-surface-border/50">
+        <div className="lg:ml-52 xl:mr-52 border-b border-surface-border">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
@@ -142,12 +144,9 @@ export default function LLMRankingsPage() {
             <div>
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-secondary mb-6 transition-colors"
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted hover:text-text-primary mb-6 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-                </svg>
-                홈으로
+                ← 홈으로
               </Link>
 
               <RankingsOverviewCard
@@ -172,14 +171,14 @@ export default function LLMRankingsPage() {
 
                     return (
                       <div key={group} id={makeBenchmarkGroupId(group)} className="space-y-4 scroll-mt-24">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-end justify-between pb-3 border-b border-dashed border-surface-border-strong">
                           <div>
-                            <p className="text-xs text-text-muted uppercase tracking-widest">{groupMeta.label}</p>
-                            <h3 className="text-lg font-semibold text-text-primary">{groupMeta.labelKo}</h3>
+                            <p className="label-mono">{groupMeta.label}</p>
+                            <h3 className="mt-0.5 text-lg font-semibold text-text-primary">{groupMeta.labelKo}</h3>
                           </div>
-                          <span className="text-xs text-text-muted">{groupBenchmarks.length} benchmarks</span>
+                          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted tabular-nums">{groupBenchmarks.length} benchmarks</span>
                         </div>
-                        <div className="grid gap-6 lg:grid-cols-3">
+                        <div className="grid gap-4 lg:grid-cols-3">
                           {groupBenchmarks.map((benchmark) => {
                             const benchmarkType = benchmark.benchmarkType as BenchmarkType;
                             return (
@@ -199,15 +198,16 @@ export default function LLMRankingsPage() {
 
                 {/* Media rankings */}
                 <section id="media-rankings" className="space-y-6 scroll-mt-24">
-                  <div>
-                    <h2 className="text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
+                  <div className="pb-3 border-b border-dashed border-surface-border-strong">
+                    <p className="label-mono">Media · ELO</p>
+                    <h2 className="mt-0.5 text-xl font-semibold text-text-primary">미디어 모델 랭킹</h2>
                     <p className="text-sm text-text-muted mt-1">
                       미디어 모델은 벤치마크 점수가 아니라 ELO 기반 상대 평가입니다. 모델 간 비교에서
                       우수한 결과를 낼수록 점수가 상승합니다.
                     </p>
                   </div>
 
-                  <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="grid gap-4 lg:grid-cols-3">
                     {mediaTypeKeys.map((mediaType) => (
                       <MediaRankingCard
                         key={mediaType}
@@ -222,7 +222,7 @@ export default function LLMRankingsPage() {
 
                 {/* Data attribution */}
                 <div id="data-source" className="flex justify-center scroll-mt-24">
-                  <p className="text-xs text-text-muted">
+                  <p className="font-mono text-[11px] text-text-muted">
                     Data provided by{' '}
                     <a
                       href="https://artificialanalysis.ai/"

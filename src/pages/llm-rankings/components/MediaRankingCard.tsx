@@ -12,6 +12,7 @@ import type { LLMMediaType } from '../../../services/llm/llmService';
 import type { MediaLeaderboardState, ProviderTickProps } from '../types';
 import { toNumber, formatScore } from '../utils';
 import { getProviderInfo } from '../../../config/providerLogos';
+import { themeColors, monoFont, chartTooltipStyle, chartAxisTick } from '../../../lib/theme';
 
 type MediaRankingCardProps = {
   mediaType: LLMMediaType;
@@ -42,7 +43,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
         modelName: model.name,
         providerName,
         providerLogo: providerInfo.logo,
-        providerColor: providerInfo.color ?? '#58a6ff',
+        providerColor: providerInfo.color ?? themeColors.accent,
       };
     })
     .filter(
@@ -96,14 +97,14 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
           />
         ) : (
           <>
-            <circle cx={0} cy={0} r={size / 2} fill="#262c36" stroke="#30363d" />
+            <circle cx={0} cy={0} r={size / 2} fill={themeColors.hover} stroke={themeColors.border} />
             <text
               x={0}
               y={4}
               textAnchor="middle"
               fontSize={9}
-              fill="#8b949e"
-              fontFamily="JetBrains Mono, monospace"
+              fill={themeColors.textMuted}
+              fontFamily={monoFont}
             >
               {initials || '?'}
             </text>
@@ -114,7 +115,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
   };
 
   return (
-    <div className="rounded-2xl border border-surface-border bg-surface-card p-4 sm:p-5 shadow-soft min-w-0 overflow-hidden">
+    <div className="panel p-4 sm:p-5 min-w-0 overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-text-primary mt-1">{config.label}</h3>
@@ -160,7 +161,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
             <div className="h-full min-w-[280px] sm:min-w-[340px]">
               <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 24 }}>
-              <CartesianGrid stroke="#30363d" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke={themeColors.border} strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="rank"
                 tick={(props: any) => renderProviderTick({ ...props, dataMap: providerMap })}
@@ -170,21 +171,13 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
                 height={30}
               />
               <YAxis
-                tick={{ fill: '#8b949e', fontSize: 10 }}
+                tick={chartAxisTick}
                 axisLine={false}
                 tickLine={false}
                 width={32}
               />
               <Tooltip
-                contentStyle={{
-                  background: '#161b22',
-                  border: '1px solid #30363d',
-                  borderRadius: 12,
-                  color: '#f0f6fc',
-                  fontSize: 12,
-                }}
-                labelStyle={{ color: '#f0f6fc' }}
-                itemStyle={{ color: '#f0f6fc' }}
+                {...chartTooltipStyle}
                 formatter={(value: number | string, _name: string, props: any) => {
                   const label = props?.payload?.modelName ?? '';
                   const numericValue = typeof value === 'number' ? value : Number(value);
@@ -195,7 +188,7 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
                 }}
                 labelFormatter={() => 'ELO'}
               />
-              <Bar dataKey="elo" radius={[6, 6, 0, 0]} barSize={20}>
+              <Bar dataKey="elo" radius={[2, 2, 0, 0]} barSize={20}>
                 {chartData.map((entry) => (
                   <Cell key={entry.rank} fill={entry.providerColor} />
                 ))}
@@ -218,14 +211,14 @@ export default function MediaRankingCard({ mediaType, config, flow, state }: Med
           <div className="divide-y divide-surface-border">
             {chartData.map((entry) => (
               <div key={`${mediaType}-${entry.rank}`} className="flex items-center gap-3 py-2">
-                <span className="w-7 text-xs font-mono text-text-muted">
+                <span className={`w-7 text-xs font-mono tabular-nums ${entry.rank <= 3 ? 'text-signal font-semibold' : 'text-text-muted'}`}>
                   {String(entry.rank).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-text-primary truncate">{entry.modelName}</p>
                   <p className="text-xs text-text-muted truncate">{entry.providerName}</p>
                 </div>
-                <span className="text-xs font-semibold text-text-secondary">
+                <span className="font-mono text-xs font-semibold text-text-secondary tabular-nums">
                   {formatScore(entry.elo, 0)}
                 </span>
               </div>

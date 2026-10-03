@@ -232,7 +232,7 @@ export default function WikiDraftsPage() {
             type="button"
             onClick={handleCreateDraft}
             disabled={isCreatingDraft}
-            className="px-3 py-1.5 bg-accent hover:bg-accent-light text-white text-xs font-medium rounded-lg transition-all disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]"
+            className="px-3 py-1.5 bg-action hover:bg-action-hover text-white text-xs font-medium rounded-lg transition-all disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]"
           >
             {isCreatingDraft ? 'Creating...' : 'New Draft'}
           </button>
@@ -243,8 +243,8 @@ export default function WikiDraftsPage() {
           <div
             className={`mb-4 px-3 py-2 rounded-lg text-xs font-medium animate-fade-in ${
               message.type === 'success'
-                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                ? 'bg-success/10 border border-success/20 text-success'
+                : 'bg-danger/10 border border-danger/20 text-danger'
             }`}
           >
             {message.text}
@@ -319,7 +319,7 @@ export default function WikiDraftsPage() {
                     type="button"
                     disabled={!selectedDraftSummary || isPublishingDraft}
                     onClick={handlePublishDraft}
-                    className="px-4 py-1.5 bg-accent hover:bg-accent-light text-white text-xs font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-40 transition-all active:scale-[0.97]"
+                    className="px-4 py-1.5 bg-action hover:bg-action-hover text-white text-xs font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-40 transition-all active:scale-[0.97]"
                   >
                     {isPublishingDraft ? 'Publishing...' : 'Publish'}
                   </button>

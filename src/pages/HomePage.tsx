@@ -29,6 +29,8 @@ export default function HomePage() {
   const tickerRef = useRef<HTMLDivElement>(null);
   const [tickerHidden, setTickerHidden] = useState(false);
 
+  const [tickerHeight, setTickerHeight] = useState(72);
+
   useEffect(() => {
     const handleScroll = () => {
       if (!tickerRef.current) return;
@@ -38,6 +40,15 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Right rail sits flush under the ticker, whatever height the ticker renders at
+  useEffect(() => {
+    const ticker = tickerRef.current;
+    if (!ticker) return;
+    const observer = new ResizeObserver(() => setTickerHeight(ticker.offsetHeight));
+    observer.observe(ticker);
+    return () => observer.disconnect();
+  }, [isInitialLoading]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -182,16 +193,16 @@ export default function HomePage() {
         </div>
 
         {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div ref={tickerRef} className="lg:ml-52 border-b border-surface-border/50">
+        <div ref={tickerRef} className="lg:ml-52 border-b border-surface-border">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
         {/* Right Sidebar - Fixed, slides up when ticker scrolls away */}
         <aside
-          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide transition-all duration-300 ease-out"
+          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide transition-all duration-300 ease-out"
           style={{
-            top: tickerHidden ? '4rem' : '8.5rem',
-            height: tickerHidden ? 'calc(100vh - 4rem)' : 'calc(100vh - 8.5rem)',
+            top: tickerHidden ? '4rem' : `calc(4rem + ${tickerHeight}px)`,
+            height: tickerHidden ? 'calc(100vh - 4rem)' : `calc(100vh - 4rem - ${tickerHeight}px)`,
           }}
         >
           <div className="space-y-6">
@@ -210,21 +221,23 @@ export default function HomePage() {
           <div className="max-w-xl mx-auto">
             {/* Articles Section */}
             <section>
-              {/* Category Tabs */}
-              <div className="flex flex-wrap gap-2 mb-8">
+              <header className="mb-5">
+                <p className="label-mono">Feed</p>
+                <h1 className="mt-1 text-xl font-semibold text-text-primary tracking-[-0.01em]">기술 트렌드</h1>
+              </header>
+
+              {/* Category filter */}
+              <div className="flex flex-wrap gap-1.5 mb-4" role="group" aria-label="카테고리">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     type="button"
+                    aria-pressed={selectedCategory === category.id}
                     onClick={(e) => {
                       e.preventDefault();
                       setSelectedCategory(category.id);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      selectedCategory === category.id
-                        ? 'bg-accent text-white'
-                        : 'text-text-muted hover:text-text-secondary hover:bg-surface-card'
-                    }`}
+                    className="chip"
                   >
                     {category.label}
                   </button>
@@ -232,7 +245,7 @@ export default function HomePage() {
               </div>
 
               {/* Article List */}
-              <div className="space-y-4">
+              <div>
                 {articles.map((article) => (
                   <ArticleCard key={article.id} article={article} />
                 ))}
@@ -250,8 +263,10 @@ export default function HomePage() {
 
               {/* End Message */}
               {!hasMore && articles.length > 0 && (
-                <div className="text-center py-12">
-                  <p className="text-sm text-text-muted">모든 트렌드를 확인했습니다</p>
+                <div className="flex items-center gap-3 py-12">
+                  <span className="flex-1 border-t border-dashed border-surface-border-strong" />
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">모든 트렌드를 확인했습니다</p>
+                  <span className="flex-1 border-t border-dashed border-surface-border-strong" />
                 </div>
               )}
             </section>

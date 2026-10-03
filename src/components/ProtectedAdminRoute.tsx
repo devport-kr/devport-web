@@ -25,7 +25,7 @@ const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-xl font-medium text-red-400 mb-2">접근 권한 없음</h1>
+          <h1 className="text-xl font-medium text-danger mb-2">접근 권한 없음</h1>
           <p className="text-text-muted mb-6">관리자 권한이 필요합니다.</p>
           <Link to="/" className="text-sm text-accent hover:text-accent-light transition-colors">
             홈으로 돌아가기
