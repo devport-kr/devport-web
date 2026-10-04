@@ -5,6 +5,7 @@ import mermaid from 'mermaid';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy } from 'lucide-react';
+import { remarkPlugins } from '../../lib/markdown';
 
 interface WikiMarkdownRendererProps {
   content: string;
@@ -593,6 +594,7 @@ export default function WikiMarkdownRenderer({
   return (
     <div className={`wiki-markdown ${className}`}>
       <ReactMarkdown
+        remarkPlugins={remarkPlugins}
         components={{
           p: ({ children }) => <p>{children}</p>,
           ul: ({ children }) => <ul>{children}</ul>,
