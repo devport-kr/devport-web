@@ -8,6 +8,7 @@ import TrendingTicker from '../components/TrendingTicker';
 import CommentSection from '../components/CommentSection';
 import BookmarkButton from '../components/BookmarkButton';
 import { getArticleByExternalId, getTrendingTicker, trackArticleView, type ArticleDetailResponse } from '../services/articles/articlesService';
+import { remarkPlugins } from '../lib/markdown';
 import type { Category } from '../types';
 import { categoryConfig } from '../types';
 import StarIcon from '../components/icons/StarIcon';
@@ -246,8 +247,8 @@ export default function ArticleDetailPage() {
 
             {/* Article body */}
             <article className="prose prose-invert prose-lg max-w-none mb-8">
-              <div className="text-text-primary leading-relaxed [&>p]:mb-4 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mt-8 [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-4 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>li]:mb-2 [&>blockquote]:border-l-4 [&>blockquote]:border-accent [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-text-secondary [&>code]:bg-surface-hover [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>pre]:bg-surface-elevated [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>a]:text-accent [&>a]:hover:underline">
-                <Markdown>{article.summaryKoBody}</Markdown>
+              <div className="article-markdown text-text-primary leading-relaxed [&>p]:mb-4 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mt-8 [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-4 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>li]:mb-2 [&>blockquote]:border-l-4 [&>blockquote]:border-accent [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-text-secondary [&>code]:bg-surface-hover [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>pre]:bg-surface-elevated [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>a]:text-accent [&>a]:hover:underline">
+                <Markdown remarkPlugins={remarkPlugins}>{article.summaryKoBody}</Markdown>
               </div>
             </article>
 
