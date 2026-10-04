@@ -216,6 +216,20 @@
     @apply text-text-primary bg-surface-elevated/60;
   }
 
+  /* Same look as wiki tables; block + max-content lets wide tables scroll on mobile */
+  .article-markdown table {
+    @apply block w-max max-w-full overflow-x-auto mb-4 text-sm border-collapse;
+  }
+
+  .article-markdown th,
+  .article-markdown td {
+    @apply border border-surface-border px-3 py-1.5 text-left;
+  }
+
+  .article-markdown th {
+    @apply text-text-primary bg-surface-elevated/60;
+  }
+
   .wiki-markdown-link {
     @apply text-accent hover:text-accent-light underline underline-offset-2;
   }
