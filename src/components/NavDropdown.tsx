@@ -15,7 +15,7 @@ interface NavDropdownProps {
 // Shared look for top-level navbar entries: full bar height so the active
 // underline sits on the navbar's bottom border
 const navTriggerClasses = (isActive: boolean, isOpen = false) =>
-  `flex items-center h-full px-3 border-b-2 text-base font-medium transition-colors ${
+  `flex items-center h-full px-3 border-b-2 text-lg font-medium transition-colors ${
     isActive ? 'border-accent' : 'border-transparent'
   } ${isActive || isOpen ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'}`;
 
