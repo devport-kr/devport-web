@@ -5,50 +5,13 @@ import GitHubIcon from '../components/icons/GitHubIcon';
 import StarIcon from '../components/icons/StarIcon';
 import ForkIcon from '../components/icons/ForkIcon';
 import { getTrendingGitReposPaginated } from '../services/articles/articlesService';
-import { stripMarkdown } from '../lib/markdown';
 import { categoryConfig } from '../types';
 import type { GitRepo } from '../types';
+import RepoThumbnail from './trending-repos/RepoThumbnail';
+import RepoDetailModal from './trending-repos/RepoDetailModal';
+import { displayTitle, formatCount, languageColors, summaryExcerpt } from './trending-repos/repoDisplay';
 
 const PAGE_SIZE = 20;
-
-const languageColors: Record<string, string> = {
-  JavaScript: '#f7df1e',
-  TypeScript: '#3178c6',
-  Python: '#3572A5',
-  Java: '#b07219',
-  Go: '#00ADD8',
-  Rust: '#dea584',
-  Ruby: '#701516',
-  PHP: '#4F5D95',
-  'C++': '#f34b7d',
-  C: '#555555',
-  'C#': '#178600',
-  Swift: '#F05138',
-  Kotlin: '#A97BFF',
-  Dart: '#00B4AB',
-  Shell: '#89e051',
-  Vue: '#41b883',
-  Svelte: '#ff3e00',
-  Scala: '#c22d40',
-  Elixir: '#6e4a7e',
-  default: '#6b7280',
-};
-
-const formatCount = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n.toLocaleString());
-
-// Korean titles often start with "owner/repo: ", which is already shown above the title
-const displayTitle = (repo: GitRepo) => {
-  const prefix = `${repo.fullName}:`;
-  return repo.summaryKoTitle.startsWith(prefix)
-    ? repo.summaryKoTitle.slice(prefix.length).trim()
-    : repo.summaryKoTitle;
-};
-
-// Summary excerpt without section headings such as "## 개요"
-const summaryExcerpt = (repo: GitRepo) =>
-  repo.summaryKoBody
-    ? stripMarkdown(repo.summaryKoBody.replace(/^#{1,6}\s.*$/gm, ''))
-    : repo.description ?? '';
 
 export default function TrendingReposPage() {
   const [repos, setRepos] = useState<GitRepo[]>([]);
@@ -57,7 +20,9 @@ export default function TrendingReposPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [selected, setSelected] = useState<{ repo: GitRepo; rank: number } | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const closeDetail = useCallback(() => setSelected(null), []);
 
   useEffect(() => {
     const fetchInitialRepos = async () => {
@@ -139,16 +104,17 @@ export default function TrendingReposPage() {
                   const excerpt = summaryExcerpt(repo);
                   return (
                     <li key={repo.id} className="border-b border-surface-border">
-                      <a
-                        href={repo.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex gap-4 sm:gap-6 py-6 -mx-4 px-4 hover:bg-surface-card/30 transition-colors group"
+                      <button
+                        type="button"
+                        onClick={() => setSelected({ repo, rank: index + 1 })}
+                        className="flex w-[calc(100%+2rem)] gap-4 sm:gap-5 py-6 -mx-4 px-4 text-left hover:bg-surface-card/30 transition-colors group"
                       >
                         {/* Rank */}
-                        <span className={`w-7 shrink-0 pt-0.5 text-sm font-mono ${index < 3 ? 'text-accent font-semibold' : 'text-text-muted'}`}>
+                        <span className={`w-6 shrink-0 pt-0.5 text-sm font-mono ${index < 3 ? 'text-accent font-semibold' : 'text-text-muted'}`}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
+
+                        <RepoThumbnail repo={repo} className="w-28 sm:w-44 shrink-0 self-start" />
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 text-xs">
@@ -192,7 +158,7 @@ export default function TrendingReposPage() {
                             )}
                           </div>
                         </div>
-                      </a>
+                      </button>
                     </li>
                   );
                 })}
@@ -214,6 +180,8 @@ export default function TrendingReposPage() {
           )}
         </div>
       </main>
+
+      {selected && <RepoDetailModal repo={selected.repo} rank={selected.rank} onClose={closeDetail} />}
 
       <Footer />
     </div>
