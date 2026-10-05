@@ -181,9 +181,9 @@ export default function HomePage() {
             </div>
           </aside>
 
-          {/* Articles - centered on the page; only pushed right when the rail (360px + 48px gap) would overlap */}
-          <main className="px-4 md:px-8 pt-8 pb-24 lg:pb-8">
-            <div className="max-w-2xl mx-auto xl:ml-[max(376px,calc((100%-42rem)/2))]">
+          {/* Articles - centered in the column to the right of the 360px rail */}
+          <main className="px-4 md:px-8 xl:pl-[calc(360px+2rem)] pt-8 pb-24 lg:pb-8">
+            <div className="max-w-2xl mx-auto">
               {/* Articles Section */}
               <section>
                 {/* Category Tabs */}
