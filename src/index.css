@@ -247,6 +247,37 @@
     margin-bottom: 0;
   }
 
+  /* Long-form blog posts: larger type and roomier rhythm than wiki panels.
+     keep-all wraps Korean at word boundaries instead of mid-word. */
+  .blog-markdown {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .blog-markdown :is(p, ul, ol, li) {
+    @apply text-base leading-8;
+  }
+
+  .blog-markdown :where(p, ul, ol, blockquote, pre, table) {
+    @apply my-5;
+  }
+
+  .blog-markdown h2 {
+    @apply text-xl mt-12 mb-4;
+  }
+
+  .blog-markdown h3 {
+    @apply text-lg mt-10 mb-3;
+  }
+
+  .blog-markdown hr {
+    @apply my-12;
+  }
+
+  .blog-markdown > :first-child {
+    margin-top: 0;
+  }
+
   section[id] {
     scroll-margin-top: 88px;
   }

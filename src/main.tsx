@@ -26,6 +26,7 @@ import PortsProjectPage from './pages/PortsProjectPage'
 import PortsChatPage from './pages/PortsChatPage'
 import ProductMcpPage from './pages/ProductMcpPage'
 import BlogPage from './pages/BlogPage'
+import BlogPostPage from './pages/BlogPostPage'
 import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
@@ -53,6 +54,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/ports/*" element={<PortsProjectPage />} />
           <Route path="/products/mcp" element={<ProductMcpPage />} />
           <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route
             path="/admin"
             element={
