@@ -148,45 +148,43 @@ export default function Navbar() {
         }}
       >
         <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between gap-4 h-16">
-            {/* Logo and primary nav */}
-            <div className="flex items-stretch self-stretch gap-6">
-              <Link
-                to="/"
-                className="flex items-center gap-1 group"
-              >
-                <span className="text-xl font-semibold text-text-primary tracking-tight">
-                  devport
-                </span>
-                <span className="text-accent text-xl font-semibold">.</span>
-              </Link>
+          {/* Three columns with equal side tracks keep the primary nav centered on the bar */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 h-16">
+            <Link
+              to="/"
+              className="justify-self-start flex items-center gap-1 group"
+            >
+              <span className="text-xl font-semibold text-text-primary tracking-tight">
+                devport
+              </span>
+              <span className="text-accent text-xl font-semibold">.</span>
+            </Link>
 
-              {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
-              <div ref={desktopNavRef} className="hidden lg:flex items-stretch">
-                {primaryNav.map((entry) =>
-                  entry.type === 'group' ? (
-                    <NavDropdown
-                      key={entry.id}
-                      group={entry}
-                      pathname={location.pathname}
-                      isActive={isNavEntryActive(entry, location.pathname)}
-                      isOpen={openNavMenu === entry.id}
-                      onToggle={() => setOpenNavMenu((prev) => (prev === entry.id ? null : entry.id))}
-                      onClose={() => setOpenNavMenu(null)}
-                    />
-                  ) : (
-                    <NavTopLink
-                      key={entry.id}
-                      item={entry}
-                      isActive={isNavEntryActive(entry, location.pathname)}
-                    />
-                  )
-                )}
-              </div>
+            {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
+            <div ref={desktopNavRef} className="hidden lg:flex items-stretch self-stretch">
+              {primaryNav.map((entry) =>
+                entry.type === 'group' ? (
+                  <NavDropdown
+                    key={entry.id}
+                    group={entry}
+                    pathname={location.pathname}
+                    isActive={isNavEntryActive(entry, location.pathname)}
+                    isOpen={openNavMenu === entry.id}
+                    onToggle={() => setOpenNavMenu((prev) => (prev === entry.id ? null : entry.id))}
+                    onClose={() => setOpenNavMenu(null)}
+                  />
+                ) : (
+                  <NavTopLink
+                    key={entry.id}
+                    item={entry}
+                    isActive={isNavEntryActive(entry, location.pathname)}
+                  />
+                )
+              )}
             </div>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
+            {/* Right side actions – pinned to the last column even when the nav is hidden */}
+            <div className="col-start-3 justify-self-end flex items-center gap-2">
               {/* Search Bar – desktop only */}
               <div className="hidden md:flex items-center mr-2">
                 <div ref={searchRef} className="relative">
