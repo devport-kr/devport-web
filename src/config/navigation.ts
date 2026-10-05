@@ -25,6 +25,7 @@ export const primaryNav: NavEntry[] = [
     items: [
       { id: 'dev-news', label: 'dev뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
       { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings' },
+      { id: 'trending-repos', label: '트렌딩 리포지토리', path: '/trending-repos' },
       { id: 'ports', label: 'ports', path: '/ports' },
     ],
   },

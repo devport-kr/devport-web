@@ -16,6 +16,7 @@ import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import LLMRankingsPage from './pages/LLMRankingsPage'
+import TrendingReposPage from './pages/TrendingReposPage'
 import ArticleDetailPage from './pages/ArticleDetailPage'
 import MyPage from './pages/MyPage'
 import AdminPage from './pages/AdminPage'
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/article/:externalId" element={<ArticleDetailPage />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/llm-rankings" element={<LLMRankingsPage />} />
+          <Route path="/trending-repos" element={<TrendingReposPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/ports" element={<PortsDirectoryPage />} />
