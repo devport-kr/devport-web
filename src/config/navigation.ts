@@ -23,9 +23,9 @@ export const primaryNav: NavEntry[] = [
     id: 'explore',
     label: '둘러보기',
     items: [
-      { id: 'dev-news', label: 'Dev뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
+      { id: 'dev-news', label: 'dev뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
       { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings' },
-      { id: 'ports', label: 'Ports', path: '/ports' },
+      { id: 'ports', label: 'ports', path: '/ports' },
     ],
   },
   {
@@ -33,7 +33,7 @@ export const primaryNav: NavEntry[] = [
     id: 'products',
     label: '제품',
     items: [
-      { id: 'devport-mcp', label: 'DevPort MCP', path: '/products/mcp' },
+      { id: 'devport-mcp', label: 'devport MCP', path: '/products/mcp' },
     ],
   },
   { type: 'link', id: 'blog', label: '블로그', path: '/blog' },
