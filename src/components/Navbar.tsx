@@ -243,7 +243,7 @@ export default function Navbar() {
             </div>
 
             {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
-            <div ref={desktopNavRef} className="hidden lg:flex items-stretch self-stretch">
+            <div ref={desktopNavRef} className="hidden lg:flex items-stretch self-stretch gap-6">
               {primaryNav.map((entry) =>
                 entry.type === 'group' ? (
                   <NavDropdown
