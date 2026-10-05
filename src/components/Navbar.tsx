@@ -150,43 +150,20 @@ export default function Navbar() {
         <div className="px-4 md:px-8">
           {/* Three columns with equal side tracks keep the primary nav centered on the bar */}
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 h-16">
-            <Link
-              to="/"
-              className="justify-self-start flex items-center gap-1 group"
-            >
-              <span className="text-xl font-semibold text-text-primary tracking-tight">
-                devport
-              </span>
-              <span className="text-accent text-xl font-semibold">.</span>
-            </Link>
+            {/* Logo and Search */}
+            <div className="justify-self-start flex items-center gap-6">
+              <Link
+                to="/"
+                className="flex items-center gap-1 group"
+              >
+                <span className="text-xl font-semibold text-text-primary tracking-tight">
+                  devport
+                </span>
+                <span className="text-accent text-xl font-semibold">.</span>
+              </Link>
 
-            {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
-            <div ref={desktopNavRef} className="hidden lg:flex items-stretch self-stretch">
-              {primaryNav.map((entry) =>
-                entry.type === 'group' ? (
-                  <NavDropdown
-                    key={entry.id}
-                    group={entry}
-                    pathname={location.pathname}
-                    isActive={isNavEntryActive(entry, location.pathname)}
-                    isOpen={openNavMenu === entry.id}
-                    onToggle={() => setOpenNavMenu((prev) => (prev === entry.id ? null : entry.id))}
-                    onClose={() => setOpenNavMenu(null)}
-                  />
-                ) : (
-                  <NavTopLink
-                    key={entry.id}
-                    item={entry}
-                    isActive={isNavEntryActive(entry, location.pathname)}
-                  />
-                )
-              )}
-            </div>
-
-            {/* Right side actions – pinned to the last column even when the nav is hidden */}
-            <div className="col-start-3 justify-self-end flex items-center gap-2">
               {/* Search Bar – desktop only */}
-              <div className="hidden md:flex items-center mr-2">
+              <div className="hidden md:flex items-center">
                 <div ref={searchRef} className="relative">
                   <form onSubmit={handleSearchSubmit}>
                     <svg
@@ -208,7 +185,7 @@ export default function Navbar() {
 
                   {/* Autocomplete Dropdown */}
                   {showAutocomplete && (
-                    <div className="absolute right-0 top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+                    <div className="absolute top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
                       {isSearching ? (
                         <div className="p-4 text-center">
                           <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-accent"></div>
@@ -262,7 +239,33 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
+            </div>
 
+            {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
+            <div ref={desktopNavRef} className="hidden lg:flex items-stretch self-stretch">
+              {primaryNav.map((entry) =>
+                entry.type === 'group' ? (
+                  <NavDropdown
+                    key={entry.id}
+                    group={entry}
+                    pathname={location.pathname}
+                    isActive={isNavEntryActive(entry, location.pathname)}
+                    isOpen={openNavMenu === entry.id}
+                    onToggle={() => setOpenNavMenu((prev) => (prev === entry.id ? null : entry.id))}
+                    onClose={() => setOpenNavMenu(null)}
+                  />
+                ) : (
+                  <NavTopLink
+                    key={entry.id}
+                    item={entry}
+                    isActive={isNavEntryActive(entry, location.pathname)}
+                  />
+                )
+              )}
+            </div>
+
+            {/* Right side actions – pinned to the last column even when the nav is hidden */}
+            <div className="col-start-3 justify-self-end flex items-center gap-2">
               {isAuthenticated ? (
                 <div className="relative">
                   <button
