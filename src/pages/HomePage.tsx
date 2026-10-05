@@ -167,10 +167,10 @@ export default function HomePage() {
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 xl:grid xl:grid-cols-[400px_minmax(0,1fr)] xl:gap-12">
-          {/* Left rail - sticks under the navbar and scrolls on its own */}
-          <aside className="hidden xl:block sticky top-16 self-start h-[calc(100vh-4rem)] py-8 overflow-y-auto scrollbar-hide">
-            <div className="space-y-6">
+        <div className="relative">
+          {/* Left rail - flush to the left edge; the inner panel sticks under the navbar */}
+          <aside className="hidden xl:block absolute inset-y-0 left-0 w-[360px] border-r border-surface-border/50 bg-surface">
+            <div className="sticky top-16 h-[calc(100vh-4rem)] px-6 py-8 overflow-y-auto scrollbar-hide space-y-6">
               <LLMLeaderboard />
               <GitHubLeaderboard
                 repos={githubRepos}
@@ -181,9 +181,9 @@ export default function HomePage() {
             </div>
           </aside>
 
-          {/* Articles - centered in the space next to the rail */}
-          <main className="pt-8 pb-24 lg:pb-8">
-            <div className="max-w-2xl mx-auto">
+          {/* Articles - centered on the page; only pushed right when the rail (360px + 48px gap) would overlap */}
+          <main className="px-4 md:px-8 pt-8 pb-24 lg:pb-8">
+            <div className="max-w-2xl mx-auto xl:ml-[max(376px,calc((100%-42rem)/2))]">
               {/* Articles Section */}
               <section>
                 {/* Category Tabs */}
