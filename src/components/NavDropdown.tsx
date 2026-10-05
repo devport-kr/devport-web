@@ -14,7 +14,7 @@ interface NavDropdownProps {
 // Shared look for top-level navbar entries: full bar height so the active
 // underline sits on the navbar's bottom border
 const navTriggerClasses = (isActive: boolean, isOpen = false) =>
-  `flex items-center gap-1 h-full px-3 border-b-2 text-sm font-medium transition-colors ${
+  `flex items-center h-full px-3 border-b-2 text-sm font-medium transition-colors ${
     isActive ? 'border-accent' : 'border-transparent'
   } ${isActive || isOpen ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'}`;
 
@@ -44,14 +44,6 @@ export default function NavDropdown({ group, pathname, isActive, isOpen, onToggl
         className={navTriggerClasses(isActive, isOpen)}
       >
         {group.label}
-        <svg
-          className={`w-3.5 h-3.5 text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-        </svg>
       </button>
 
       {isOpen && (
