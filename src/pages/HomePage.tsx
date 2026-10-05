@@ -25,29 +25,6 @@ export default function HomePage() {
 
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
-  const tickerRef = useRef<HTMLDivElement>(null);
-  // Right rail starts right under the ticker and follows it up as it scrolls away,
-  // stopping under the navbar (64px = 4rem)
-  const [railTop, setRailTop] = useState(64);
-
-  useEffect(() => {
-    const updateRailTop = () => {
-      if (!tickerRef.current) return;
-      const rect = tickerRef.current.getBoundingClientRect();
-      setRailTop(Math.max(64, Math.round(rect.bottom)));
-    };
-    updateRailTop();
-    window.addEventListener('scroll', updateRailTop, { passive: true });
-    window.addEventListener('resize', updateRailTop);
-    const observer = new ResizeObserver(updateRailTop);
-    if (tickerRef.current) observer.observe(tickerRef.current);
-    return () => {
-      window.removeEventListener('scroll', updateRailTop);
-      window.removeEventListener('resize', updateRailTop);
-      observer.disconnect();
-    };
-  }, [isInitialLoading]);
-
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
@@ -186,85 +163,80 @@ export default function HomePage() {
 
       <div className="min-h-[calc(100vh-4rem)]">
         {/* Trending Ticker */}
-        <div ref={tickerRef} className="border-b border-surface-border/50">
+        <div className="border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        {/* Right Sidebar - Fixed, slides up when ticker scrolls away */}
-        <aside
-          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide"
-          style={{
-            top: `${railTop}px`,
-            height: `calc(100vh - ${railTop}px)`,
-          }}
-        >
-          <div className="space-y-6">
-            <LLMLeaderboard />
-            <GitHubLeaderboard
-              repos={githubRepos}
-              onLoadMore={fetchMoreGitRepos}
-              hasMore={reposHasMore}
-              isLoading={reposLoading}
-            />
-          </div>
-        </aside>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 xl:grid xl:grid-cols-[400px_minmax(0,1fr)] xl:gap-12">
+          {/* Left rail - sticks under the navbar and scrolls on its own */}
+          <aside className="hidden xl:block sticky top-16 self-start h-[calc(100vh-4rem)] py-8 overflow-y-auto scrollbar-hide">
+            <div className="space-y-6">
+              <LLMLeaderboard />
+              <GitHubLeaderboard
+                repos={githubRepos}
+                onLoadMore={fetchMoreGitRepos}
+                hasMore={reposHasMore}
+                isLoading={reposLoading}
+              />
+            </div>
+          </aside>
 
-        {/* Center - Articles (truly centered on viewport) */}
-        <main className="pt-8 pb-8 lg:pb-8 px-8 pb-24">
-          <div className="max-w-xl mx-auto">
-            {/* Articles Section */}
-            <section>
-              {/* Category Tabs */}
-              <div className="flex flex-wrap gap-2 mb-8">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedCategory(category.id);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      selectedCategory === category.id
-                        ? 'bg-accent text-white'
-                        : 'text-text-muted hover:text-text-secondary hover:bg-surface-card'
-                    }`}
-                  >
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Article List */}
-              <div className="space-y-4">
-                {articles.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
-                ))}
-              </div>
-
-              {/* Infinite Scroll Trigger */}
-              <div ref={observerTarget} className="h-10" />
-
-              {/* Loading Indicator */}
-              {(isLoading || showLoadingSpinner) && (
-                <div className="flex justify-center items-center py-12">
-                  <div className="w-6 h-6 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
+          {/* Articles - centered in the space next to the rail */}
+          <main className="pt-8 pb-24 lg:pb-8">
+            <div className="max-w-2xl mx-auto">
+              {/* Articles Section */}
+              <section>
+                {/* Category Tabs */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedCategory(category.id);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedCategory === category.id
+                          ? 'bg-accent text-white'
+                          : 'text-text-muted hover:text-text-secondary hover:bg-surface-card'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
                 </div>
-              )}
 
-              {/* End Message */}
-              {!hasMore && articles.length > 0 && (
-                <div className="text-center py-12">
-                  <p className="text-sm text-text-muted">모든 트렌드를 확인했습니다</p>
+                {/* Article List */}
+                <div className="space-y-4">
+                  {articles.map((article) => (
+                    <ArticleCard key={article.id} article={article} />
+                  ))}
                 </div>
-              )}
-            </section>
-          </div>
-        </main>
+
+                {/* Infinite Scroll Trigger */}
+                <div ref={observerTarget} className="h-10" />
+
+                {/* Loading Indicator */}
+                {(isLoading || showLoadingSpinner) && (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="w-6 h-6 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
+                  </div>
+                )}
+
+                {/* End Message */}
+                {!hasMore && articles.length > 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-sm text-text-muted">모든 트렌드를 확인했습니다</p>
+                  </div>
+                )}
+              </section>
+            </div>
+          </main>
+        </div>
       </div>
 
-      {/* Right margin matches the fixed right rail (w-[28%], min 380px, max 500px) so it never covers the footer */}
-      <Footer className="xl:mr-[clamp(380px,28%,500px)]" />
+      <Footer />
     </div>
   );
 }
