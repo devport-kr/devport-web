@@ -13,8 +13,11 @@ export const stripMarkdown = (markdown: string) => {
     .replace(/```[\s\S]*?```/g, ' ')
     // inline code
     .replace(/`[^`]*`/g, '')
-    // images ![alt](url) -> alt
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    // images are dropped: repo write-ups embed README screenshots, and their
+    // alt text ("데모 화면") reads as noise in an excerpt
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    // links left empty by a removed image: [![alt](img)](url)
+    .replace(/\[\s*\]\([^)]*\)/g, '')
     // links [text](url) -> text
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     // headings #### Title -> Title
