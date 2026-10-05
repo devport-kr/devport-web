@@ -3,59 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { searchAutocomplete } from '../services/search/searchService';
 import type { ArticleAutocompleteResponse } from '../services/search/searchService';
-
-/* ------------------------------------------------------------------ */
-/*  Mobile nav items (replaces the removed MobileBottomNav)           */
-/* ------------------------------------------------------------------ */
-
-const mobileNavItems = [
-  {
-    id: 'home',
-    label: '홈',
-    path: '/',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
-  },
-  {
-    id: 'ports',
-    label: 'Ports',
-    path: '/ports',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
-  },
-  {
-    id: 'llm-rankings',
-    label: 'LLM 랭킹',
-    path: '/llm-rankings',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
-
-  {
-    id: 'mypage',
-    label: '마이페이지',
-    path: '/mypage',
-    authPath: '/login',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-  },
-];
+import { primaryNav, isNavEntryActive, isNavItemActive } from '../config/navigation';
+import type { NavItem } from '../config/navigation';
+import NavDropdown, { NavTopLink } from './NavDropdown';
 
 export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [openNavMenu, setOpenNavMenu] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [suggestions, setSuggestions] = useState<ArticleAutocompleteResponse[]>([]);
@@ -67,23 +22,38 @@ export default function Navbar() {
   const location = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const desktopNavRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Close mobile menu on route change
+  // Close mobile menu and nav dropdowns on route change
   useEffect(() => {
     setShowMobileMenu(false);
+    setOpenNavMenu(null);
   }, [location.pathname]);
+
+  // Close nav dropdowns on Escape
+  useEffect(() => {
+    if (!openNavMenu) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenNavMenu(null);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [openNavMenu]);
 
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
   };
 
-  // Close autocomplete and mobile menu when clicking outside
+  // Close autocomplete, nav dropdowns and mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowAutocomplete(false);
+      }
+      if (desktopNavRef.current && !desktopNavRef.current.contains(event.target as Node)) {
+        setOpenNavMenu(null);
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setShowMobileMenu(false);
@@ -178,9 +148,9 @@ export default function Navbar() {
         }}
       >
         <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Search */}
-            <div className="flex items-center gap-6">
+          <div className="flex items-center justify-between gap-4 h-16">
+            {/* Logo and primary nav */}
+            <div className="flex items-stretch self-stretch gap-6">
               <Link
                 to="/"
                 className="flex items-center gap-1 group"
@@ -191,8 +161,34 @@ export default function Navbar() {
                 <span className="text-accent text-xl font-semibold">.</span>
               </Link>
 
+              {/* Primary nav – desktop only (mobile uses the slide-down menu) */}
+              <div ref={desktopNavRef} className="hidden lg:flex items-stretch">
+                {primaryNav.map((entry) =>
+                  entry.type === 'group' ? (
+                    <NavDropdown
+                      key={entry.id}
+                      group={entry}
+                      pathname={location.pathname}
+                      isActive={isNavEntryActive(entry, location.pathname)}
+                      isOpen={openNavMenu === entry.id}
+                      onToggle={() => setOpenNavMenu((prev) => (prev === entry.id ? null : entry.id))}
+                      onClose={() => setOpenNavMenu(null)}
+                    />
+                  ) : (
+                    <NavTopLink
+                      key={entry.id}
+                      item={entry}
+                      isActive={isNavEntryActive(entry, location.pathname)}
+                    />
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Right side actions */}
+            <div className="flex items-center gap-2">
               {/* Search Bar – desktop only */}
-              <div className="hidden md:flex items-center">
+              <div className="hidden md:flex items-center mr-2">
                 <div ref={searchRef} className="relative">
                   <form onSubmit={handleSearchSubmit}>
                     <svg
@@ -208,13 +204,13 @@ export default function Navbar() {
                       placeholder="검색..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                      className="w-48 xl:w-64 pl-10 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
                     />
                   </form>
 
                   {/* Autocomplete Dropdown */}
                   {showAutocomplete && (
-                    <div className="absolute top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+                    <div className="absolute right-0 top-full mt-2 w-96 bg-surface-card border border-surface-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
                       {isSearching ? (
                         <div className="p-4 text-center">
                           <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-accent"></div>
@@ -268,10 +264,7 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
               {isAuthenticated ? (
                 <div className="relative">
                   <button
@@ -362,34 +355,46 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile slide-down menu */}
+      {/* Mobile slide-down menu – scrolls when taller than the viewport */}
       {showMobileMenu && (
-        <div className="lg:hidden absolute top-full left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 animate-fade-in"
+        <div className="lg:hidden absolute top-full left-0 right-0 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 animate-fade-in"
           style={{ WebkitTransform: 'translate3d(0,0,0)', transform: 'translate3d(0,0,0)' }}
         >
-          <div className="px-4 py-3 space-y-1">
-            {mobileNavItems.map((item) => {
-              const linkPath = item.authPath && !isAuthenticated ? item.authPath : item.path;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.id}
-                  to={linkPath}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
-                    ? 'text-accent bg-accent/10'
-                    : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
-                    }`}
-                >
-                  <span className={`transition-colors ${isActive ? 'text-accent' : ''}`}>
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="px-4 py-3 space-y-3">
+            {primaryNav.map((entry) =>
+              entry.type === 'group' ? (
+                <div key={entry.id}>
+                  <p className="px-3 pt-1 pb-1.5 text-xs font-medium text-text-muted">{entry.label}</p>
+                  <div className="space-y-1">
+                    {entry.items.map((item) => (
+                      <MobileNavLink key={item.id} item={item} isActive={isNavItemActive(item, location.pathname)} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div key={entry.id} className="pt-3 border-t border-surface-border/50">
+                  <MobileNavLink item={entry} isActive={isNavItemActive(entry, location.pathname)} />
+                </div>
+              )
+            )}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function MobileNavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  return (
+    <Link
+      to={item.path}
+      aria-current={isActive ? 'page' : undefined}
+      className={`flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
+        ? 'text-accent bg-accent/10'
+        : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
+        }`}
+    >
+      {item.label}
+    </Link>
   );
 }

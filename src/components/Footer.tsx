@@ -40,7 +40,7 @@ export default function Footer({ className = '' }: FooterProps) {
           {/* Links */}
           <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm items-center">
             <Link
-              to="/"
+              to="/blog"
               className="text-text-muted hover:text-text-secondary transition-colors"
             >
               Blog

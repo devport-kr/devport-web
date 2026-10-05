@@ -3,7 +3,6 @@ import { PortfolioPage } from '../components/ui/starfall-portfolio-landing';
 import { useNavigate } from 'react-router-dom';
 import type { WikiProjectSummary } from '../services/wiki/wikiService';
 import { getWikiProjects } from '../services/wiki/wikiService';
-import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
@@ -56,15 +55,8 @@ export default function PortsDirectoryPage() {
     <div className="min-h-screen bg-glow">
       <Navbar />
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div
-          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 hidden lg:block w-52`}
-        >
-          <Sidebar compact={false} />
-        </div>
-
         {/* ─── DIRECTORY VIEW (LANDING PAGE) ── */}
-        <main className="lg:ml-52 text-text-primary">
+        <main className="text-text-primary">
           {/* Aurora landing — full viewport hero */}
           <PortfolioPage
             hero={{
@@ -205,7 +197,7 @@ export default function PortsDirectoryPage() {
         </aside>
 
       </div>
-      <Footer className="lg:ml-52" />
+      <Footer />
     </div>
   );
 }

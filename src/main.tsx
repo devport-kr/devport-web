@@ -23,6 +23,8 @@ import SearchResultsPage from './pages/SearchResultsPage'
 import PortsDirectoryPage from './pages/PortsDirectoryPage'
 import PortsProjectPage from './pages/PortsProjectPage'
 import PortsChatPage from './pages/PortsChatPage'
+import ProductMcpPage from './pages/ProductMcpPage'
+import BlogPage from './pages/BlogPage'
 import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
@@ -47,6 +49,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/ports/chat" element={<PortsChatPage />} />
           <Route path="/ports/chat/*" element={<PortsChatPage />} />
           <Route path="/ports/*" element={<PortsProjectPage />} />
+          <Route path="/products/mcp" element={<ProductMcpPage />} />
+          <Route path="/blog" element={<BlogPage />} />
           <Route
             path="/admin"
             element={

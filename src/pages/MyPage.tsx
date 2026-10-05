@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import { getSavedArticles, getReadHistory, unsaveArticle } from '../services/me/meService';
 import { updateProfile, changePassword } from '../services/auth/authService';
@@ -306,13 +305,8 @@ export default function MyPage() {
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-          <Sidebar />
-        </div>
-
         {/* Main Content */}
-        <main className="lg:ml-52 pt-8 pb-8 px-8">
+        <main className="pt-8 pb-8 px-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
@@ -776,7 +770,7 @@ export default function MyPage() {
           </div>
         </main>
       </div>
-      <Footer className="lg:ml-52" />
+      <Footer />
     </div>
   );
 }

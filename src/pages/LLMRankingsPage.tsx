@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import TrendingTicker from '../components/TrendingTicker';
 import type { BenchmarkCategoryGroup, BenchmarkType } from '../types';
@@ -102,10 +101,6 @@ export default function LLMRankingsPage() {
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
-        <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-          <Sidebar />
-        </div>
-
         {/* TOC Sidebar */}
         <div
           className="fixed top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden xl:flex items-center"
@@ -132,11 +127,11 @@ export default function LLMRankingsPage() {
           </div>
         </div>
 
-        <div className="lg:ml-52 xl:mr-52 border-b border-surface-border/50">
+        <div className="xl:mr-52 border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        <main className="lg:ml-52 xl:mr-52 pt-8 px-4 md:px-6 lg:px-10">
+        <main className="xl:mr-52 pt-8 px-4 md:px-6 lg:px-10">
           <div className="max-w-6xl mx-auto space-y-12 relative z-10">
             {/* Back link + Overview card */}
             <div>
@@ -240,7 +235,7 @@ export default function LLMRankingsPage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52 xl:mr-52" />
+      <Footer className="xl:mr-52" />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import TrendingTicker from '../components/TrendingTicker';
 import GitHubLeaderboard from '../components/GitHubLeaderboard';
@@ -186,13 +185,8 @@ export default function HomePage() {
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-          <Sidebar />
-        </div>
-
-        {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div ref={tickerRef} className="lg:ml-52 border-b border-surface-border/50">
+        {/* Trending Ticker */}
+        <div ref={tickerRef} className="border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
@@ -270,7 +264,7 @@ export default function HomePage() {
       </div>
 
       {/* Right margin matches the fixed right rail (w-[28%], min 380px, max 500px) so it never covers the footer */}
-      <Footer className="lg:ml-52 xl:mr-[clamp(380px,28%,500px)]" />
+      <Footer className="xl:mr-[clamp(380px,28%,500px)]" />
     </div>
   );
 }
