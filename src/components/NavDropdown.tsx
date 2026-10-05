@@ -15,9 +15,27 @@ interface NavDropdownProps {
 // Shared look for top-level navbar entries: full bar height so the active
 // underline sits on the navbar's bottom border
 const navTriggerClasses = (isActive: boolean, isOpen = false) =>
-  `flex items-center h-full px-3 border-b-2 text-sm font-medium transition-colors ${
+  `flex items-center h-full px-3 border-b-2 text-[15px] font-medium transition-colors ${
     isActive ? 'border-accent' : 'border-transparent'
   } ${isActive || isOpen ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'}`;
+
+// Menu row content: icon + label, and an accent dot for the current page.
+// The row needs the `group` class for the icon's hover color.
+export function NavItemContent({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  return (
+    <>
+      <span className="flex items-center gap-2.5">
+        <item.icon
+          className={`w-4 h-4 shrink-0 transition-colors ${
+            isActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-primary'
+          }`}
+        />
+        {item.label}
+      </span>
+      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+    </>
+  );
+}
 
 interface NavTopLinkProps {
   item: NavItem;
@@ -60,10 +78,9 @@ export default function NavDropdown({ group, pathname, isActive, isOpen, onToggl
                   to={item.path}
                   onClick={onClose}
                   aria-current={isItemActive ? 'page' : undefined}
-                  className={`${menuItemClasses(isItemActive)} justify-between gap-4 px-3 py-2`}
+                  className={`${menuItemClasses(isItemActive)} group justify-between gap-4 px-3 py-2`}
                 >
-                  {item.label}
-                  {isItemActive && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                  <NavItemContent item={item} isActive={isItemActive} />
                 </Link>
               );
             })}

@@ -5,7 +5,7 @@ import { searchAutocomplete } from '../services/search/searchService';
 import type { ArticleAutocompleteResponse } from '../services/search/searchService';
 import { primaryNav, isNavEntryActive, isNavItemActive } from '../config/navigation';
 import type { NavItem } from '../config/navigation';
-import NavDropdown, { NavTopLink } from './NavDropdown';
+import NavDropdown, { NavItemContent, NavTopLink } from './NavDropdown';
 import { menuItemClasses, menuPanelClasses } from './navMenuStyles';
 
 export default function Navbar() {
@@ -384,10 +384,9 @@ function MobileNavLink({ item, isActive }: { item: NavItem; isActive: boolean })
     <Link
       to={item.path}
       aria-current={isActive ? 'page' : undefined}
-      className={`${menuItemClasses(isActive)} justify-between px-3 py-3 font-medium`}
+      className={`${menuItemClasses(isActive)} group justify-between px-3 py-3 font-medium`}
     >
-      {item.label}
-      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+      <NavItemContent item={item} isActive={isActive} />
     </Link>
   );
 }

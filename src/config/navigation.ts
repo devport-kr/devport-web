@@ -1,7 +1,17 @@
+import type { ComponentType } from 'react';
+import HomeIcon from '../components/icons/HomeIcon';
+import TrendingUpIcon from '../components/icons/TrendingUpIcon';
+import PortsIcon from '../components/icons/PortsIcon';
+import ChartBarIcon from '../components/icons/ChartBarIcon';
+import PuzzleIcon from '../components/icons/PuzzleIcon';
+import PencilIcon from '../components/icons/PencilIcon';
+
 export interface NavItem {
   id: string;
   label: string;
   path: string;
+  /** Shown next to the label in menus (dropdowns, mobile sheet); the top bar stays text-only */
+  icon: ComponentType<{ className?: string }>;
   /** Additional path prefixes that should also mark this item as active */
   activeOn?: string[];
 }
@@ -23,8 +33,8 @@ export const primaryNav: NavEntry[] = [
     id: 'dev',
     label: 'dev',
     items: [
-      { id: 'news', label: '뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
-      { id: 'trending-repos', label: '트렌딩 리포', path: '/trending-repos' },
+      { id: 'news', label: '뉴스', path: '/', icon: HomeIcon, activeOn: ['/articles', '/article', '/search'] },
+      { id: 'trending-repos', label: '트렌딩 리포', path: '/trending-repos', icon: TrendingUpIcon },
     ],
   },
   {
@@ -32,12 +42,12 @@ export const primaryNav: NavEntry[] = [
     id: 'port',
     label: 'port',
     items: [
-      { id: 'ports', label: 'ports', path: '/ports' },
-      { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings' },
-      { id: 'mcp', label: 'mcp', path: '/products/mcp' },
+      { id: 'ports', label: 'ports', path: '/ports', icon: PortsIcon },
+      { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings', icon: ChartBarIcon },
+      { id: 'mcp', label: 'mcp', path: '/products/mcp', icon: PuzzleIcon },
     ],
   },
-  { type: 'link', id: 'blog', label: 'blog', path: '/blog' },
+  { type: 'link', id: 'blog', label: 'blog', path: '/blog', icon: PencilIcon },
 ];
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
