@@ -42,6 +42,7 @@ export default {
       boxShadow: {
         'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.3)',
         'glow': '0 0 20px rgba(47, 129, 247, 0.15)',
+        'menu': '0 16px 40px -12px rgba(0, 0, 0, 0.6)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -50,6 +51,7 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-up': 'slideUp 0.4s ease-out',
+        'menu-in': 'menuIn 0.14s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -59,6 +61,10 @@ export default {
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        menuIn: {
+          '0%': { opacity: '0', transform: 'translateY(-4px) scale(0.98)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
       },
     },

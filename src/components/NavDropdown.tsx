@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { isNavItemActive } from '../config/navigation';
 import type { NavGroup, NavItem } from '../config/navigation';
+import { menuItemClasses, menuPanelClasses } from './navMenuStyles';
 
 interface NavDropdownProps {
   group: NavGroup;
@@ -47,28 +48,26 @@ export default function NavDropdown({ group, pathname, isActive, isOpen, onToggl
       </button>
 
       {isOpen && (
-        <div
-          id={menuId}
-          className="absolute left-0 top-full mt-1 min-w-[11rem] p-1.5 bg-surface-card border border-surface-border rounded-xl shadow-soft animate-fade-in"
-        >
-          {group.items.map((item) => {
-            const isItemActive = isNavItemActive(item, pathname);
-            return (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={onClose}
-                aria-current={isItemActive ? 'page' : undefined}
-                className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                  isItemActive
-                    ? 'text-accent bg-accent/10'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        // Centered under the trigger; the inner panel animates separately so its
+        // transform doesn't fight the centering translate
+        <div className="absolute left-1/2 top-full -translate-x-1/2 pt-2">
+          <div id={menuId} className={`min-w-[9rem] ${menuPanelClasses}`}>
+            {group.items.map((item) => {
+              const isItemActive = isNavItemActive(item, pathname);
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={onClose}
+                  aria-current={isItemActive ? 'page' : undefined}
+                  className={`${menuItemClasses(isItemActive)} justify-between gap-4 px-3 py-2`}
+                >
+                  {item.label}
+                  {isItemActive && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

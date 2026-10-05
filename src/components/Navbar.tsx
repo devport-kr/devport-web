@@ -6,6 +6,7 @@ import type { ArticleAutocompleteResponse } from '../services/search/searchServi
 import { primaryNav, isNavEntryActive, isNavItemActive } from '../config/navigation';
 import type { NavItem } from '../config/navigation';
 import NavDropdown, { NavTopLink } from './NavDropdown';
+import { menuItemClasses, menuPanelClasses } from './navMenuStyles';
 
 export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -280,26 +281,19 @@ export default function Navbar() {
                     <span className="hidden md:block text-sm text-text-secondary">
                       {user?.name}
                     </span>
-                    <svg
-                      className={`w-4 h-4 text-text-muted transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                    </svg>
                   </button>
 
                   {/* User Dropdown Menu */}
                   {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-surface-card rounded-xl shadow-soft border border-surface-border py-1 animate-fade-in">
-                      <div className="px-4 py-3 border-b border-surface-border">
+                    // mt-6 lines the panel up with the nav dropdowns, 8px below the bar
+                    <div className={`absolute right-0 top-full mt-6 w-56 ${menuPanelClasses}`}>
+                      <div className="px-3 pt-2 pb-2.5 mb-1.5 border-b border-surface-border/60">
                         <p className="text-sm font-medium text-text-primary truncate">{user?.name}</p>
                         <p className="text-xs text-text-muted truncate mt-0.5">{user?.email}</p>
                       </div>
                       <Link
                         to="/mypage"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                        className={`${menuItemClasses(location.pathname === '/mypage')} gap-2.5 px-3 py-2`}
                         onClick={() => setShowUserMenu(false)}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,7 +303,7 @@ export default function Navbar() {
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-surface-hover transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-white/[0.04] transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -358,7 +352,7 @@ export default function Navbar() {
 
       {/* Mobile slide-down menu – scrolls when taller than the viewport */}
       {showMobileMenu && (
-        <div className="lg:hidden absolute top-full left-0 right-0 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 animate-fade-in"
+        <div className="lg:hidden absolute top-full left-0 right-0 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-surface/95 backdrop-blur-xl border-b border-surface-border/50 shadow-menu animate-menu-in"
           style={{ WebkitTransform: 'translate3d(0,0,0)', transform: 'translate3d(0,0,0)' }}
         >
           <div className="px-4 py-3 space-y-3">
@@ -390,12 +384,10 @@ function MobileNavLink({ item, isActive }: { item: NavItem; isActive: boolean })
     <Link
       to={item.path}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive
-        ? 'text-accent bg-accent/10'
-        : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
-        }`}
+      className={`${menuItemClasses(isActive)} justify-between px-3 py-3 font-medium`}
     >
       {item.label}
+      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
     </Link>
   );
 }
