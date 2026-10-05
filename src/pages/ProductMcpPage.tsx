@@ -19,7 +19,7 @@ export default function ProductMcpPage() {
           to="/"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-accent hover:bg-accent-light text-white rounded-lg transition-colors"
         >
-          dev뉴스 보러 가기
+          뉴스 보러 가기
         </Link>
       </main>
 

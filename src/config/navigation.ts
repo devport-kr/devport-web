@@ -20,24 +20,24 @@ export type NavEntry =
 export const primaryNav: NavEntry[] = [
   {
     type: 'group',
-    id: 'explore',
-    label: '둘러보기',
+    id: 'dev',
+    label: 'dev',
     items: [
-      { id: 'dev-news', label: 'dev뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
-      { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings' },
-      { id: 'trending-repos', label: '트렌딩 리포지토리', path: '/trending-repos' },
-      { id: 'ports', label: 'ports', path: '/ports' },
+      { id: 'news', label: '뉴스', path: '/', activeOn: ['/articles', '/article', '/search'] },
+      { id: 'trending-repos', label: '트렌딩 리포', path: '/trending-repos' },
     ],
   },
   {
     type: 'group',
-    id: 'products',
-    label: '제품',
+    id: 'port',
+    label: 'port',
     items: [
-      { id: 'devport-mcp', label: 'devport MCP', path: '/products/mcp' },
+      { id: 'ports', label: 'ports', path: '/ports' },
+      { id: 'llm-rankings', label: 'LLM 랭킹', path: '/llm-rankings' },
+      { id: 'mcp', label: 'mcp', path: '/products/mcp' },
     ],
   },
-  { type: 'link', id: 'blog', label: '블로그', path: '/blog' },
+  { type: 'link', id: 'blog', label: 'blog', path: '/blog' },
 ];
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
