@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
+import { Check, ChevronRight, Clock, LoaderCircle, X } from 'lucide-react';
 import LegalDocumentModal from '../components/LegalDocumentModal';
 import {
   type LegalDocumentKey,
@@ -16,6 +17,21 @@ import {
 } from '../services/auth/authService';
 import { isBotVerificationFailure, parseApiError, type ParsedApiError } from '../lib/http/apiError';
 import { validateEmail, validatePassword, validateUsername } from '../lib/signupValidation';
+import AuthLayout from '../components/auth/AuthLayout';
+import OAuthButton from '../components/auth/OAuthButton';
+import { OAUTH_PROVIDERS, type OAuthProvider } from '../components/auth/oauthProviders';
+import Checkbox from '../components/form/Checkbox';
+import FormAlert from '../components/form/FormAlert';
+import PasswordInput from '../components/form/PasswordInput';
+import PasswordRequirements from '../components/form/PasswordRequirements';
+import {
+  buttonClass,
+  errorTextClass,
+  helperTextClass,
+  inputClass,
+  labelClass,
+  successTextClass,
+} from '../components/form/formStyles';
 
 type SignupMode = 'local' | 'oauth';
 type FormField = 'username' | 'password' | 'passwordConfirm' | 'email';
@@ -26,13 +42,11 @@ const EMAIL_INVALID = '올바른 이메일 주소를 입력해주세요.';
 const EMAIL_VERIFICATION_REQUIRED = '이메일 인증을 완료해주세요.';
 const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 
-const inputClassName = (hasError: boolean) =>
-  `w-full px-4 py-2.5 bg-surface-elevated border ${
-    hasError ? 'border-red-500' : 'border-surface-border'
-  } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`;
-
-const inlineButtonClassName =
-  'shrink-0 whitespace-nowrap px-4 py-2.5 bg-surface-card border border-surface-border hover:border-accent text-text-secondary text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-surface-border';
+const AGREEMENT_ITEMS: { key: 'terms' | 'privacy' | 'age14'; label: string; document?: LegalDocumentKey }[] = [
+  { key: 'terms', label: '서비스 이용약관 동의', document: 'terms' },
+  { key: 'privacy', label: '개인정보 수집·이용 동의', document: 'privacy' },
+  { key: 'age14', label: '만 14세 이상입니다' },
+];
 
 const formatCountdown = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -283,7 +297,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleOAuthSignup = (provider: 'github' | 'google' | 'naver') => {
+  const handleOAuthSignup = (provider: OAuthProvider) => {
     if (!hasRequiredAgreements) {
       setErrors({
         agreements: '필수 약관에 모두 동의해야 회원가입할 수 있습니다.',
@@ -435,30 +449,37 @@ export default function SignupPage() {
 
   const renderUsernameMessage = () => {
     if (errors.username) {
-      return <p className="mt-1.5 text-sm text-red-400">{errors.username}</p>;
-    }
-    if (usernameStatus === 'checking') {
-      return <p className="mt-1.5 text-xs text-text-muted">아이디 확인 중...</p>;
+      return <p className={errorTextClass}>{errors.username}</p>;
     }
     if (usernameStatus === 'available') {
-      return <p className="mt-1.5 text-sm text-green-400">사용 가능한 아이디입니다</p>;
+      return <p className={successTextClass}>사용 가능한 아이디입니다</p>;
     }
     if (usernameStatus === 'unavailable') {
-      return <p className="mt-1.5 text-sm text-red-400">이미 사용 중이거나 사용할 수 없는 아이디입니다</p>;
+      return <p className={errorTextClass}>이미 사용 중이거나 사용할 수 없는 아이디입니다</p>;
     }
-    return <p className="mt-1.5 text-xs text-text-muted">3~20자 영문, 숫자, _, -</p>;
+    return <p className={helperTextClass}>3~20자 영문, 숫자, _, -</p>;
+  };
+
+  const renderUsernameStatusIcon = () => {
+    if (errors.username) return null;
+    if (usernameStatus === 'checking') {
+      return <LoaderCircle aria-label="아이디 확인 중" className="h-4 w-4 animate-spin text-text-muted" />;
+    }
+    if (usernameStatus === 'available') return <Check aria-hidden className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />;
+    if (usernameStatus === 'unavailable') return <X aria-hidden className="h-4 w-4 text-red-400" strokeWidth={2.5} />;
+    return null;
   };
 
   const renderEmailMessage = () => {
     const emailError = errors.email ?? errors.emailSend;
     if (emailError) {
       return (
-        <p className="mt-1.5 text-sm text-red-400">
+        <p className={errorTextClass}>
           {emailError}
           {errors.email === EMAIL_REGISTERED && (
             <>
               {' '}
-              <Link to="/login" className="font-medium text-accent hover:text-accent/80">
+              <Link to="/login" className="font-medium text-accent-light underline-offset-4 hover:underline">
                 로그인하기
               </Link>
             </>
@@ -467,27 +488,27 @@ export default function SignupPage() {
       );
     }
     if (isEmailVerified) {
-      return <p className="mt-1.5 text-sm text-green-400">이메일 인증이 완료되었습니다</p>;
+      return <p className={successTextClass}>이메일 인증이 완료되었습니다</p>;
     }
     if (isCodeStep) {
       return null;
     }
     if (!turnstileToken) {
-      return <p className="mt-1.5 text-xs text-text-muted break-keep">아래 봇 검증이 끝나면 인증번호를 받을 수 있습니다</p>;
+      return <p className={helperTextClass}>아래 봇 검증이 끝나면 인증번호를 받을 수 있습니다</p>;
     }
-    return <p className="mt-1.5 text-xs text-text-muted break-keep">입력한 이메일로 인증번호 6자리를 보내드립니다</p>;
+    return <p className={helperTextClass}>입력한 이메일로 인증번호 6자리를 보내드립니다</p>;
   };
 
   const renderCodeMessage = () => {
     if (errors.code) {
-      return <p className="mt-1.5 text-sm text-red-400">{errors.code}</p>;
+      return <p className={errorTextClass}>{errors.code}</p>;
     }
     if (codeSecondsLeft === 0) {
-      return <p className="mt-1.5 text-sm text-red-400">인증번호가 만료되었습니다. 인증번호를 다시 요청해주세요.</p>;
+      return <p className={errorTextClass}>인증번호가 만료되었습니다. 인증번호를 다시 요청해주세요.</p>;
     }
     return (
-      <p className="mt-1.5 text-xs text-text-muted break-keep">
-        {codeRequest?.email}(으)로 보낸 인증번호를 입력해주세요 · 남은 시간 {formatCountdown(codeSecondsLeft)}
+      <p className={helperTextClass}>
+        <span className="text-text-secondary">{codeRequest?.email}</span>(으)로 보낸 인증번호를 입력해주세요
       </p>
     );
   };
@@ -498,347 +519,292 @@ export default function SignupPage() {
     return codeRequest ? '재발송' : '인증번호 받기';
   };
 
+  const isPasswordConfirmed =
+    Boolean(formData.passwordConfirm) && formData.password === formData.passwordConfirm && !errors.passwordConfirm;
+
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-0.5 mb-3">
-              <span className="text-3xl font-semibold text-text-primary">devport</span>
-              <span className="text-accent text-3xl font-semibold">.</span>
+      <AuthLayout
+        title="계정 만들기"
+        description="무료로 가입하고 아티클 저장, 읽은 기록, 뉴스레터를 이용해보세요."
+        footer={
+          <>
+            이미 계정이 있으신가요?{' '}
+            <Link to="/login" className="font-medium text-accent-light underline-offset-4 hover:underline">
+              로그인
             </Link>
-            <p className="text-sm text-text-muted">개발자를 위한 글로벌 트렌드 포털</p>
-          </div>
+          </>
+        }
+      >
+        {generalError && <FormAlert className="mb-6">{generalError}</FormAlert>}
 
-          <div className="min-h-[42rem] rounded-2xl border border-surface-border bg-surface-card p-8">
-            <h2 className="text-lg font-medium text-text-primary mb-6 text-center">회원가입</h2>
-            {generalError && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-sm text-red-400 text-center">{generalError}</p>
+        {/* Signup Mode Tabs */}
+        <div role="tablist" aria-label="가입 방법" className="grid grid-cols-2 gap-1 rounded-lg border border-surface-border bg-surface-elevated p-1">
+          {(
+            [
+              ['local', '아이디로 가입'],
+              ['oauth', '소셜 계정으로 가입'],
+            ] as const
+          ).map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={signupMode === mode}
+              onClick={() => setSignupMode(mode)}
+              className={`h-9 rounded-md text-sm font-medium transition-colors ${
+                signupMode === mode
+                  ? 'bg-surface-hover text-text-primary shadow-soft'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ID/PW Signup Form (submitted by the button below the Turnstile widget) */}
+        {signupMode === 'local' && (
+          <form id="local-signup-form" onSubmit={handleLocalSignup} noValidate className="mt-6 space-y-5">
+            <div>
+              <label htmlFor="username" className={labelClass}>
+                아이디
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleFieldChange}
+                  onBlur={handleFieldBlur}
+                  autoComplete="username"
+                  maxLength={20}
+                  className={`${inputClass(Boolean(errors.username) || usernameStatus === 'unavailable')} pr-10`}
+                  placeholder="영문, 숫자로 된 아이디"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center">
+                  {renderUsernameStatusIcon()}
+                </span>
               </div>
-            )}
-
-            {/* Signup Mode Tabs */}
-            <div className="flex gap-2 mb-6 bg-surface-elevated rounded-xl p-1">
-              <button
-                type="button"
-                onClick={() => setSignupMode('local')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  signupMode === 'local'
-                    ? 'bg-surface-card text-text-primary'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                아이디로 가입
-              </button>
-              <button
-                type="button"
-                onClick={() => setSignupMode('oauth')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  signupMode === 'oauth'
-                    ? 'bg-surface-card text-text-primary'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                소셜 계정으로 가입
-              </button>
+              {renderUsernameMessage()}
             </div>
 
-            <div className="mb-6 rounded-2xl border border-surface-border bg-surface-elevated/40 p-5">
-              {/* ID/PW Signup Form (submitted by the button below the Turnstile widget) */}
-              {signupMode === 'local' && (
-                <form id="local-signup-form" onSubmit={handleLocalSignup} noValidate className="space-y-4">
-                  <div>
-                    <label htmlFor="username" className="block text-sm font-medium text-text-secondary mb-2">
-                      아이디
-                    </label>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleFieldChange}
-                      onBlur={handleFieldBlur}
-                      autoComplete="username"
-                      maxLength={20}
-                      className={inputClassName(Boolean(errors.username) || usernameStatus === 'unavailable')}
-                      placeholder="아이디를 입력하세요"
-                    />
-                    {renderUsernameMessage()}
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
-                      비밀번호
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleFieldChange}
-                      onBlur={handleFieldBlur}
-                      autoComplete="new-password"
-                      maxLength={64}
-                      className={inputClassName(Boolean(errors.password))}
-                      placeholder="비밀번호를 입력하세요"
-                    />
-                    {errors.password ? (
-                      <p className="mt-1.5 text-sm text-red-400">{errors.password}</p>
-                    ) : (
-                      <p className="mt-1.5 text-xs text-text-muted">8~64자, 특수문자(!@#$%^&* 등) 1개 이상 포함</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="passwordConfirm" className="block text-sm font-medium text-text-secondary mb-2">
-                      비밀번호 확인
-                    </label>
-                    <input
-                      type="password"
-                      id="passwordConfirm"
-                      name="passwordConfirm"
-                      value={formData.passwordConfirm}
-                      onChange={handleFieldChange}
-                      onBlur={handleFieldBlur}
-                      autoComplete="new-password"
-                      maxLength={64}
-                      className={inputClassName(Boolean(errors.passwordConfirm))}
-                      placeholder="비밀번호를 다시 입력하세요"
-                    />
-                    {errors.passwordConfirm && (
-                      <p className="mt-1.5 text-sm text-red-400">{errors.passwordConfirm}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
-                      이메일
-                    </label>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleFieldChange}
-                        onBlur={handleFieldBlur}
-                        onKeyDown={handleStepKeyDown(handleSendCode, canSendCode)}
-                        readOnly={isEmailLocked}
-                        autoComplete="email"
-                        maxLength={100}
-                        className={`${inputClassName(Boolean(errors.email))} min-w-0 ${isEmailLocked ? 'text-text-muted' : ''}`}
-                        placeholder="이메일을 입력하세요"
-                      />
-                      {isEmailVerified ? (
-                        <button type="button" onClick={handleChangeEmail} className={inlineButtonClassName}>
-                          변경
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSendCode}
-                          disabled={!canSendCode}
-                          className={inlineButtonClassName}
-                        >
-                          {getSendCodeLabel()}
-                        </button>
-                      )}
-                    </div>
-                    {renderEmailMessage()}
-                  </div>
-
-                  {isCodeStep && (
-                    <div>
-                      <label htmlFor="verificationCode" className="block text-sm font-medium text-text-secondary mb-2">
-                        인증번호
-                      </label>
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <input
-                          type="text"
-                          id="verificationCode"
-                          name="verificationCode"
-                          value={verificationCode}
-                          onChange={handleCodeChange}
-                          onKeyDown={handleStepKeyDown(handleVerifyCode, canVerifyCode)}
-                          inputMode="numeric"
-                          autoComplete="one-time-code"
-                          maxLength={6}
-                          autoFocus
-                          className={`${inputClassName(Boolean(errors.code))} min-w-0 tracking-widest`}
-                          placeholder="6자리 숫자"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyCode}
-                          disabled={!canVerifyCode}
-                          className={inlineButtonClassName}
-                        >
-                          {isVerifyingCode ? '확인 중...' : '확인'}
-                        </button>
-                      </div>
-                      {renderCodeMessage()}
-                    </div>
-                  )}
-                </form>
+            <div>
+              <label htmlFor="password" className={labelClass}>
+                비밀번호
+              </label>
+              <PasswordInput
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleFieldChange}
+                onBlur={handleFieldBlur}
+                autoComplete="new-password"
+                maxLength={64}
+                hasError={Boolean(errors.password)}
+                placeholder="비밀번호를 입력하세요"
+              />
+              {errors.password ? (
+                <p className={errorTextClass}>{errors.password}</p>
+              ) : (
+                <PasswordRequirements password={formData.password} />
               )}
+            </div>
 
-              {/* OAuth Signup */}
-              {signupMode === 'oauth' && (
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => handleOAuthSignup('github')}
-                    disabled={isOAuthSignupDisabled}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-[#24292e] hover:bg-[#2f363d] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                    </svg>
-                    GitHub로 회원가입
+            <div>
+              <label htmlFor="passwordConfirm" className={labelClass}>
+                비밀번호 확인
+              </label>
+              <PasswordInput
+                id="passwordConfirm"
+                name="passwordConfirm"
+                value={formData.passwordConfirm}
+                onChange={handleFieldChange}
+                onBlur={handleFieldBlur}
+                autoComplete="new-password"
+                maxLength={64}
+                hasError={Boolean(errors.passwordConfirm)}
+                placeholder="비밀번호를 한 번 더 입력하세요"
+              />
+              {errors.passwordConfirm ? (
+                <p className={errorTextClass}>{errors.passwordConfirm}</p>
+              ) : (
+                isPasswordConfirmed && <p className={successTextClass}>비밀번호가 일치합니다</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="email" className={labelClass}>
+                이메일
+              </label>
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleFieldChange}
+                    onBlur={handleFieldBlur}
+                    onKeyDown={handleStepKeyDown(handleSendCode, canSendCode)}
+                    readOnly={isEmailLocked}
+                    autoComplete="email"
+                    maxLength={100}
+                    className={`${inputClass(Boolean(errors.email))} ${isEmailVerified ? 'pr-10' : ''}`}
+                    placeholder="you@example.com"
+                  />
+                  {isEmailVerified && (
+                    <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center">
+                      <Check aria-hidden className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />
+                    </span>
+                  )}
+                </div>
+                {isEmailVerified ? (
+                  <button type="button" onClick={handleChangeEmail} className={buttonClass('secondary')}>
+                    변경
                   </button>
-
+                ) : (
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignup('google')}
-                    disabled={isOAuthSignupDisabled}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleSendCode}
+                    disabled={!canSendCode}
+                    className={`${buttonClass('secondary')} min-w-[7.5rem] tabular-nums`}
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                    </svg>
-                    Google로 회원가입
+                    {getSendCodeLabel()}
                   </button>
+                )}
+              </div>
+              {renderEmailMessage()}
+            </div>
 
+            {isCodeStep && (
+              <div className="animate-slide-up rounded-xl border border-accent/25 bg-accent/[0.04] p-4">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label htmlFor="verificationCode" className="text-[13px] font-medium text-text-secondary">
+                    인증번호
+                  </label>
+                  {codeSecondsLeft > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-accent-light">
+                      <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+                      {formatCountdown(codeSecondsLeft)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    id="verificationCode"
+                    name="verificationCode"
+                    value={verificationCode}
+                    onChange={handleCodeChange}
+                    onKeyDown={handleStepKeyDown(handleVerifyCode, canVerifyCode)}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    autoFocus
+                    className={`${inputClass(Boolean(errors.code))} min-w-0 flex-1 font-mono tracking-[0.35em] placeholder:tracking-normal placeholder:font-sans`}
+                    placeholder="6자리 숫자"
+                  />
                   <button
                     type="button"
-                    onClick={() => handleOAuthSignup('naver')}
-                    disabled={isOAuthSignupDisabled}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-[#03C75A] hover:bg-[#02b350] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleVerifyCode}
+                    disabled={!canVerifyCode}
+                    className={`${buttonClass('primary')} min-w-[5rem]`}
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" />
-                    </svg>
-                    Naver로 회원가입
+                    {isVerifyingCode ? '확인 중...' : '확인'}
                   </button>
                 </div>
-              )}
-            </div>
-
-            <div className="mb-6 rounded-2xl border border-surface-border bg-surface-elevated/60 p-5">
-              <div className="mt-4 space-y-3">
-                <label className="flex items-start gap-3 border-b border-surface-border pb-3 text-sm text-text-primary">
-                  <input
-                    type="checkbox"
-                    checked={isAllAgreed}
-                    onChange={handleAllAgreementChange}
-                    className="mt-1 h-4 w-4 rounded border-surface-border bg-surface-card text-accent focus:ring-accent"
-                  />
-                  <span className="font-medium">모두 동의하기</span>
-                </label>
-
-                <label className="flex items-start gap-3 text-sm text-text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={agreements.terms}
-                    onChange={handleAgreementChange('terms')}
-                    className="mt-1 h-4 w-4 rounded border-surface-border bg-surface-card text-accent focus:ring-accent"
-                  />
-                  <span>
-                    [필수] 서비스 이용약관 동의{' '}
-                    <button
-                      type="button"
-                      onClick={() => setOpenDocument('terms')}
-                      className="text-accent underline underline-offset-2 hover:text-accent/80"
-                    >
-                      보기
-                    </button>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 text-sm text-text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={agreements.privacy}
-                    onChange={handleAgreementChange('privacy')}
-                    className="mt-1 h-4 w-4 rounded border-surface-border bg-surface-card text-accent focus:ring-accent"
-                  />
-                  <span>
-                    [필수] 개인정보 수집·이용 동의{' '}
-                    <button
-                      type="button"
-                      onClick={() => setOpenDocument('privacy')}
-                      className="text-accent underline underline-offset-2 hover:text-accent/80"
-                    >
-                      보기
-                    </button>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 text-sm text-text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={agreements.age14}
-                    onChange={handleAgreementChange('age14')}
-                    className="mt-1 h-4 w-4 rounded border-surface-border bg-surface-card text-accent focus:ring-accent"
-                  />
-                  <span>[필수] 만 14세 이상입니다</span>
-                </label>
+                {renderCodeMessage()}
               </div>
-
-              {errors.agreements && (
-                <p className="mt-3 text-sm text-red-400">{errors.agreements}</p>
-              )}
-            </div>
-
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => setTurnstileToken(null)}
-                onExpire={() => setTurnstileToken(null)}
-                options={{
-                  theme: 'dark',
-                  size: 'normal',
-                }}
-              />
-            </div>
-
-            {signupMode === 'local' && (
-              <button
-                type="submit"
-                form="local-signup-form"
-                disabled={isLocalSignupDisabled || isSubmitting}
-                className="w-full mt-6 px-5 py-3 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? '가입 중...' : '가입하기'}
-              </button>
             )}
+          </form>
+        )}
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-text-muted">
-                이미 계정이 있으신가요?{' '}
-                <Link to="/login" className="text-accent hover:text-accent/80 font-medium">
-                  로그인
-                </Link>
-              </p>
-            </div>
-          </div>
+        {signupMode === 'oauth' && (
+          <p className="mt-6 text-sm leading-relaxed text-text-muted break-keep">
+            GitHub, Google, 네이버 계정으로 간편하게 가입할 수 있어요. 아래 약관에 동의한 뒤 가입할 계정을 선택해주세요.
+          </p>
+        )}
 
-          <div className="mt-6 text-center">
-            <Link
-              to="/"
-              className="text-sm text-text-muted hover:text-text-secondary transition-colors"
-            >
-              ← 홈으로
-            </Link>
+        <fieldset className="mt-6 overflow-hidden rounded-xl border border-surface-border bg-surface-elevated/50">
+          <legend className="sr-only">약관 동의</legend>
+          <label className="flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.02]">
+            <Checkbox checked={isAllAgreed} onChange={handleAllAgreementChange} />
+            <span className="text-sm font-semibold text-text-primary">모두 동의하기</span>
+          </label>
+          <div className="space-y-3 border-t border-surface-border px-4 py-3.5">
+            {AGREEMENT_ITEMS.map(({ key, label, document }) => (
+              <div key={key} className="flex items-center justify-between gap-3">
+                <label className="flex cursor-pointer items-center gap-3 text-[13px] text-text-secondary">
+                  <Checkbox checked={agreements[key]} onChange={handleAgreementChange(key)} />
+                  <span>
+                    <span className="mr-1.5 font-medium text-accent-light">필수</span>
+                    {label}
+                  </span>
+                </label>
+                {document && (
+                  <button
+                    type="button"
+                    onClick={() => setOpenDocument(document)}
+                    className="inline-flex shrink-0 items-center text-xs text-text-muted transition-colors hover:text-text-primary"
+                  >
+                    보기
+                    <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
+        </fieldset>
+        {errors.agreements && <p className={errorTextClass}>{errors.agreements}</p>}
+
+        {/* Reserves the widget's height so the buttons below don't jump */}
+        <div className="mt-6 min-h-[65px]">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            onSuccess={(token) => setTurnstileToken(token)}
+            onError={() => setTurnstileToken(null)}
+            onExpire={() => setTurnstileToken(null)}
+            options={{
+              theme: 'dark',
+              size: 'flexible',
+            }}
+          />
         </div>
-      </div>
+
+        {signupMode === 'local' ? (
+          <button
+            type="submit"
+            form="local-signup-form"
+            disabled={isLocalSignupDisabled || isSubmitting}
+            className={`${buttonClass()} mt-4 w-full`}
+          >
+            {isSubmitting ? (
+              <>
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+                가입 중...
+              </>
+            ) : (
+              '가입하기'
+            )}
+          </button>
+        ) : (
+          <div className="mt-4 space-y-2.5">
+            {OAUTH_PROVIDERS.map((provider) => (
+              <OAuthButton
+                key={provider.id}
+                provider={provider}
+                onClick={() => handleOAuthSignup(provider.id)}
+                disabled={isOAuthSignupDisabled}
+              >
+                {provider.label}로 가입하기
+              </OAuthButton>
+            ))}
+          </div>
+        )}
+      </AuthLayout>
 
       <LegalDocumentModal
         documentKey={openDocument}

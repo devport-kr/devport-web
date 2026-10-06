@@ -2,7 +2,7 @@
 
 const USERNAME_CHARS = /^[a-zA-Z0-9_-]+$/;
 const PRINTABLE_ASCII = /^[\x20-\x7E]*$/;
-const PASSWORD_SPECIAL_CHAR = /[!@#$%^&*(),.?":{}|<>]/;
+export const PASSWORD_SPECIAL_CHAR = /[!@#$%^&*(),.?":{}|<>]/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMAIL_MAX_LENGTH = 100;
 
