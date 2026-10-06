@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validatePassword, validateUsername } from '../signupValidation';
+import { validateEmail, validatePassword, validateUsername } from '../signupValidation';
 
 // The rules the backend enforces (devport-api PR #24).
 const SERVER_USERNAME = /^[a-zA-Z0-9_-]{3,20}$/;
@@ -42,5 +42,19 @@ describe('validatePassword', () => {
     expect(validatePassword('short!1')).toBe('비밀번호는 8~64자로 입력해주세요.');
     expect(validatePassword('longenough')).toBe('특수문자(!@#$%^&* 등)를 1개 이상 포함해주세요.');
     expect(validatePassword('비밀번호입니다!!!')).toBe('비밀번호는 영문, 숫자, 특수문자, 공백만 사용할 수 있습니다.');
+  });
+});
+
+describe('validateEmail', () => {
+  it('accepts a normal address up to 100 characters', () => {
+    expect(validateEmail('user@example.com')).toBeNull();
+    expect(validateEmail(`${'a'.repeat(88)}@example.com`)).toBeNull();
+  });
+
+  it('rejects empty, malformed and too long addresses', () => {
+    expect(validateEmail('')).toBe('이메일을 입력해주세요.');
+    expect(validateEmail('user@example')).toBe('올바른 이메일 주소를 입력해주세요.');
+    expect(validateEmail('us er@example.com')).toBe('올바른 이메일 주소를 입력해주세요.');
+    expect(validateEmail(`${'a'.repeat(89)}@example.com`)).toBe('올바른 이메일 주소를 입력해주세요.');
   });
 });

@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../../lib/http/apiClient';
 
 export interface UserResponse {
   id: number;
-  email?: string | null; // local (ID/PW) accounts have no email
+  email?: string | null; // local (ID/PW) accounts created before email verification have no email
   username?: string;
   name: string;
   profileImageUrl?: string;
@@ -19,8 +19,29 @@ export interface UserResponse {
 export interface SignupRequest {
   username: string;
   password: string;
+  email: string;
+  emailVerificationToken: string; // verificationToken from verifySignupEmailCode
   agreedTermsVersion: string;
+}
+
+export interface SignupEmailCodeRequest {
+  email: string;
   turnstileToken: string;
+}
+
+export interface SignupEmailCodeResponse {
+  expiresIn: number; // seconds the code stays valid
+  resendAvailableIn: number; // seconds until another code can be sent
+}
+
+export interface SignupEmailCodeVerifyRequest {
+  email: string;
+  code: string; // 6 digits
+}
+
+export interface SignupEmailVerificationResponse {
+  verificationToken: string;
+  expiresIn: number; // seconds the token stays valid
 }
 
 export interface LoginRequest {
@@ -86,6 +107,27 @@ export const signup = async (data: SignupRequest): Promise<AccessTokenResponse> 
     withCredentials: true,
     skipAuthRefresh: true,
   } as any);
+  return response.data;
+};
+
+// Emails a 6-digit code. Turnstile tokens are single-use, so reset the widget after every call.
+export const sendSignupEmailCode = async (
+  data: SignupEmailCodeRequest
+): Promise<SignupEmailCodeResponse> => {
+  const response = await apiClient.post<SignupEmailCodeResponse>('/api/auth/signup/email-code', data, {
+    skipAuthRefresh: true,
+  } as any);
+  return response.data;
+};
+
+export const verifySignupEmailCode = async (
+  data: SignupEmailCodeVerifyRequest
+): Promise<SignupEmailVerificationResponse> => {
+  const response = await apiClient.post<SignupEmailVerificationResponse>(
+    '/api/auth/signup/email-code/verify',
+    data,
+    { skipAuthRefresh: true } as any
+  );
   return response.data;
 };
 
