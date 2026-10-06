@@ -7,32 +7,89 @@ import {
   CURRENT_TERMS_VERSION,
 } from '../content/legalDocuments';
 import { useAuth } from '../contexts/AuthContext';
-import { checkUsername, initiateOAuthLogin, signup } from '../services/auth/authService';
+import {
+  checkUsername,
+  initiateOAuthLogin,
+  sendSignupEmailCode,
+  signup,
+  verifySignupEmailCode,
+} from '../services/auth/authService';
 import { isBotVerificationFailure, parseApiError, type ParsedApiError } from '../lib/http/apiError';
-import { validatePassword, validateUsername } from '../lib/signupValidation';
+import { validateEmail, validatePassword, validateUsername } from '../lib/signupValidation';
 
 type SignupMode = 'local' | 'oauth';
-type FormField = 'username' | 'password' | 'passwordConfirm';
+type FormField = 'username' | 'password' | 'passwordConfirm' | 'email';
 
 const USERNAME_UNAVAILABLE = '이미 사용 중이거나 사용할 수 없는 아이디입니다.';
+const EMAIL_REGISTERED = '이미 가입된 이메일입니다.';
+const EMAIL_INVALID = '올바른 이메일 주소를 입력해주세요.';
+const EMAIL_VERIFICATION_REQUIRED = '이메일 인증을 완료해주세요.';
+const VERIFICATION_CODE_PATTERN = /^\d{6}$/;
 
 const inputClassName = (hasError: boolean) =>
   `w-full px-4 py-2.5 bg-surface-elevated border ${
     hasError ? 'border-red-500' : 'border-surface-border'
   } rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors`;
 
+const inlineButtonClassName =
+  'shrink-0 whitespace-nowrap px-4 py-2.5 bg-surface-card border border-surface-border hover:border-accent text-text-secondary text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-surface-border';
+
+const formatCountdown = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+// Signup 400s from the email verification check: the token expired, was already used or belongs to another email.
+const isEmailVerificationRejected = ({ status, message, validationErrors }: ParsedApiError) =>
+  status === 400 && (Boolean(message?.includes('이메일 인증')) || 'emailVerificationToken' in validationErrors);
+
+const getSendCodeErrors = (apiError: ParsedApiError): Record<string, string> => {
+  const { status, message, validationErrors } = apiError;
+
+  if (status === 409) {
+    return { email: EMAIL_REGISTERED };
+  }
+  if (status === 400) {
+    if (isBotVerificationFailure(apiError)) {
+      return { emailSend: '봇 검증에 실패했습니다. 다시 시도해주세요.' };
+    }
+    if (validationErrors.email) {
+      return { email: EMAIL_INVALID };
+    }
+  }
+  // 429 (resend cooldown, hourly or daily limit) and 503 (mail not sent) messages come from the server in Korean.
+  if ((status === 429 || status === 503) && message) {
+    return { emailSend: message };
+  }
+  return { emailSend: '인증번호를 보내지 못했습니다. 잠시 후 다시 시도해주세요.' };
+};
+
+const getVerifyCodeError = ({ status, message, validationErrors }: ParsedApiError): string => {
+  if (status === 400 && validationErrors.code) {
+    return '인증번호 6자리를 입력해주세요.';
+  }
+  // 400 (wrong code, with the remaining tries) and 503 messages come from the server in Korean.
+  if ((status === 400 || status === 503) && message) {
+    return message;
+  }
+  return '인증번호를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.';
+};
+
 const getSignupErrors = (apiError: ParsedApiError): Record<string, string> => {
   const { status, message, validationErrors } = apiError;
 
   if (status === 409) {
-    return { username: '이미 사용 중인 아이디입니다.' };
+    // Either the username or the email is taken; only the email conflict message mentions 이메일.
+    return message?.includes('이메일') ? { email: EMAIL_REGISTERED } : { username: '이미 사용 중인 아이디입니다.' };
   }
   if (status === 429) {
     return { general: message || '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' };
   }
   if (status === 400) {
-    if (isBotVerificationFailure(apiError)) {
-      return { general: '봇 검증에 실패했습니다. 다시 시도해주세요.' };
+    if (isEmailVerificationRejected(apiError)) {
+      return {
+        emailSend: message?.includes('이메일 인증')
+          ? message
+          : '이메일 인증이 만료되었습니다. 이메일을 다시 인증해주세요.',
+      };
     }
     if ('agreedTermsVersion' in validationErrors || /terms version/i.test(message ?? '')) {
       return { general: '약관이 개정되었습니다. 새로고침 후 다시 동의해주세요.' };
@@ -44,6 +101,9 @@ const getSignupErrors = (apiError: ParsedApiError): Record<string, string> => {
     }
     if (validationErrors.password) {
       fieldErrors.password = '비밀번호는 8~64자이며 특수문자를 1개 이상 포함해야 합니다.';
+    }
+    if (validationErrors.email) {
+      fieldErrors.email = EMAIL_INVALID;
     }
     if (Object.keys(fieldErrors).length > 0) {
       return fieldErrors;
@@ -65,9 +125,19 @@ export default function SignupPage() {
     username: '',
     password: '',
     passwordConfirm: '',
+    email: '',
   });
   // Result of the last availability check; available is null when the check itself failed.
   const [usernameCheck, setUsernameCheck] = useState<{ username: string; available: boolean | null } | null>(null);
+  // Email verification: send a code → verify it → keep the token for the signup request.
+  const [codeRequest, setCodeRequest] = useState<{ email: string; expiresAt: number } | null>(null);
+  const [resendAvailableAt, setResendAvailableAt] = useState(0);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [emailVerificationToken, setEmailVerificationToken] = useState<string | null>(null);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  // Clock for the countdowns; only ticks while one is running.
+  const [now, setNow] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agreements, setAgreements] = useState({
     terms: false,
@@ -79,8 +149,19 @@ export default function SignupPage() {
   const hasRequiredAgreements =
     agreements.terms && agreements.privacy && agreements.age14;
   const isAllAgreed = hasRequiredAgreements;
-  const isSignupActionDisabled = !turnstileToken || !hasRequiredAgreements;
+  const isOAuthSignupDisabled = !turnstileToken || !hasRequiredAgreements;
+  const isLocalSignupDisabled = !emailVerificationToken || !hasRequiredAgreements;
   const generalError = errors.general ?? searchParams.get('error');
+
+  const isEmailVerified = emailVerificationToken !== null;
+  const isEmailLocked = isEmailVerified || isSendingCode || isVerifyingCode;
+  const isCodeStep = codeRequest !== null && !isEmailVerified;
+  const resendSeconds = Math.max(0, Math.ceil((resendAvailableAt - now) / 1000));
+  const codeSecondsLeft = codeRequest ? Math.max(0, Math.ceil((codeRequest.expiresAt - now) / 1000)) : 0;
+  const isCountingDown = resendSeconds > 0 || (isCodeStep && codeSecondsLeft > 0);
+  const canSendCode = !isEmailLocked && Boolean(turnstileToken) && resendSeconds === 0;
+  const canVerifyCode =
+    isCodeStep && !isVerifyingCode && codeSecondsLeft > 0 && VERIFICATION_CODE_PATTERN.test(verificationCode);
 
   const isUsernameFormatValid = validateUsername(formData.username) === null;
   const usernameStatus = !isUsernameFormatValid
@@ -122,6 +203,13 @@ export default function SignupPage() {
       clearTimeout(timer);
     };
   }, [formData.username]);
+
+  useEffect(() => {
+    if (!isCountingDown) return;
+
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isCountingDown]);
 
   const resetTurnstile = () => {
     turnstileRef.current?.reset();
@@ -165,12 +253,22 @@ export default function SignupPage() {
     const name = e.target.name as FormField;
     const { value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'email') {
+      // A code that was already sent belongs to the previous address.
+      setCodeRequest(null);
+      setResendAvailableAt(0);
+      setVerificationCode('');
+      clearErrors(name, 'emailSend', 'code', 'general');
+      return;
+    }
     clearErrors(name, 'general');
   };
 
   const getFieldError = (field: FormField, data = formData): string | null => {
     if (field === 'username') return validateUsername(data.username);
     if (field === 'password') return validatePassword(data.password);
+    if (field === 'email') return validateEmail(data.email.trim());
     if (!data.passwordConfirm) return '비밀번호를 한 번 더 입력해주세요.';
     return data.password === data.passwordConfirm ? null : '비밀번호가 일치하지 않습니다.';
   };
@@ -202,27 +300,105 @@ export default function SignupPage() {
     initiateOAuthLogin(provider, turnstileToken, 'signup', CURRENT_TERMS_VERSION);
   };
 
+  const handleSendCode = async () => {
+    const email = formData.email.trim();
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setErrors((prev) => ({ ...prev, email: emailError }));
+      return;
+    }
+    if (!turnstileToken) {
+      setErrors((prev) => ({ ...prev, emailSend: '봇 검증을 완료해주세요.' }));
+      return;
+    }
+
+    setIsSendingCode(true);
+    clearErrors('email', 'emailSend', 'code', 'general');
+
+    try {
+      const { expiresIn, resendAvailableIn } = await sendSignupEmailCode({ email, turnstileToken });
+      const sentAt = Date.now();
+      setNow(sentAt);
+      setCodeRequest({ email, expiresAt: sentAt + expiresIn * 1000 });
+      setResendAvailableAt(sentAt + resendAvailableIn * 1000);
+      setVerificationCode('');
+    } catch (error: unknown) {
+      console.error('Signup email code error:', error);
+      setErrors((prev) => ({ ...prev, ...getSendCodeErrors(parseApiError(error)) }));
+    } finally {
+      // Turnstile tokens are single-use: get a fresh one for the next attempt, even after a failure.
+      resetTurnstile();
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!codeRequest || !canVerifyCode) return;
+
+    setIsVerifyingCode(true);
+    clearErrors('code', 'emailSend', 'general');
+
+    try {
+      const { verificationToken } = await verifySignupEmailCode({
+        email: codeRequest.email,
+        code: verificationCode,
+      });
+      setEmailVerificationToken(verificationToken);
+      setCodeRequest(null);
+      setVerificationCode('');
+    } catch (error: unknown) {
+      console.error('Signup email verify error:', error);
+      const apiError = parseApiError(error);
+      const { message } = apiError;
+      if (apiError.status === 400 && message?.includes('다시 요청')) {
+        // The code expired or ran out of tries and is gone on the server: back to the send step.
+        setCodeRequest(null);
+        setVerificationCode('');
+        setErrors((prev) => ({ ...prev, emailSend: message }));
+      } else {
+        setErrors((prev) => ({ ...prev, code: getVerifyCodeError(apiError) }));
+      }
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+    clearErrors('code');
+  };
+
+  // Enter in the email or code field runs that step instead of submitting the whole form.
+  const handleStepKeyDown = (action: () => void, enabled: boolean) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    if (enabled) action();
+  };
+
+  const handleChangeEmail = () => {
+    setEmailVerificationToken(null);
+    clearErrors('email', 'emailSend', 'code');
+  };
+
   const handleLocalSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const nextErrors: Record<string, string> = {};
-    (['username', 'password', 'passwordConfirm'] as const).forEach((field) => {
+    (['username', 'password', 'passwordConfirm', 'email'] as const).forEach((field) => {
       const fieldError = getFieldError(field);
       if (fieldError) nextErrors[field] = fieldError;
     });
     if (!nextErrors.username && usernameStatus === 'unavailable') {
       nextErrors.username = USERNAME_UNAVAILABLE;
     }
+    if (!nextErrors.email && !emailVerificationToken) {
+      nextErrors.emailSend = EMAIL_VERIFICATION_REQUIRED;
+    }
     if (!hasRequiredAgreements) {
       nextErrors.agreements = '필수 약관에 모두 동의해야 회원가입할 수 있습니다.';
     }
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || !emailVerificationToken) {
       setErrors(nextErrors);
-      return;
-    }
-
-    if (!turnstileToken) {
-      setErrors({ general: '봇 검증을 완료해주세요.' });
       return;
     }
 
@@ -233,8 +409,9 @@ export default function SignupPage() {
       const { accessToken } = await signup({
         username: formData.username,
         password: formData.password,
+        email: formData.email.trim(),
+        emailVerificationToken,
         agreedTermsVersion: CURRENT_TERMS_VERSION,
-        turnstileToken,
       });
 
       await authenticate(accessToken);
@@ -242,13 +419,16 @@ export default function SignupPage() {
     } catch (error: unknown) {
       console.error('Signup error:', error);
       const apiError = parseApiError(error);
-      if (apiError.status === 409) {
+      const signupErrors = getSignupErrors(apiError);
+      if (signupErrors.email === EMAIL_REGISTERED || isEmailVerificationRejected(apiError)) {
+        // The token can't be used for this email any more: unlock the field and verify again.
+        setEmailVerificationToken(null);
+      } else if (apiError.status === 409) {
+        // A failed signup doesn't use up the token, so the user can pick another username and resubmit.
         setUsernameCheck({ username: formData.username, available: false });
       }
-      setErrors(getSignupErrors(apiError));
+      setErrors(signupErrors);
     } finally {
-      // Turnstile tokens are single-use: get a fresh one for the next attempt.
-      resetTurnstile();
       setIsSubmitting(false);
     }
   };
@@ -267,6 +447,55 @@ export default function SignupPage() {
       return <p className="mt-1.5 text-sm text-red-400">이미 사용 중이거나 사용할 수 없는 아이디입니다</p>;
     }
     return <p className="mt-1.5 text-xs text-text-muted">3~20자 영문, 숫자, _, -</p>;
+  };
+
+  const renderEmailMessage = () => {
+    const emailError = errors.email ?? errors.emailSend;
+    if (emailError) {
+      return (
+        <p className="mt-1.5 text-sm text-red-400">
+          {emailError}
+          {errors.email === EMAIL_REGISTERED && (
+            <>
+              {' '}
+              <Link to="/login" className="font-medium text-accent hover:text-accent/80">
+                로그인하기
+              </Link>
+            </>
+          )}
+        </p>
+      );
+    }
+    if (isEmailVerified) {
+      return <p className="mt-1.5 text-sm text-green-400">이메일 인증이 완료되었습니다</p>;
+    }
+    if (isCodeStep) {
+      return null;
+    }
+    if (!turnstileToken) {
+      return <p className="mt-1.5 text-xs text-text-muted break-keep">아래 봇 검증이 끝나면 인증번호를 받을 수 있습니다</p>;
+    }
+    return <p className="mt-1.5 text-xs text-text-muted break-keep">입력한 이메일로 인증번호 6자리를 보내드립니다</p>;
+  };
+
+  const renderCodeMessage = () => {
+    if (errors.code) {
+      return <p className="mt-1.5 text-sm text-red-400">{errors.code}</p>;
+    }
+    if (codeSecondsLeft === 0) {
+      return <p className="mt-1.5 text-sm text-red-400">인증번호가 만료되었습니다. 인증번호를 다시 요청해주세요.</p>;
+    }
+    return (
+      <p className="mt-1.5 text-xs text-text-muted break-keep">
+        {codeRequest?.email}(으)로 보낸 인증번호를 입력해주세요 · 남은 시간 {formatCountdown(codeSecondsLeft)}
+      </p>
+    );
+  };
+
+  const getSendCodeLabel = () => {
+    if (isSendingCode) return '발송 중...';
+    if (resendSeconds > 0) return `재발송 (${resendSeconds}초)`;
+    return codeRequest ? '재발송' : '인증번호 받기';
   };
 
   return (
@@ -381,6 +610,76 @@ export default function SignupPage() {
                       <p className="mt-1.5 text-sm text-red-400">{errors.passwordConfirm}</p>
                     )}
                   </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
+                      이메일
+                    </label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleFieldChange}
+                        onBlur={handleFieldBlur}
+                        onKeyDown={handleStepKeyDown(handleSendCode, canSendCode)}
+                        readOnly={isEmailLocked}
+                        autoComplete="email"
+                        maxLength={100}
+                        className={`${inputClassName(Boolean(errors.email))} min-w-0 ${isEmailLocked ? 'text-text-muted' : ''}`}
+                        placeholder="이메일을 입력하세요"
+                      />
+                      {isEmailVerified ? (
+                        <button type="button" onClick={handleChangeEmail} className={inlineButtonClassName}>
+                          변경
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendCode}
+                          disabled={!canSendCode}
+                          className={inlineButtonClassName}
+                        >
+                          {getSendCodeLabel()}
+                        </button>
+                      )}
+                    </div>
+                    {renderEmailMessage()}
+                  </div>
+
+                  {isCodeStep && (
+                    <div>
+                      <label htmlFor="verificationCode" className="block text-sm font-medium text-text-secondary mb-2">
+                        인증번호
+                      </label>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          type="text"
+                          id="verificationCode"
+                          name="verificationCode"
+                          value={verificationCode}
+                          onChange={handleCodeChange}
+                          onKeyDown={handleStepKeyDown(handleVerifyCode, canVerifyCode)}
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          autoFocus
+                          className={`${inputClassName(Boolean(errors.code))} min-w-0 tracking-widest`}
+                          placeholder="6자리 숫자"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyCode}
+                          disabled={!canVerifyCode}
+                          className={inlineButtonClassName}
+                        >
+                          {isVerifyingCode ? '확인 중...' : '확인'}
+                        </button>
+                      </div>
+                      {renderCodeMessage()}
+                    </div>
+                  )}
                 </form>
               )}
 
@@ -390,7 +689,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuthSignup('github')}
-                    disabled={isSignupActionDisabled}
+                    disabled={isOAuthSignupDisabled}
                     className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-[#24292e] hover:bg-[#2f363d] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -402,7 +701,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuthSignup('google')}
-                    disabled={isSignupActionDisabled}
+                    disabled={isOAuthSignupDisabled}
                     className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -417,7 +716,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuthSignup('naver')}
-                    disabled={isSignupActionDisabled}
+                    disabled={isOAuthSignupDisabled}
                     className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-[#03C75A] hover:bg-[#02b350] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -513,7 +812,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 form="local-signup-form"
-                disabled={isSignupActionDisabled || isSubmitting}
+                disabled={isLocalSignupDisabled || isSubmitting}
                 className="w-full mt-6 px-5 py-3 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? '가입 중...' : '가입하기'}
