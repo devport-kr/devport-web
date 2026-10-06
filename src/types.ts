@@ -13,6 +13,8 @@ export interface GitRepo {
   starsThisWeek: number;
   summaryKoTitle: string;
   summaryKoBody?: string;
+  /** Representative image chosen by the crawler; not in the API response yet (null/absent until it ships) */
+  imageUrl?: string | null;
   category: Category;
   score: number;
   createdAt: string;

@@ -13,7 +13,6 @@ import {
 } from '../services/ports/portsService';
 import { getWikiSnapshot } from '../services/wiki/wikiService';
 
-import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CommentItem from '../components/CommentItem';
@@ -377,22 +376,15 @@ export default function PortsProjectPage() {
     <div className="min-h-screen bg-glow">
       <Navbar />
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div
-          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 hidden lg:block w-14`}
-        >
-          <Sidebar compact={true} />
-        </div>
-
         {/* ─── PROJECT DETAIL ── */}
-        <div className={`lg:ml-14 min-h-screen`}>
+        <div className="min-h-screen">
           {(projectLoading) ? (
             <div className="flex items-center justify-center py-24 text-text-muted">Loading project...</div>
           ) : (
             <>
               {/* Fixed right sidebar - ALWAYS visible */}
               <aside
-                className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-40 transition-all duration-300 ease-in-out ${isChatExpanded ? 'w-[800px] max-w-[calc(100vw-3.5rem)] shadow-2xl bg-surface/95 backdrop-blur-md' : 'w-[320px] 2xl:w-[520px]'
+                className={`fixed right-0 top-16 h-[calc(100vh-4rem)] pt-12 pb-6 px-5 border-l border-surface-border/50 hidden xl:flex flex-col bg-surface z-40 transition-all duration-300 ease-in-out ${isChatExpanded ? 'w-[800px] max-w-[100vw] shadow-2xl bg-surface/95 backdrop-blur-md' : 'w-[320px] 2xl:w-[520px]'
                   }`}
               >
                 {/* Chat Panel — fills remaining height */}
@@ -407,10 +399,10 @@ export default function PortsProjectPage() {
                 )}
               </aside>
 
-              {/* TOC Sidebar - Fixed next to global sidebar */}
+              {/* TOC Sidebar - Fixed to the left edge */}
               {tocSections.length > 0 && (
                 <div
-                  className={`fixed left-14 top-16 w-56 h-[calc(100vh-4rem)] z-30 hidden xl:block transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}
+                  className={`fixed left-0 top-16 w-56 h-[calc(100vh-4rem)] z-30 hidden xl:block transition-all duration-300 ${isChatExpanded ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}
                 >
                   <div className="h-full pl-4 pr-3 pt-12">
                     <nav className="space-y-0.5 border-l border-surface-border/80 pl-3 pr-1 text-left">
@@ -722,8 +714,8 @@ export default function PortsProjectPage() {
       </button>
 
 
-      {/* Matches the content area: compact sidebar (ml-14), TOC (ml-56) and chat rail at xl */}
-      <Footer className="lg:ml-14 xl:ml-[17.5rem] xl:mr-[320px] 2xl:mr-[520px]" />
+      {/* Matches the content area: TOC (ml-56) and chat rail at xl */}
+      <Footer className="xl:ml-56 xl:mr-[320px] 2xl:mr-[520px]" />
     </div>
   );
 }

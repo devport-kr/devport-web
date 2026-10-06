@@ -1,18 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import TrendingTicker from '../components/TrendingTicker';
-import GitHubLeaderboard from '../components/GitHubLeaderboard';
-import LLMLeaderboard from '../components/LLMLeaderboard';
 import ArticleCard from '../components/ArticleCard';
-import { getArticles, getTrendingGitReposPaginated, getTrendingTicker } from '../services/articles/articlesService';
-import type { Article, GitRepo, Category } from '../types';
+import { getArticles, getTrendingTicker } from '../services/articles/articlesService';
+import type { Article, Category } from '../types';
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'ALL'>('ALL');
   const [articles, setArticles] = useState<Article[]>([]);
-  const [githubRepos, setGithubRepos] = useState<GitRepo[]>([]);
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -20,59 +16,26 @@ export default function HomePage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const [reposPage, setReposPage] = useState(0);
-  const [reposHasMore, setReposHasMore] = useState(true);
-  const [reposLoading, setReposLoading] = useState(false);
-
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
-  const tickerRef = useRef<HTMLDivElement>(null);
-  // Right rail starts right under the ticker and follows it up as it scrolls away,
-  // stopping under the navbar (64px = 4rem)
-  const [railTop, setRailTop] = useState(64);
-
-  useEffect(() => {
-    const updateRailTop = () => {
-      if (!tickerRef.current) return;
-      const rect = tickerRef.current.getBoundingClientRect();
-      setRailTop(Math.max(64, Math.round(rect.bottom)));
-    };
-    updateRailTop();
-    window.addEventListener('scroll', updateRailTop, { passive: true });
-    window.addEventListener('resize', updateRailTop);
-    const observer = new ResizeObserver(updateRailTop);
-    if (tickerRef.current) observer.observe(tickerRef.current);
-    return () => {
-      window.removeEventListener('scroll', updateRailTop);
-      window.removeEventListener('resize', updateRailTop);
-      observer.disconnect();
-    };
-  }, [isInitialLoading]);
-
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
-      setReposLoading(true);
       try {
-        const [articlesData, githubData, tickerData] = await Promise.all([
+        const [articlesData, tickerData] = await Promise.all([
           getArticles(selectedCategory === 'ALL' ? undefined : selectedCategory, 0, 9),
-          getTrendingGitReposPaginated(0, 10),
           getTrendingTicker(),
         ]);
 
         setArticles(articlesData.content);
         setHasMore(articlesData.hasMore);
         setCurrentPage(0);
-        setGithubRepos(githubData.content);
-        setReposHasMore(githubData.hasMore);
-        setReposPage(0);
         setTickerArticles(tickerData);
         setIsInitialLoading(false);
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
       } finally {
         setIsLoading(false);
-        setReposLoading(false);
       }
     };
 
@@ -102,24 +65,6 @@ export default function HomePage() {
       setShowLoadingSpinner(false);
     }
   }, [isLoading, hasMore, currentPage, selectedCategory]);
-
-  const fetchMoreGitRepos = async () => {
-    if (reposLoading || !reposHasMore) return;
-
-    try {
-      setReposLoading(true);
-      const nextPage = reposPage + 1;
-      const data = await getTrendingGitReposPaginated(nextPage, 10);
-
-      setGithubRepos((prev) => [...prev, ...data.content]);
-      setReposHasMore(data.hasMore);
-      setReposPage(nextPage);
-    } catch (error) {
-      console.error('Failed to fetch more GitHub repos:', error);
-    } finally {
-      setReposLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (isInitialLoading) return;
@@ -186,38 +131,14 @@ export default function HomePage() {
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-          <Sidebar />
-        </div>
-
-        {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div ref={tickerRef} className="lg:ml-52 border-b border-surface-border/50">
+        {/* Trending Ticker */}
+        <div className="border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
-        {/* Right Sidebar - Fixed, slides up when ticker scrolls away */}
-        <aside
-          className="fixed right-0 w-[28%] min-w-[380px] max-w-[500px] pt-8 pb-8 px-6 border-l border-surface-border/50 overflow-y-auto hidden xl:block bg-surface z-40 scrollbar-hide"
-          style={{
-            top: `${railTop}px`,
-            height: `calc(100vh - ${railTop}px)`,
-          }}
-        >
-          <div className="space-y-6">
-            <LLMLeaderboard />
-            <GitHubLeaderboard
-              repos={githubRepos}
-              onLoadMore={fetchMoreGitRepos}
-              hasMore={reposHasMore}
-              isLoading={reposLoading}
-            />
-          </div>
-        </aside>
-
-        {/* Center - Articles (truly centered on viewport) */}
-        <main className="pt-8 pb-8 lg:pb-8 px-8 pb-24">
-          <div className="max-w-xl mx-auto">
+        {/* Articles */}
+        <main className="px-4 md:px-8 pt-8 pb-24 lg:pb-8">
+          <div className="max-w-2xl mx-auto">
             {/* Articles Section */}
             <section>
               {/* Category Tabs */}
@@ -269,8 +190,7 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* Right margin matches the fixed right rail (w-[28%], min 380px, max 500px) so it never covers the footer */}
-      <Footer className="lg:ml-52 xl:mr-[clamp(380px,28%,500px)]" />
+      <Footer />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import TrendingTicker from '../components/TrendingTicker';
 import CommentSection from '../components/CommentSection';
@@ -85,11 +84,6 @@ export default function ArticleDetailPage() {
       <div className="min-h-screen bg-glow">
         <Navbar />
         <div className="min-h-[calc(100vh-4rem)]">
-          {/* Left Sidebar - Fixed */}
-          <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-            <Sidebar />
-          </div>
-
           {/* Loading spinner */}
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="w-8 h-8 border-2 border-surface-border border-t-accent rounded-full animate-spin"></div>
@@ -104,18 +98,13 @@ export default function ArticleDetailPage() {
       <div className="min-h-screen bg-glow">
         <Navbar />
         <div className="min-h-[calc(100vh-4rem)]">
-          {/* Left Sidebar - Fixed */}
-          <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-            <Sidebar />
-          </div>
-
           {/* Trending Ticker */}
-          <div className="lg:ml-52 border-b border-surface-border/50">
+          <div className="border-b border-surface-border/50">
             <TrendingTicker articles={tickerArticles} />
           </div>
 
           {/* Error content */}
-          <main className="lg:ml-52 pt-8 pb-8 px-8">
+          <main className="pt-8 pb-8 px-8">
             <div className="max-w-2xl mx-auto">
               <div className="text-center py-16">
                 <h1 className="text-2xl font-bold text-text-primary mb-4">404</h1>
@@ -145,18 +134,13 @@ export default function ArticleDetailPage() {
       <Navbar />
 
       <div className="min-h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - Fixed */}
-        <div className="fixed left-0 top-16 w-52 h-[calc(100vh-4rem)] z-40 hidden lg:block">
-          <Sidebar />
-        </div>
-
-        {/* Trending Ticker - with left margin to avoid left sidebar */}
-        <div className="lg:ml-52 border-b border-surface-border/50">
+        {/* Trending Ticker */}
+        <div className="border-b border-surface-border/50">
           <TrendingTicker articles={tickerArticles} />
         </div>
 
         {/* Center - Article Content */}
-        <main className="lg:ml-52 pt-8 pb-8 px-8">
+        <main className="pt-8 pb-8 px-8">
           <div className="max-w-2xl mx-auto">
             {/* Back button */}
             <Link
@@ -275,7 +259,7 @@ export default function ArticleDetailPage() {
         </main>
       </div>
 
-      <Footer className="lg:ml-52" />
+      <Footer />
     </div>
   );
 }

@@ -17,6 +17,7 @@
  *   src/services/llm/llmService.ts          — LLM benchmarks, media
  *   src/services/ports/portsService.ts      — projects
  *   src/services/admin/adminService.ts      — admin CRUD operations
+ *   src/services/newsletter/newsletterService.ts — newsletter subscription
  *
  * Once all consumers are migrated to direct domain imports, this
  * file can be removed.
@@ -31,7 +32,6 @@ export {
   signup,
   login,
   exchangeOAuthCode,
-  resendVerification,
   updateProfile,
   changePassword,
   removeEmail,
@@ -41,9 +41,7 @@ export type {
   SignupRequest,
   LoginRequest,
   AccessTokenResponse,
-  SignupResponse,
   OAuthExchangeRequest,
-  ResendVerificationRequest,
   ProfileUpdateRequest,
   PasswordChangeRequest,
 } from './auth/authService';

@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../../lib/http/apiClient';
 
 export interface UserResponse {
   id: number;
-  email: string;
+  email?: string | null; // local (ID/PW) accounts have no email
   username?: string;
   name: string;
   profileImageUrl?: string;
@@ -19,9 +19,8 @@ export interface UserResponse {
 export interface SignupRequest {
   username: string;
   password: string;
-  email: string;
-  name?: string;
   agreedTermsVersion: string;
+  turnstileToken: string;
 }
 
 export interface LoginRequest {
@@ -34,18 +33,8 @@ export interface AccessTokenResponse {
   expiresIn?: number;
 }
 
-export interface SignupResponse {
-  verificationRequired?: boolean;
-  email?: string;
-  message?: string;
-}
-
 export interface OAuthExchangeRequest {
   code: string;
-}
-
-export interface ResendVerificationRequest {
-  email: string;
 }
 
 export interface ProfileUpdateRequest {
@@ -91,11 +80,21 @@ export const logout = async (): Promise<void> => {
   } as any);
 };
 
-export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
-  const response = await apiClient.post<SignupResponse>('/api/auth/signup', data, {
+// Same response as login: access token in the body, refresh token as a cookie.
+export const signup = async (data: SignupRequest): Promise<AccessTokenResponse> => {
+  const response = await apiClient.post<AccessTokenResponse>('/api/auth/signup', data, {
+    withCredentials: true,
     skipAuthRefresh: true,
   } as any);
   return response.data;
+};
+
+export const checkUsername = async (username: string): Promise<boolean> => {
+  const response = await apiClient.get<{ available: boolean }>('/api/auth/check-username', {
+    params: { username },
+    skipAuthRefresh: true,
+  } as any);
+  return response.data.available;
 };
 
 export const login = async (data: LoginRequest): Promise<AccessTokenResponse> => {
@@ -114,14 +113,6 @@ export const exchangeOAuthCode = async (
     skipAuthRefresh: true,
   } as any);
   return response.data;
-};
-
-export const resendVerification = async (
-  data: ResendVerificationRequest
-): Promise<void> => {
-  await apiClient.post('/api/auth/resend-verification', data, {
-    skipAuthRefresh: true,
-  } as any);
 };
 
 // ─── Profile APIs ────────────────────────────────────────────────

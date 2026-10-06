@@ -11,11 +11,11 @@ import { AuthProvider } from './contexts/AuthContext'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import CheckEmailPage from './pages/CheckEmailPage'
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import LLMRankingsPage from './pages/LLMRankingsPage'
+import TrendingReposPage from './pages/TrendingReposPage'
 import ArticleDetailPage from './pages/ArticleDetailPage'
 import MyPage from './pages/MyPage'
 import AdminPage from './pages/AdminPage'
@@ -23,6 +23,11 @@ import SearchResultsPage from './pages/SearchResultsPage'
 import PortsDirectoryPage from './pages/PortsDirectoryPage'
 import PortsProjectPage from './pages/PortsProjectPage'
 import PortsChatPage from './pages/PortsChatPage'
+import ProductMcpPage from './pages/ProductMcpPage'
+import BlogPage from './pages/BlogPage'
+import BlogPostPage from './pages/BlogPostPage'
+import NewsletterConfirmPage from './pages/NewsletterConfirmPage'
+import NewsletterUnsubscribePage from './pages/NewsletterUnsubscribePage'
 import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
@@ -34,19 +39,24 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/check-email" element={<CheckEmailPage />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/articles/:externalId" element={<ArticleDetailPage />} />
           <Route path="/article/:externalId" element={<ArticleDetailPage />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/llm-rankings" element={<LLMRankingsPage />} />
+          <Route path="/trending-repos" element={<TrendingReposPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/ports" element={<PortsDirectoryPage />} />
           <Route path="/ports/chat" element={<PortsChatPage />} />
           <Route path="/ports/chat/*" element={<PortsChatPage />} />
           <Route path="/ports/*" element={<PortsProjectPage />} />
+          <Route path="/products/mcp" element={<ProductMcpPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/newsletter/confirm" element={<NewsletterConfirmPage />} />
+          <Route path="/newsletter/unsubscribe" element={<NewsletterUnsubscribePage />} />
           <Route
             path="/admin"
             element={

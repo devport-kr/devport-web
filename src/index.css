@@ -216,6 +216,11 @@
     @apply text-text-primary bg-surface-elevated/60;
   }
 
+  /* README screenshots and demos in repo write-ups: fit the column, framed like cards */
+  .wiki-markdown img {
+    @apply block max-w-full h-auto my-5 rounded-xl border border-surface-border/60;
+  }
+
   /* Same look as wiki tables; block + max-content lets wide tables scroll on mobile */
   .article-markdown table {
     @apply block w-max max-w-full overflow-x-auto mb-4 text-sm border-collapse;
@@ -240,6 +245,37 @@
 
   .legal-markdown > :last-child {
     margin-bottom: 0;
+  }
+
+  /* Long-form blog posts: larger type and roomier rhythm than wiki panels.
+     keep-all wraps Korean at word boundaries instead of mid-word. */
+  .blog-markdown {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .blog-markdown :is(p, ul, ol, li) {
+    @apply text-base leading-8;
+  }
+
+  .blog-markdown :where(p, ul, ol, blockquote, pre, table) {
+    @apply my-5;
+  }
+
+  .blog-markdown h2 {
+    @apply text-xl mt-12 mb-4;
+  }
+
+  .blog-markdown h3 {
+    @apply text-lg mt-10 mb-3;
+  }
+
+  .blog-markdown hr {
+    @apply my-12;
+  }
+
+  .blog-markdown > :first-child {
+    margin-top: 0;
   }
 
   section[id] {
