@@ -6,6 +6,7 @@ import type { ArticleAutocompleteResponse } from '../services/search/searchServi
 import { primaryNav, isNavEntryActive, isNavItemActive } from '../config/navigation';
 import type { NavItem } from '../config/navigation';
 import NavDropdown, { NavItemContent, NavTopLink } from './NavDropdown';
+import Avatar from './Avatar';
 import { menuItemClasses, menuPanelClasses } from './navMenuStyles';
 
 export default function Navbar() {
@@ -273,10 +274,10 @@ export default function Navbar() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
                   >
-                    <img
-                      src={user?.profileImageUrl || 'https://via.placeholder.com/40'}
-                      alt={user?.name || 'User'}
-                      className="w-8 h-8 rounded-full ring-1 ring-surface-border"
+                    <Avatar
+                      src={user?.profileImageUrl}
+                      name={user?.name}
+                      className="w-8 h-8 text-sm ring-1 ring-surface-border"
                     />
                     <span className="hidden md:block text-sm text-text-secondary">
                       {user?.name}

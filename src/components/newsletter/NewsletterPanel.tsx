@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
+import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getMyNewsletter,
@@ -8,6 +9,10 @@ import {
   type NewsletterSubscription,
 } from '../../services/newsletter/newsletterService';
 import { parseApiError } from '../../lib/http/apiError';
+import Checkbox from '../form/Checkbox';
+import FormAlert from '../form/FormAlert';
+import { buttonClass, inputClass, labelClass } from '../form/formStyles';
+import SettingsCard from '../mypage/SettingsCard';
 
 const EMAIL_MAX_LENGTH = 100;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,12 +21,6 @@ const VERIFICATION_SENT = "인증 메일을 보냈습니다. 메일의 링크에
 const VERIFICATION_RESENT = "인증 메일을 다시 보냈습니다. 메일의 링크에서 '구독 확인'을 눌러주세요 (24시간 이내).";
 const EMAIL_CHANGED = '새 이메일 주소로 인증 메일을 보냈습니다. 인증을 마치기 전까지는 뉴스레터가 발송되지 않습니다.';
 const REQUEST_FAILED = '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.';
-
-const inputClass = 'w-full px-4 py-2.5 bg-surface-elevated border border-surface-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors';
-const checkboxClass = 'mt-1 h-4 w-4 rounded border-surface-border bg-surface-card text-accent focus:ring-accent';
-const btnPrimary = 'px-5 py-2.5 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
-const btnSecondary = 'px-5 py-2.5 bg-surface-elevated hover:bg-surface-elevated/80 text-text-secondary text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
-const btnDanger = 'px-5 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
 const formatDateTime = (value?: string) =>
   value ? new Date(value).toLocaleString('ko-KR', { dateStyle: 'long', timeStyle: 'short' }) : '-';
@@ -173,14 +172,14 @@ export default function NewsletterPanel() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="w-8 h-8 border-2 border-surface-border border-t-accent rounded-full animate-spin" />
+        <LoaderCircle className="h-6 w-6 animate-spin text-text-muted" />
       </div>
     );
   }
 
   if (loadFailed || !subscription) {
     return (
-      <div className="bg-surface-card border border-surface-border rounded-xl p-6 text-center">
+      <div className="flex flex-col items-center rounded-xl border border-dashed border-surface-border px-6 py-12 text-center">
         <p className="text-sm text-text-muted mb-4">뉴스레터 구독 정보를 불러오지 못했습니다.</p>
         <button
           type="button"
@@ -188,7 +187,7 @@ export default function NewsletterPanel() {
             setIsLoading(true);
             fetchSubscription();
           }}
-          className={btnSecondary}
+          className={buttonClass('secondary', 'sm')}
         >
           다시 시도
         </button>
@@ -202,177 +201,174 @@ export default function NewsletterPanel() {
   const hasConsented = consents.privacy && consents.receive;
 
   return (
-    <div className="space-y-6">
-      {notice && (
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-          <p className="text-sm text-green-400">{notice}</p>
-        </div>
-      )}
+    <div className="space-y-4">
+      {notice && <FormAlert tone="success">{notice}</FormAlert>}
 
-      {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
-      )}
+      {error && <FormAlert>{error}</FormAlert>}
 
-      <form onSubmit={handleSubmitEmail} noValidate className="bg-surface-card border border-surface-border rounded-xl p-6">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <h3 className="text-lg font-medium text-text-primary">뉴스레터</h3>
-          {status === 'PENDING' && (
-            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
-              인증 대기
-            </span>
-          )}
-          {status === 'ACTIVE' && (
-            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
-              구독 중
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-text-muted mb-6">
-          개발 트렌드와 devport 소식을 이메일로 받아보세요.
-        </p>
-
-        {status !== 'NONE' && (
-          <dl className="grid grid-cols-[6rem_minmax(0,1fr)] gap-y-2 text-sm mb-6">
-            <dt className="text-text-muted">이메일</dt>
-            <dd className="text-text-primary break-all">{subscription.email}</dd>
-            {status === 'PENDING' ? (
+      <form onSubmit={handleSubmitEmail} noValidate>
+        <SettingsCard
+          title="이메일 구독"
+          description="주요 개발 트렌드와 서비스 소식을 정리해 이메일로 보내드려요."
+          aside={
+            <>
+              {status === 'PENDING' && (
+                <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  인증 대기
+                </span>
+              )}
+              {status === 'ACTIVE' && (
+                <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  구독 중
+                </span>
+              )}
+            </>
+          }
+          footer={
+            showEmailForm ? (
               <>
-                <dt className="text-text-muted">인증 기한</dt>
-                <dd className="text-text-primary">{formatDateTime(subscription.verificationExpiresAt)}</dd>
+                {isEditingEmail && (
+                  <button type="button" onClick={handleCancelEditEmail} disabled={isSubmitting} className={buttonClass('secondary', 'sm')}>
+                    취소
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !turnstileToken || !hasConsented}
+                  className={buttonClass('primary', 'sm')}
+                >
+                  {isSubmitting ? '처리 중...' : isEditingEmail ? '변경하고 인증 메일 받기' : '구독 신청'}
+                </button>
+              </>
+            ) : status === 'PENDING' ? (
+              <>
+                <button type="button" onClick={handleUnsubscribe} disabled={isSubmitting} className={`${buttonClass('danger', 'sm')} mr-auto`}>
+                  신청 취소
+                </button>
+                <button type="button" onClick={handleStartEditEmail} disabled={isSubmitting} className={buttonClass('secondary', 'sm')}>
+                  이메일 변경
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isSubmitting || !turnstileToken}
+                  className={buttonClass('primary', 'sm')}
+                >
+                  {isSubmitting ? '처리 중...' : '인증 메일 다시 보내기'}
+                </button>
               </>
             ) : (
               <>
-                <dt className="text-text-muted">구독 시작일</dt>
-                <dd className="text-text-primary">{formatDate(subscription.verifiedAt)}</dd>
+                <button type="button" onClick={handleUnsubscribe} disabled={isSubmitting} className={`${buttonClass('danger', 'sm')} mr-auto`}>
+                  구독 해지
+                </button>
+                <button type="button" onClick={handleStartEditEmail} disabled={isSubmitting} className={buttonClass('secondary', 'sm')}>
+                  이메일 변경
+                </button>
               </>
-            )}
-          </dl>
-        )}
+            )
+          }
+        >
+          {status !== 'NONE' && (
+            <dl className="divide-y divide-surface-border/70 text-sm">
+              <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-4 pb-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                <dt className="text-[13px] text-text-muted">이메일</dt>
+                <dd className="text-text-primary break-all">{subscription.email}</dd>
+              </div>
+              <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-4 pt-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                {status === 'PENDING' ? (
+                  <>
+                    <dt className="text-[13px] text-text-muted">인증 기한</dt>
+                    <dd className="text-text-primary">{formatDateTime(subscription.verificationExpiresAt)}</dd>
+                  </>
+                ) : (
+                  <>
+                    <dt className="text-[13px] text-text-muted">구독 시작일</dt>
+                    <dd className="text-text-primary">{formatDate(subscription.verifiedAt)}</dd>
+                  </>
+                )}
+              </div>
+            </dl>
+          )}
 
-        {status === 'PENDING' && !isEditingEmail && (
-          <p className="text-sm text-text-secondary leading-relaxed mb-6">
-            메일함에서 인증 메일의 '구독 확인'을 눌러야 구독이 완료됩니다. 메일이 보이지 않으면 스팸함을 확인해주세요.
-          </p>
-        )}
+          {status === 'PENDING' && !isEditingEmail && (
+            <p className="mt-5 text-[13px] text-text-secondary leading-relaxed break-keep">
+              메일함에서 인증 메일의 '구독 확인'을 눌러야 구독이 완료됩니다. 메일이 보이지 않으면 스팸함을 확인해주세요.
+            </p>
+          )}
 
-        {status === 'ACTIVE' && isEditingEmail && (
-          <p className="text-sm text-text-secondary leading-relaxed mb-6">
-            이메일을 변경하면 새 주소로 인증을 다시 완료해야 하며, 인증 전까지는 뉴스레터가 발송되지 않습니다.
-          </p>
-        )}
+          {status === 'ACTIVE' && isEditingEmail && (
+            <p className="mt-5 text-[13px] text-text-secondary leading-relaxed break-keep">
+              이메일을 변경하면 새 주소로 인증을 다시 완료해야 하며, 인증 전까지는 뉴스레터가 발송되지 않습니다.
+            </p>
+          )}
 
-        {showEmailForm && (
-          <div className="space-y-4 mb-6">
-            <div>
-              <label htmlFor="newsletter-email" className="block text-sm font-medium text-text-secondary mb-2">
-                {isEditingEmail ? '새 이메일' : '이메일'}
-              </label>
-              <input
-                type="email"
-                id="newsletter-email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                maxLength={EMAIL_MAX_LENGTH}
-                autoComplete="email"
-                className={inputClass}
-                placeholder="email@example.com"
-              />
-            </div>
-
-            <div className="rounded-xl border border-surface-border bg-surface-elevated/40 p-4 space-y-4">
+          {showEmailForm && (
+            <div className={`max-w-xl space-y-4 ${status !== 'NONE' ? 'mt-5' : ''}`}>
               <div>
-                <label className="flex items-start gap-3 text-sm text-text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={consents.privacy}
-                    onChange={(e) => setConsents((prev) => ({ ...prev, privacy: e.target.checked }))}
-                    className={checkboxClass}
-                  />
-                  <span>[필수] 뉴스레터 발송을 위한 개인정보 수집·이용 동의</span>
+                <label htmlFor="newsletter-email" className={labelClass}>
+                  {isEditingEmail ? '새 이메일' : '이메일'}
                 </label>
-                <div className="mt-2 pl-7 space-y-0.5 text-xs text-text-muted leading-relaxed">
-                  <p>· 수집 항목: 이메일 주소</p>
-                  <p>· 이용 목적: devport 뉴스레터 발송 및 구독 관리</p>
-                  <p>· 보유 기간: 구독 해지 또는 회원 탈퇴 시까지 (해지 즉시 파기)</p>
-                  <p>※ 동의를 거부할 수 있으며, 거부 시 뉴스레터를 받아보실 수 없습니다.</p>
-                </div>
+                <input
+                  type="email"
+                  id="newsletter-email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={EMAIL_MAX_LENGTH}
+                  autoComplete="email"
+                  className={inputClass()}
+                  placeholder="email@example.com"
+                />
               </div>
 
-              <label className="flex items-start gap-3 text-sm text-text-secondary">
-                <input
-                  type="checkbox"
-                  checked={consents.receive}
-                  onChange={(e) => setConsents((prev) => ({ ...prev, receive: e.target.checked }))}
-                  className={checkboxClass}
-                />
-                <span>[필수] devport 뉴스레터(개발 트렌드 및 서비스 소식) 이메일 수신에 동의합니다.</span>
-              </label>
+              <div className="rounded-xl border border-surface-border bg-surface-elevated/50 p-4 space-y-4">
+                <div>
+                  <label className="flex cursor-pointer items-start gap-3 text-[13px] text-text-secondary">
+                    <Checkbox
+                      checked={consents.privacy}
+                      onChange={(e) => setConsents((prev) => ({ ...prev, privacy: e.target.checked }))}
+                      className="mt-px"
+                    />
+                    <span>[필수] 뉴스레터 발송을 위한 개인정보 수집·이용 동의</span>
+                  </label>
+                  <div className="mt-2 pl-[30px] space-y-0.5 text-xs text-text-muted leading-relaxed">
+                    <p>· 수집 항목: 이메일 주소</p>
+                    <p>· 이용 목적: devport 뉴스레터 발송 및 구독 관리</p>
+                    <p>· 보유 기간: 구독 해지 또는 회원 탈퇴 시까지 (해지 즉시 파기)</p>
+                    <p>※ 동의를 거부할 수 있으며, 거부 시 뉴스레터를 받아보실 수 없습니다.</p>
+                  </div>
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-3 border-t border-surface-border pt-4 text-[13px] text-text-secondary">
+                  <Checkbox
+                    checked={consents.receive}
+                    onChange={(e) => setConsents((prev) => ({ ...prev, receive: e.target.checked }))}
+                    className="mt-px"
+                  />
+                  <span>[필수] devport 뉴스레터(개발 트렌드 및 서비스 소식) 이메일 수신에 동의합니다.</span>
+                </label>
+              </div>
             </div>
-          </div>
-        )}
-
-        {needsTurnstile && (
-          <div className="mb-6">
-            <Turnstile
-              ref={turnstileRef}
-              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-              onSuccess={(token) => setTurnstileToken(token)}
-              onError={() => setTurnstileToken(null)}
-              onExpire={() => setTurnstileToken(null)}
-              options={{
-                theme: 'dark',
-                size: 'normal',
-              }}
-            />
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-3">
-          {showEmailForm ? (
-            <>
-              <button
-                type="submit"
-                disabled={isSubmitting || !turnstileToken || !hasConsented}
-                className={btnPrimary}
-              >
-                {isSubmitting ? '처리 중...' : isEditingEmail ? '변경하고 인증 메일 받기' : '구독 신청'}
-              </button>
-              {isEditingEmail && (
-                <button type="button" onClick={handleCancelEditEmail} disabled={isSubmitting} className={btnSecondary}>
-                  취소
-                </button>
-              )}
-            </>
-          ) : status === 'PENDING' ? (
-            <>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isSubmitting || !turnstileToken}
-                className={btnPrimary}
-              >
-                {isSubmitting ? '처리 중...' : '인증 메일 다시 보내기'}
-              </button>
-              <button type="button" onClick={handleStartEditEmail} disabled={isSubmitting} className={btnSecondary}>
-                이메일 변경
-              </button>
-              <button type="button" onClick={handleUnsubscribe} disabled={isSubmitting} className={btnDanger}>
-                신청 취소
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={handleStartEditEmail} disabled={isSubmitting} className={btnSecondary}>
-                이메일 변경
-              </button>
-              <button type="button" onClick={handleUnsubscribe} disabled={isSubmitting} className={btnDanger}>
-                구독 해지
-              </button>
-            </>
           )}
-        </div>
+
+          {needsTurnstile && (
+            <div className="mt-5 max-w-xl min-h-[65px]">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{
+                  theme: 'dark',
+                  size: 'flexible',
+                }}
+              />
+            </div>
+          )}
+        </SettingsCard>
       </form>
     </div>
   );
