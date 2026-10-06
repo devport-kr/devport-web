@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
+import NewsletterAdminPanel from '../components/admin/NewsletterAdminPanel';
 import type { Article } from '../types';
 import {
   adminCreateArticle,
@@ -30,7 +31,7 @@ import {
   type WikiAdminProjectSummary,
 } from '../services/wiki/wikiAuthoringService';
 
-type TabType = 'article' | 'wiki' | 'gitrepo' | 'llmmodel' | 'modelcreator' | 'benchmark';
+type TabType = 'article' | 'wiki' | 'gitrepo' | 'llmmodel' | 'modelcreator' | 'benchmark' | 'newsletter';
 type ArticleSubView = 'list' | 'llm-process' | 'manual-create';
 type RepoSubView = 'single' | 'bulk';
 
@@ -427,6 +428,7 @@ const AdminPage = () => {
     { id: 'llmmodel', label: 'Models', shortcut: '4' },
     { id: 'modelcreator', label: 'Creators', shortcut: '5' },
     { id: 'benchmark', label: 'Benchmarks', shortcut: '6' },
+    { id: 'newsletter', label: 'Newsletter', shortcut: '7' },
   ];
 
   const inputClass = "w-full px-3 py-2 bg-surface-elevated border border-surface-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/20 transition-all placeholder:text-text-muted/50";
@@ -1437,6 +1439,17 @@ const AdminPage = () => {
                     </div>
                     <button type="submit" className={`w-full ${btnPrimary}`}>Create Benchmark</button>
                   </form>
+                )}
+
+                {/* ═══ NEWSLETTER TAB ═══ */}
+                {activeTab === 'newsletter' && (
+                  <NewsletterAdminPanel
+                    inputClass={inputClass}
+                    labelClass={labelClass}
+                    btnPrimary={btnPrimary}
+                    btnSecondary={btnSecondary}
+                    showMessage={showMessage}
+                  />
                 )}
               </>
             )}

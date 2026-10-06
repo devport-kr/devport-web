@@ -276,3 +276,63 @@ export const adminUpdateBenchmark = async (benchmarkType: string, data: Partial<
 export const adminDeleteBenchmark = async (benchmarkType: string): Promise<void> => {
   await apiClient.delete(`/api/admin/llm-benchmarks/${benchmarkType}`);
 };
+
+// ─── Admin Newsletter APIs ───────────────────────────────────────
+
+export type NewsletterIssueStatus = 'SENDING' | 'SENT' | 'PARTIALLY_FAILED' | 'FAILED';
+
+export interface NewsletterIssue {
+  id: number;
+  subject: string;
+  content: string;
+  status: NewsletterIssueStatus;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
+export interface NewsletterStats {
+  activeCount: number;
+  pendingCount: number;
+}
+
+// Spring Page JSON, returned as-is by the endpoint
+export interface SpringPage<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface NewsletterIssueRequest {
+  subject: string;
+  content: string;
+}
+
+export const adminGetNewsletterStats = async (): Promise<NewsletterStats> => {
+  const response = await apiClient.get<NewsletterStats>('/api/admin/newsletter/stats');
+  return response.data;
+};
+
+export const adminGetNewsletterIssues = async (page = 0, size = 20): Promise<SpringPage<NewsletterIssue>> => {
+  const response = await apiClient.get<SpringPage<NewsletterIssue>>('/api/admin/newsletter/issues', {
+    params: { page, size },
+  });
+  return response.data;
+};
+
+// The subject gets a [테스트] prefix and the unsubscribe link in it is a dummy.
+export const adminSendNewsletterTest = async (data: NewsletterIssueRequest & { email: string }): Promise<void> => {
+  await apiClient.post('/api/admin/newsletter/issues/test', data);
+};
+
+// 202 Accepted: sending runs in the background, so poll adminGetNewsletterIssues for progress.
+export const adminSendNewsletter = async (data: NewsletterIssueRequest): Promise<NewsletterIssue> => {
+  const response = await apiClient.post<NewsletterIssue>('/api/admin/newsletter/issues', data);
+  return response.data;
+};

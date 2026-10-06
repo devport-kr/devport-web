@@ -46,6 +46,12 @@ export default function Footer({ className = '' }: FooterProps) {
               Blog
             </Link>
             <Link
+              to="/mypage?tab=newsletter"
+              className="text-text-muted hover:text-text-secondary transition-colors"
+            >
+              Newsletter
+            </Link>
+            <Link
               to="/privacy"
               className="text-text-muted hover:text-text-secondary transition-colors"
             >

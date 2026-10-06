@@ -11,7 +11,6 @@ import { AuthProvider } from './contexts/AuthContext'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import CheckEmailPage from './pages/CheckEmailPage'
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -27,6 +26,8 @@ import PortsChatPage from './pages/PortsChatPage'
 import ProductMcpPage from './pages/ProductMcpPage'
 import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
+import NewsletterConfirmPage from './pages/NewsletterConfirmPage'
+import NewsletterUnsubscribePage from './pages/NewsletterUnsubscribePage'
 import WikiDraftsPage from './pages/wiki-admin/WikiDraftsPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
@@ -38,7 +39,6 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/check-email" element={<CheckEmailPage />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/articles/:externalId" element={<ArticleDetailPage />} />
@@ -55,6 +55,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/products/mcp" element={<ProductMcpPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/newsletter/confirm" element={<NewsletterConfirmPage />} />
+          <Route path="/newsletter/unsubscribe" element={<NewsletterUnsubscribePage />} />
           <Route
             path="/admin"
             element={

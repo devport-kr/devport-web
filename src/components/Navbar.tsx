@@ -289,7 +289,7 @@ export default function Navbar() {
                     <div className={`absolute right-0 top-full mt-6 w-56 ${menuPanelClasses}`}>
                       <div className="px-3 pt-2 pb-2.5 mb-1.5 border-b border-surface-border/60">
                         <p className="text-sm font-medium text-text-primary truncate">{user?.name}</p>
-                        <p className="text-xs text-text-muted truncate mt-0.5">{user?.email}</p>
+                        <p className="text-xs text-text-muted truncate mt-0.5">{user?.email ?? (user?.username ? '@' + user.username : '')}</p>
                       </div>
                       <Link
                         to="/mypage"
