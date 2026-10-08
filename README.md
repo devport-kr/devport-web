@@ -1,73 +1,49 @@
-# DevPort
+<p align="center">
+  <img src="public/og-image.png" alt="devport · 해외 개발 트렌드를 한국어로" width="720" />
+</p>
 
-> 한국 개발자를 위한 글로벌 트렌드 큐레이션 플랫폼
+# devport
+화제가 된 개발 소식을 모아 한국어로 정리하는 서비스입니다.
 
-![DevPort](https://img.shields.io/badge/Status-MVP-blue?style=flat-square)
-![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
-![Tailwind](https://img.shields.io/badge/Tailwind-3-blue?style=flat-square&logo=tailwindcss)
+[devport.kr](https://devport.kr) · [블로그](https://devport.kr/blog) · [문의 및 제보](https://github.com/devport-kr/devport-web/issues)
 
-<!-- TODO: 배포 후 스크린샷 추가 -->
+---
 
-## 🌊 프로젝트 소개
+## 왜 devport인가
 
-devPort (devport.kr)는 GitHub, Hacker News, Reddit, 주요 기술 블로그의 영문 트렌드 콘텐츠를 수집하여 한국어 한 줄 요약과 함께 제공하는 서비스입니다. 언어 장벽 없이 글로벌 개발 트렌드를 빠르게 파악할 수 있도록 돕습니다.
+개발 생태계의 새로운 흐름은 대부분 영어권에서 시작됩니다. 매일 새로운 글과 토론, 오픈소스 프로젝트, 모델 벤치마크가 쏟아지지만 정보는 여러 플랫폼에 흩어져 있고, 원문을 모두 읽지 않으면 무엇이 중요한지 판단하기 어렵습니다.
 
-### 주요 기능
+devport는 이 정보를 한곳에 모으고, 맥락까지 한국어로 읽을 수 있게 정리합니다. 무엇이 화제인지 훑어보는 데서 끝나지 않고, 왜 중요한지와 어떤 프로젝트를 살펴봐야 하는지까지 이어서 이해할 수 있도록 돕습니다.
 
-- 🎯 **자동 스크롤 티커** - 실시간 트렌드 요약을 한눈에
-- 🏆 **GitHub 트렌딩 리더보드** - 상위 10개 인기 저장소
-- 🗂️ **카테고리 필터링** - AI/LLM, DevOps/SRE, Backend, Infra/Cloud 등
+### 개발 뉴스
 
-## 🛠️ 기술 스택
+해외 커뮤니티와 기술 블로그에서 반응이 큰 글을 골라 한국어 제목과 본문 요약으로 제공합니다. AI/LLM, DevOps/SRE, Infra/Cloud, Backend, Frontend, Security 등 12개 카테고리로 분류하고, 반응과 최신성을 반영한 점수로 정렬합니다. 모든 글에는 원문 링크가 함께 제공됩니다.
 
-### 프론트엔드
-- **프레임워크**: React 18 + TypeScript
-- **빌드 도구**: Vite
-- **스타일링**: Tailwind CSS v3
+### 트렌딩 리포지토리
 
-## 🚀 시작하기
+GitHub에서 빠르게 성장 중인 오픈소스 프로젝트를 한국어 요약과 함께 소개합니다.
 
-### 필수 요구사항
-- Node.js 18+
-- npm 또는 yarn
+### Ports
 
-### 설치 및 실행
+주목받는 AI 오픈소스 프로젝트를 프로젝트별 한국어 위키로 정리합니다. 코드를 읽기 전에 프로젝트의 목적과 구조, 주요 변화를 먼저 파악할 수 있고, portki 챗봇에게 프로젝트에 대해 바로 질문할 수 있습니다.
 
-```bash
-# 저장소 클론
-git clone https://github.com/YOUR_USERNAME/devport-app.git
-cd devport-app
+### LLM 랭킹
 
-# 의존성 설치
-npm install
+주요 LLM의 벤치마크 점수를 종합 지능, 에이전틱, 추론, 코딩, 수학 등 영역별로 비교합니다. 이미지·영상 생성 모델의 ELO 기반 순위도 함께 제공합니다. 데이터 출처는 [Artificial Analysis](https://artificialanalysis.ai/)입니다.
 
-# 개발 서버 실행
-npm run dev
-```
+### 검색과 개인화
 
-브라우저에서 `http://localhost:5173` 으로 접속하세요.
+키워드 검색과 자동완성으로 지난 글을 다시 찾을 수 있습니다. 로그인하면 글 저장, 읽은 기록, 댓글, 뉴스레터 구독을 이용할 수 있습니다.
 
-### 프로덕션 빌드
 
-```bash
-npm run build
-```
+## 피드백
 
-### 주요 엔드포인트 (구현 예정)
+버그 제보와 기능 제안은 [Issues](https://github.com/devport-kr/devport-web/issues)로 남겨 주세요. 서비스 안에서도 하단의 제보 링크로 바로 의견을 보낼 수 있습니다.
 
-- `GET /api/articles` - 카테고리 필터링을 지원하는 페이지네이션 피드
-- `GET /api/articles/github-trending` - 상위 10개 GitHub 저장소
-- `GET /api/articles/trending-ticker` - 자동 스크롤 티커용 아티클
-
-## 🤝 기여
-
-피드백과 제안은 언제나 환영합니다!
-
-## 📝 라이선스
+## 라이선스
 
 MIT License
 
-## 👤 만든 사람
+---
 
-- GitHub: [@BrianKimBumsoo](https://github.com/briankim913)
+Maintained by [@BrianKim913](https://github.com/BrianKim913)
