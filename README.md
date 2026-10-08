@@ -1,91 +1,73 @@
-<p align="center">
-  <img src="public/og-image.png" alt="devport · 해외 개발 트렌드를 한국어로" width="720" />
-</p>
+# DevPort
 
-# devport
+> 한국 개발자를 위한 글로벌 트렌드 큐레이션 플랫폼
 
-**해외 개발 트렌드를 한국어로.**
-GitHub, Hacker News, Reddit, Dev.to와 주요 기술 블로그에서 화제가 된 개발 소식을 모아 한국어로 정리하는 서비스입니다.
+![DevPort](https://img.shields.io/badge/Status-MVP-blue?style=flat-square)
+![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Tailwind](https://img.shields.io/badge/Tailwind-3-blue?style=flat-square&logo=tailwindcss)
 
-[devport.kr](https://devport.kr) · [블로그](https://devport.kr/blog) · [문의 및 제보](https://github.com/devport-kr/devport-web/issues)
+<!-- TODO: 배포 후 스크린샷 추가 -->
 
----
+## 🌊 프로젝트 소개
 
-## 왜 devport인가
+devPort (devport.kr)는 GitHub, Hacker News, Reddit, 주요 기술 블로그의 영문 트렌드 콘텐츠를 수집하여 한국어 한 줄 요약과 함께 제공하는 서비스입니다. 언어 장벽 없이 글로벌 개발 트렌드를 빠르게 파악할 수 있도록 돕습니다.
 
-개발 생태계의 새로운 흐름은 대부분 영어권에서 시작됩니다. 매일 새로운 글과 토론, 오픈소스 프로젝트, 모델 벤치마크가 쏟아지지만 정보는 여러 플랫폼에 흩어져 있고, 원문을 모두 읽지 않으면 무엇이 중요한지 판단하기 어렵습니다.
+### 주요 기능
 
-devport는 이 정보를 한곳에 모으고, 맥락까지 한국어로 읽을 수 있게 정리합니다. 무엇이 화제인지 훑어보는 데서 끝나지 않고, 왜 중요한지와 어떤 프로젝트를 살펴봐야 하는지까지 이어서 이해할 수 있도록 돕습니다.
+- 🎯 **자동 스크롤 티커** - 실시간 트렌드 요약을 한눈에
+- 🏆 **GitHub 트렌딩 리더보드** - 상위 10개 인기 저장소
+- 🗂️ **카테고리 필터링** - AI/LLM, DevOps/SRE, Backend, Infra/Cloud 등
 
-## 주요 기능
+## 🛠️ 기술 스택
 
-### 개발 뉴스
+### 프론트엔드
+- **프레임워크**: React 18 + TypeScript
+- **빌드 도구**: Vite
+- **스타일링**: Tailwind CSS v3
 
-해외 커뮤니티와 기술 블로그에서 반응이 큰 글을 골라 한국어 제목과 본문 요약으로 제공합니다. AI/LLM, DevOps/SRE, Infra/Cloud, Backend, Frontend, Security 등 12개 카테고리로 분류하고, 반응과 최신성을 반영한 점수로 정렬합니다. 모든 글에는 원문 링크가 함께 제공됩니다.
+## 🚀 시작하기
 
-### 트렌딩 리포지토리
+### 필수 요구사항
+- Node.js 18+
+- npm 또는 yarn
 
-GitHub에서 빠르게 성장 중인 오픈소스 프로젝트를 한국어 요약과 함께 소개합니다.
+### 설치 및 실행
 
-### Ports
+```bash
+# 저장소 클론
+git clone https://github.com/YOUR_USERNAME/devport-app.git
+cd devport-app
 
-주목받는 AI 오픈소스 프로젝트를 프로젝트별 한국어 위키로 정리합니다. 코드를 읽기 전에 프로젝트의 목적과 구조, 주요 변화를 먼저 파악할 수 있고, portki 챗봇에게 프로젝트에 대해 바로 질문할 수 있습니다.
+# 의존성 설치
+npm install
 
-### LLM 랭킹
-
-주요 LLM의 벤치마크 점수를 종합 지능, 에이전틱, 추론, 코딩, 수학 등 영역별로 비교합니다. 이미지·영상 생성 모델의 ELO 기반 순위도 함께 제공합니다. 데이터 출처는 [Artificial Analysis](https://artificialanalysis.ai/)입니다.
-
-### 검색과 개인화
-
-키워드 검색과 자동완성으로 지난 글을 다시 찾을 수 있습니다. 로그인하면 글 저장, 읽은 기록, 댓글, 뉴스레터 구독을 이용할 수 있습니다.
-
-## 콘텐츠가 만들어지는 과정
-
-devport는 원문을 그대로 옮기지 않습니다. 모든 글은 다음 과정을 거쳐 제공됩니다.
-
-1. **수집**: 개발자에게 의미 있는 해외 글, 토론, 저장소, 벤치마크 데이터를 모읍니다.
-2. **정제**: 여러 출처에 중복으로 올라온 콘텐츠를 걸러냅니다.
-3. **재구성**: 원문을 읽지 않아도 핵심 맥락을 이해할 수 있도록 한국어 제목과 본문으로 정리합니다.
-4. **분류**: 카테고리와 기술 태그를 붙입니다.
-5. **정렬**: 원문 커뮤니티의 반응과 최신성을 반영해 우선순위를 계산합니다.
-
-```mermaid
-flowchart LR
-    S["GitHub · Hacker News · Reddit<br/>Dev.to · 기술 블로그"] --> C["devport-crawler<br/>수집 · 정제 · 한국어 요약 · 분류 · 점수화"]
-    R["GitHub 저장소"] --> P["portki<br/>저장소 분석 · 한국어 위키 생성"]
-    C --> A["devport-api"]
-    P --> A
-    A --> W["devport-web<br/>devport.kr"]
+# 개발 서버 실행
+npm run dev
 ```
 
-## 서비스 구성
+브라우저에서 `http://localhost:5173` 으로 접속하세요.
 
-devport는 역할별로 나뉜 저장소로 운영됩니다.
+### 프로덕션 빌드
 
-| 저장소 | 역할 |
-| --- | --- |
-| **devport-web** (이 저장소) | 사용자가 만나는 웹 서비스. 뉴스 피드, 아티클, 검색, Ports, LLM 랭킹, 마이페이지 |
-| [devport-api](https://github.com/devport-kr/devport-api) | 아티클, 검색, 개인화, Ports, 랭킹 데이터를 제공하는 API 서버 |
-| [devport-crawler](https://github.com/devport-kr/devport-crawler) | 해외 콘텐츠와 랭킹 데이터 수집, 한국어 요약·분류·점수화 |
-| [portki](https://github.com/devport-kr/portki) | GitHub 저장소를 분석해 한국어 위키를 생성하고 갱신하는 AI 에이전트 |
-| [iac](https://github.com/devport-kr/iac) | AWS 인프라 구성 (Terraform) |
+```bash
+npm run build
+```
 
-## 기술 구성
+### 주요 엔드포인트 (구현 예정)
 
-- **애플리케이션**: React 19, TypeScript, Vite, Tailwind CSS, React Router
-- **콘텐츠 렌더링**: react-markdown, remark-gfm, Mermaid
-- **데이터 시각화**: Recharts
-- **배포**: GitHub Actions를 통해 AWS S3와 CloudFront로 배포
-- **검색엔진 최적화**: 페이지별 메타 태그와 구조화 데이터, 매일 갱신되는 사이트맵
+- `GET /api/articles` - 카테고리 필터링을 지원하는 페이지네이션 피드
+- `GET /api/articles/github-trending` - 상위 10개 GitHub 저장소
+- `GET /api/articles/trending-ticker` - 자동 스크롤 티커용 아티클
 
-## 피드백
+## 🤝 기여
 
-버그 제보와 기능 제안은 [Issues](https://github.com/devport-kr/devport-web/issues)로 남겨 주세요. 서비스 안에서도 하단의 제보 링크로 바로 의견을 보낼 수 있습니다.
+피드백과 제안은 언제나 환영합니다!
 
-## 라이선스
+## 📝 라이선스
 
 MIT License
 
----
+## 👤 만든 사람
 
-Maintained by [@BrianKim913](https://github.com/BrianKim913)
+- GitHub: [@BrianKimBumsoo](https://github.com/briankim913)
