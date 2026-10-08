@@ -5,7 +5,7 @@ import TrendingTicker from '../components/TrendingTicker';
 import ArticleCard from '../components/ArticleCard';
 import { getArticles, getTrendingTicker } from '../services/articles/articlesService';
 import type { Article, Category } from '../types';
-import { usePageMeta } from '../lib/seo';
+import { DEFAULT_TITLE, usePageMeta } from '../lib/seo';
 
 export default function HomePage() {
   usePageMeta({});
@@ -145,7 +145,7 @@ export default function HomePage() {
         <main className="px-4 md:px-8 pt-8 pb-24 lg:pb-8">
           <div className="max-w-2xl mx-auto">
             {/* Page heading for search engines and screen readers; the feed is the visual header */}
-            <h1 className="sr-only">devport · 해외 개발 트렌드를 한국어로</h1>
+            <h1 className="sr-only">{DEFAULT_TITLE}</h1>
             {/* Articles Section */}
             <section>
               {/* Category Tabs */}

@@ -4,9 +4,9 @@ import { stripMarkdown } from './markdown';
 
 export const SITE_URL = 'https://devport.kr';
 export const SITE_NAME = 'devport';
-export const DEFAULT_TITLE = 'devport · 해외 개발 트렌드를 한국어로';
+export const DEFAULT_TITLE = 'devport · 노이즈는 줄이고, 맥락은 남깁니다';
 export const DEFAULT_DESCRIPTION =
-  'GitHub, Hacker News, Reddit, Dev.to에서 화제가 된 개발 글과 급상승 저장소, LLM 벤치마크 랭킹을 한국어로 정리해 한곳에서 보여줍니다.';
+  '매일 쏟아지는 AI 프로젝트, 많이 보는 것보다 제대로 이해하는 것이 중요합니다. devport는 흩어진 기술을 맥락 중심으로 재구성해 발견부터 이해, 적용까지의 시간을 줄입니다.';
 export const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 
 export interface PageMeta {

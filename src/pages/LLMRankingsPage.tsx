@@ -19,7 +19,7 @@ export default function LLMRankingsPage() {
   usePageMeta({
     title: 'LLM 벤치마크 랭킹',
     description:
-      'GPT, Claude, Gemini 등 주요 LLM의 코딩·추론·수학·에이전틱 벤치마크 점수와 이미지·영상 생성 모델 순위를 Artificial Analysis 데이터로 한곳에서 비교합니다.',
+      'LLM과 멀티모달 모델의 벤치마크 데이터를 비교 가능한 형태로 정리합니다. 코딩·추론·수학·에이전틱 성능과 이미지·영상 생성 모델 순위를 Artificial Analysis 데이터로 비교하세요.',
   });
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);

@@ -19,7 +19,7 @@ export default function PortsDirectoryPage() {
   usePageMeta({
     title: 'Ports · AI 오픈소스 프로젝트 위키',
     description:
-      '매일 쏟아지는 AI 프로젝트들, portki가 대신 확인하고 정리해드립니다. 프로젝트별 한국어 위키를 읽고 챗봇에게 궁금한 것을 물어보세요.',
+      '단순히 저장소를 보여주지 않습니다. AI 오픈소스 프로젝트의 구조와 목적, 릴리즈와 활동 흐름을 한국어 위키로 정리해 필요한 부분만 빠르게 파악할 수 있습니다.',
   });
   const navigate = useNavigate();
 
