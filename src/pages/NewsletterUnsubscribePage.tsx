@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import NewsletterActionCard, { newsletterActionButtonClass } from '../components/newsletter/NewsletterActionCard';
 import { unsubscribeNewsletterByToken } from '../services/newsletter/newsletterService';
 import { parseApiError } from '../lib/http/apiError';
+import { usePageMeta } from '../lib/seo';
 
 type UnsubscribeResult = 'unsubscribed' | 'alreadyDone';
 
 export default function NewsletterUnsubscribePage() {
+  usePageMeta({ title: '뉴스레터 구독 해지', noindex: true });
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [result, setResult] = useState<UnsubscribeResult | null>(null);

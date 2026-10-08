@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { formatPostDate, getBlogPost } from '../content/blogPosts';
 import { remarkPlugins } from '../lib/markdown';
+import { SITE_URL, usePageMeta } from '../lib/seo';
 
 function BackToBlog() {
   return (
@@ -22,6 +23,25 @@ function BackToBlog() {
 export default function BlogPostPage() {
   const { slug = '' } = useParams();
   const post = getBlogPost(slug);
+  usePageMeta({
+    title: post?.title ?? '블로그',
+    description: post?.excerpt,
+    type: post ? 'article' : 'website',
+    noindex: !post,
+    jsonLd: post
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: post.title,
+          description: post.excerpt,
+          inLanguage: 'ko-KR',
+          datePublished: post.date || undefined,
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+          author: { '@type': 'Organization', name: 'devport', url: SITE_URL },
+          publisher: { '@id': `${SITE_URL}/#organization` },
+        }
+      : undefined,
+  });
 
   return (
     <div className="min-h-screen bg-glow">

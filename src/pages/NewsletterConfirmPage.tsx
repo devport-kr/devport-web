@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import NewsletterActionCard, { newsletterActionButtonClass } from '../components/newsletter/NewsletterActionCard';
 import { confirmNewsletter } from '../services/newsletter/newsletterService';
 import { parseApiError } from '../lib/http/apiError';
+import { usePageMeta } from '../lib/seo';
 
 type ConfirmResult =
   | { kind: 'confirmed'; email?: string }
@@ -11,6 +12,7 @@ type ConfirmResult =
   | { kind: 'conflict'; message: string };
 
 export default function NewsletterConfirmPage() {
+  usePageMeta({ title: '뉴스레터 구독 확인', noindex: true });
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [result, setResult] = useState<ConfirmResult | null>(null);

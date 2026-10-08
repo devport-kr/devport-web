@@ -15,6 +15,7 @@ import {
   type WikiDraftUpsertPayload,
   type WikiVersionHistory,
 } from '../../services/wiki/wikiAuthoringService';
+import { usePageMeta } from '../../lib/seo';
 
 interface BannerMessage {
   type: 'success' | 'error';
@@ -22,6 +23,7 @@ interface BannerMessage {
 }
 
 export default function WikiDraftsPage() {
+  usePageMeta({ title: '위키 초안', noindex: true });
   const { projectId } = useParams<{ projectId: string }>();
   const numericProjectId = Number(projectId);
   const hasValidProjectId = Number.isInteger(numericProjectId) && numericProjectId > 0;

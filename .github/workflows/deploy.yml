@@ -3,6 +3,10 @@ name: Deploy Frontend
 on:
   push:
     branches: [main]
+  # Daily rebuild so sitemap.xml picks up newly crawled articles (06:00 KST)
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
 
 jobs:
   deploy:

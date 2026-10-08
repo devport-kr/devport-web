@@ -1,0 +1,9 @@
+# /api/ stays crawlable: Google renders pages with JavaScript and needs the
+# API responses to see article content.
+User-agent: *
+Disallow: /admin
+Disallow: /mypage
+Disallow: /oauth2/
+Disallow: /newsletter/
+
+Sitemap: https://devport.kr/sitemap.xml

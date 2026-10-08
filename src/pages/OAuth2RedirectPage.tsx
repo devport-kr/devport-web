@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { exchangeOAuthCode } from '../services/auth/authService';
+import { usePageMeta } from '../lib/seo';
 
 type ApiErrorPayload = {
   message?: string;
@@ -10,6 +11,7 @@ type ApiErrorPayload = {
 };
 
 export default function OAuth2RedirectPage() {
+  usePageMeta({ title: '로그인', noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { authenticate } = useAuth();

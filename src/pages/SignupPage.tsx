@@ -32,6 +32,7 @@ import {
   labelClass,
   successTextClass,
 } from '../components/form/formStyles';
+import { usePageMeta } from '../lib/seo';
 
 type SignupMode = 'local' | 'oauth';
 type FormField = 'username' | 'password' | 'passwordConfirm' | 'email';
@@ -128,6 +129,7 @@ const getSignupErrors = (apiError: ParsedApiError): Record<string, string> => {
 };
 
 export default function SignupPage() {
+  usePageMeta({ title: '회원가입', noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { authenticate, isAuthenticated } = useAuth();

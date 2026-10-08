@@ -11,6 +11,7 @@ import { getAuthProviderMeta } from '../components/mypage/accountMeta';
 import { menuItemClasses } from '../components/navMenuStyles';
 import { getSavedArticles, getReadHistory, unsaveArticle } from '../services/me/meService';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageMeta } from '../lib/seo';
 
 type TabType = 'saved' | 'history' | 'profile' | 'newsletter';
 
@@ -30,6 +31,7 @@ const fetchPage = (tab: TabType, page: number) =>
   tab === 'saved' ? getSavedArticles(page, PAGE_SIZE) : getReadHistory(page, PAGE_SIZE);
 
 export default function MyPage() {
+  usePageMeta({ title: '마이페이지', noindex: true });
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: isAuthLoading, refreshUser } = useAuth();
   // The tab lives in the URL so links like /mypage?tab=newsletter open it directly.

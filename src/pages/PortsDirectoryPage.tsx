@@ -6,6 +6,7 @@ import { getWikiProjects } from '../services/wiki/wikiService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlobalWikiChatPanel from '../components/wiki/GlobalWikiChatPanel';
+import { usePageMeta } from '../lib/seo';
 
 function fmt(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1) + 'k';
@@ -15,6 +16,11 @@ function fmt(n: number) {
 // ─── Page ───────────────────────────────────────────────────
 
 export default function PortsDirectoryPage() {
+  usePageMeta({
+    title: 'Ports · AI 오픈소스 프로젝트 위키',
+    description:
+      '매일 쏟아지는 AI 프로젝트들, portki가 대신 확인하고 정리해드립니다. 프로젝트별 한국어 위키를 읽고 챗봇에게 궁금한 것을 물어보세요.',
+  });
   const navigate = useNavigate();
 
   // Directory data

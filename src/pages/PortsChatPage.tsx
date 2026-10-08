@@ -15,6 +15,7 @@ import SessionHistoryDrawer from '../components/wiki/SessionHistoryDrawer';
 import Navbar from '../components/Navbar';
 import { History, Plus, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePageMeta } from '../lib/seo';
 
 /* ------------------------------------------------------------------ */
 /*  Suggestion prompts                                                 */
@@ -645,6 +646,7 @@ function GlobalChat() {
 /* ------------------------------------------------------------------ */
 
 export default function PortsChatPage() {
+  usePageMeta({ title: 'Ports 챗', noindex: true });
   const params = useParams<{ '*': string }>();
   const rawParam = params['*'] || '';
 

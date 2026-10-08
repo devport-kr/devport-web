@@ -30,6 +30,7 @@ import {
   listAdminWikiProjects,
   type WikiAdminProjectSummary,
 } from '../services/wiki/wikiAuthoringService';
+import { usePageMeta } from '../lib/seo';
 
 type TabType = 'article' | 'wiki' | 'gitrepo' | 'llmmodel' | 'modelcreator' | 'benchmark' | 'newsletter';
 type ArticleSubView = 'list' | 'llm-process' | 'manual-create';
@@ -39,6 +40,7 @@ const CATEGORIES = ['AI_LLM', 'DEVOPS_SRE', 'INFRA_CLOUD', 'DATABASE', 'BLOCKCHA
 const SOURCES = ['hackernews', 'reddit', 'medium', 'devto', 'hashnode', 'github'];
 
 const AdminPage = () => {
+  usePageMeta({ title: '관리자', noindex: true });
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('article');

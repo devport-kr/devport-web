@@ -5,8 +5,10 @@ import TrendingTicker from '../components/TrendingTicker';
 import ArticleCard from '../components/ArticleCard';
 import { getArticles, getTrendingTicker } from '../services/articles/articlesService';
 import type { Article, Category } from '../types';
+import { usePageMeta } from '../lib/seo';
 
 export default function HomePage() {
+  usePageMeta({});
   const [selectedCategory, setSelectedCategory] = useState<Category | 'ALL'>('ALL');
   const [articles, setArticles] = useState<Article[]>([]);
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
@@ -22,15 +24,11 @@ export default function HomePage() {
     const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const [articlesData, tickerData] = await Promise.all([
-          getArticles(selectedCategory === 'ALL' ? undefined : selectedCategory, 0, 9),
-          getTrendingTicker(),
-        ]);
+        const articlesData = await getArticles(selectedCategory === 'ALL' ? undefined : selectedCategory, 0, 9);
 
         setArticles(articlesData.content);
         setHasMore(articlesData.hasMore);
         setCurrentPage(0);
-        setTickerArticles(tickerData);
         setIsInitialLoading(false);
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -41,6 +39,13 @@ export default function HomePage() {
 
     fetchInitialData();
   }, [selectedCategory]);
+
+  // The ticker request is several MB, so the feed renders without waiting for it
+  useEffect(() => {
+    getTrendingTicker()
+      .then(setTickerArticles)
+      .catch((error) => console.error('Failed to fetch trending ticker:', error));
+  }, []);
 
   const fetchMoreArticles = useCallback(async () => {
     if (isLoading || !hasMore) return;
@@ -139,6 +144,8 @@ export default function HomePage() {
         {/* Articles */}
         <main className="px-4 md:px-8 pt-8 pb-24 lg:pb-8">
           <div className="max-w-2xl mx-auto">
+            {/* Page heading for search engines and screen readers; the feed is the visual header */}
+            <h1 className="sr-only">devport · 해외 개발 트렌드를 한국어로</h1>
             {/* Articles Section */}
             <section>
               {/* Category Tabs */}

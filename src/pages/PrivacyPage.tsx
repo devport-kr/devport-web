@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import LegalDocumentContent from '../components/LegalDocumentContent';
 import { legalDocuments } from '../content/legalDocuments';
+import { usePageMeta } from '../lib/seo';
 
 export default function PrivacyPage() {
+  usePageMeta({ title: legalDocuments.privacy.title });
   const document = legalDocuments.privacy;
 
   return (

@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { blogPosts, formatPostDate } from '../content/blogPosts';
+import { usePageMeta } from '../lib/seo';
 
 export default function BlogPage() {
+  usePageMeta({ title: '블로그', description: 'devport를 만들며 배우고 고민한 것들을 기록합니다.' });
   return (
     <div className="min-h-screen bg-glow">
       <Navbar />

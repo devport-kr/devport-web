@@ -5,8 +5,10 @@ import Footer from '../components/Footer';
 import ArticleCard from '../components/ArticleCard';
 import { searchFulltext } from '../services/search/searchService';
 import type { Article } from '../types';
+import { usePageMeta } from '../lib/seo';
 
 export default function SearchResultsPage() {
+  usePageMeta({ title: '검색', noindex: true });
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 

@@ -11,6 +11,7 @@ import { OAUTH_PROVIDERS, type OAuthProvider } from '../components/auth/oauthPro
 import FormAlert from '../components/form/FormAlert';
 import PasswordInput from '../components/form/PasswordInput';
 import { buttonClass, inputClass, labelClass } from '../components/form/formStyles';
+import { usePageMeta } from '../lib/seo';
 
 type ApiErrorPayload = {
   message?: string;
@@ -18,6 +19,7 @@ type ApiErrorPayload = {
 };
 
 export default function LoginPage() {
+  usePageMeta({ title: '로그인', noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { authenticate, isAuthenticated } = useAuth();

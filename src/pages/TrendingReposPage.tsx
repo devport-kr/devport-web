@@ -10,10 +10,15 @@ import type { GitRepo } from '../types';
 import RepoThumbnail from './trending-repos/RepoThumbnail';
 import RepoDetailModal from './trending-repos/RepoDetailModal';
 import { displayTitle, formatCount, languageColors, summaryExcerpt } from './trending-repos/repoDisplay';
+import { usePageMeta } from '../lib/seo';
 
 const PAGE_SIZE = 20;
 
 export default function TrendingReposPage() {
+  usePageMeta({
+    title: '트렌딩 GitHub 리포지토리',
+    description: 'GitHub에서 가장 빠르게 성장 중인 오픈소스 프로젝트를 한국어 요약과 함께 소개합니다.',
+  });
   const [repos, setRepos] = useState<GitRepo[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);

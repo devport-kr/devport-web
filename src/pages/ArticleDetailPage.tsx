@@ -8,6 +8,8 @@ import CommentSection from '../components/CommentSection';
 import BookmarkButton from '../components/BookmarkButton';
 import { getArticleByExternalId, getTrendingTicker, trackArticleView, type ArticleDetailResponse } from '../services/articles/articlesService';
 import { remarkPlugins } from '../lib/markdown';
+import { SITE_URL, toDescription, usePageMeta } from '../lib/seo';
+import { parseApiError } from '../lib/http/apiError';
 import type { Category } from '../types';
 import { categoryConfig } from '../types';
 import StarIcon from '../components/icons/StarIcon';
@@ -21,7 +23,32 @@ export default function ArticleDetailPage() {
   const [article, setArticle] = useState<ArticleDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
+
+  const description = article ? toDescription(article.summaryKoBody || article.titleEn) : undefined;
+  usePageMeta({
+    title: article?.summaryKoTitle,
+    description,
+    path: `/articles/${externalId}`,
+    type: 'article',
+    noindex: notFound,
+    jsonLd: article
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.summaryKoTitle,
+          description,
+          inLanguage: 'ko-KR',
+          datePublished: article.createdAtSource.slice(0, 10),
+          keywords: article.tags.join(', '),
+          isBasedOn: article.url,
+          mainEntityOfPage: `${SITE_URL}/articles/${article.externalId}`,
+          author: { '@type': 'Organization', name: 'devport', url: SITE_URL },
+          publisher: { '@id': `${SITE_URL}/#organization` },
+        }
+      : undefined,
+  });
 
   // Scroll to top when page loads
   useEffect(() => {
@@ -34,15 +61,12 @@ export default function ArticleDetailPage() {
 
       setIsLoading(true);
       setError(null);
+      setNotFound(false);
 
       try {
-        const [articleData, tickerData] = await Promise.all([
-          getArticleByExternalId(externalId),
-          getTrendingTicker(),
-        ]);
+        const articleData = await getArticleByExternalId(externalId);
 
         setArticle(articleData);
-        setTickerArticles(tickerData);
 
         // Track article view for authenticated users
         if (externalId) {
@@ -51,6 +75,9 @@ export default function ArticleDetailPage() {
       } catch (err) {
         console.error('Failed to fetch article:', err);
         setError('아티클을 찾을 수 없습니다.');
+        // Only a definite 404 keeps the page out of search: a transient API
+        // failure while Googlebot renders must not get the article deindexed
+        setNotFound(parseApiError(err).status === 404);
       } finally {
         setIsLoading(false);
       }
@@ -58,6 +85,13 @@ export default function ArticleDetailPage() {
 
     fetchData();
   }, [externalId]);
+
+  // The ticker request is several MB, so the article renders without waiting for it
+  useEffect(() => {
+    getTrendingTicker()
+      .then(setTickerArticles)
+      .catch((err) => console.error('Failed to fetch trending ticker:', err));
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

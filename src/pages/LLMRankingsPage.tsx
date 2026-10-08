@@ -13,8 +13,14 @@ import { mediaTypeConfig, mediaFlowConfig } from './llm-rankings/types';
 import BenchmarkCard from './llm-rankings/components/BenchmarkCard';
 import MediaRankingCard from './llm-rankings/components/MediaRankingCard';
 import RankingsOverviewCard from './llm-rankings/components/RankingsOverviewCard';
+import { usePageMeta } from '../lib/seo';
 
 export default function LLMRankingsPage() {
+  usePageMeta({
+    title: 'LLM 벤치마크 랭킹',
+    description:
+      'GPT, Claude, Gemini 등 주요 LLM의 코딩·추론·수학·에이전틱 벤치마크 점수와 이미지·영상 생성 모델 순위를 Artificial Analysis 데이터로 한곳에서 비교합니다.',
+  });
   const [tickerArticles, setTickerArticles] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('llm-benchmarks');

@@ -18,6 +18,7 @@ import Footer from '../components/Footer';
 import CommentItem from '../components/CommentItem';
 import WikiChatPanel from '../components/wiki/WikiChatPanel';
 import WikiMarkdownRenderer, { MermaidCodeBlock } from '../components/wiki/WikiMarkdownRenderer';
+import { usePageMeta } from '../lib/seo';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -149,6 +150,11 @@ export default function PortsProjectPage() {
       return fullNameFromUrl;
     }
   }, [fullNameFromUrl]);
+
+  usePageMeta({
+    title: projectData ? `${projectData.fullName} · Ports` : 'Ports',
+    description: projectData?.description || undefined,
+  });
 
   // Load project, events, comments, wiki by external ID
   useEffect(() => {
