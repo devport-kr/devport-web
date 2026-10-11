@@ -5,5 +5,6 @@ Disallow: /admin
 Disallow: /mypage
 Disallow: /oauth2/
 Disallow: /newsletter/
+Disallow: /portfolio.pdf
 
 Sitemap: https://devport.kr/sitemap.xml
